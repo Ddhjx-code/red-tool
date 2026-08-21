@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>敦煌色卡 · 立轴色谱</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:900px;height:1200px;}
+  body{
+    font-family:"Kaiti SC","STKaiti","KaiTi",serif;
+    background:#F5F0E6;
+    position:relative;
+    overflow:hidden;
+  }
+  .paper-tex{
+    position:absolute;inset:0;pointer-events:none;opacity:.5;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='200' height='200' filter='url(%23n)' opacity='0.05'/></svg>");
+  }
+  .border-outer{position:absolute;inset:24px;border:6px solid #C3272B;}
+  .border-inner{position:absolute;inset:40px;border:2px solid #C3272B;}
+  .corner{position:absolute;width:34px;height:34px;border:3px solid #C3272B;}
+  .corner.tl{top:40px;left:40px;border-right:none;border-bottom:none;}
+  .corner.tr{top:40px;right:40px;border-left:none;border-bottom:none;}
+  .corner.bl{bottom:40px;left:40px;border-right:none;border-top:none;}
+  .corner.br{bottom:40px;right:40px;border-left:none;border-top:none;}
+  .wrap{position:absolute;inset:40px;display:flex;flex-direction:column;align-items:center;padding:52px 48px 44px;}
+  .title{font-size:76px;letter-spacing:22px;color:#425066;font-weight:700;text-indent:22px;}
+  .subtitle{margin-top:20px;font-size:27px;letter-spacing:8px;color:#8a6a4a;}
+  .divider{margin-top:26px;display:flex;align-items:center;gap:14px;}
+  .divider .line{width:120px;height:2px;background:#C3272B;opacity:.7;}
+  .divider .dot{width:10px;height:10px;background:#C3272B;transform:rotate(45deg);}
+  .bands{margin-top:64px;display:flex;gap:38px;align-items:flex-end;}
+  .band{display:flex;flex-direction:column;align-items:center;}
+  .swatch{width:112px;height:470px;border-radius:6px;box-shadow:0 6px 18px rgba(66,80,102,.18), inset 0 0 0 2px rgba(255,255,255,.14);}
+  .cname{margin-top:22px;font-size:27px;letter-spacing:2px;color:#425066;writing-mode:vertical-rl;height:120px;}
+  .foot{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:20px;}
+  .source{font-size:23px;letter-spacing:4px;color:#425066;}
+  .seal{width:96px;height:96px;background:#C3272B;transform:rotate(-6deg);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(195,39,43,.35), inset 0 0 0 3px rgba(255,255,255,.4);}
+  .seal span{writing-mode:vertical-rl;color:#fff;font-size:34px;letter-spacing:6px;font-weight:700;}
+</style>
+</head>
+<body>
+  <div class="paper-tex"></div>
+  <div class="border-outer"></div>
+  <div class="border-inner"></div>
+  <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+  <div class="wrap">
+    <div class="title">敦煌色谱</div>
+    <div class="subtitle">飞天遗色 · 盛唐</div>
+    <div class="divider"><span class="line"></span><span class="dot"></span><span class="line"></span></div>
+    <div class="bands">
+      <div class="band"><div class="swatch" style="background:#2F5D9E"></div><div class="cname">石青</div></div>
+      <div class="band"><div class="swatch" style="background:#45897A"></div><div class="cname">石绿</div></div>
+      <div class="band"><div class="swatch" style="background:#B83A2E"></div><div class="cname">朱砂</div></div>
+      <div class="band"><div class="swatch" style="background:#D9A441"></div><div class="cname">雌黄</div></div>
+      <div class="band"><div class="swatch" style="background:#9C5B3C"></div><div class="cname">土红</div></div>
+    </div>
+    <div class="foot">
+      <div class="source">莫高窟 · 第三二〇窟 · 飞天</div>
+      <div class="seal"><span>敦煌</span></div>
+    </div>
+  </div>
+</body>
+</html>

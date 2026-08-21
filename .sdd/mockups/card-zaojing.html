@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>敦煌色卡 · 藻井</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:900px;height:1200px;}
+  body{font-family:"Kaiti SC","STKaiti","KaiTi",serif;background:#F5F0E6;position:relative;overflow:hidden;}
+  .paper-tex{position:absolute;inset:0;pointer-events:none;opacity:.5;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='200' height='200' filter='url(%23n)' opacity='0.05'/></svg>");}
+  .border-outer{position:absolute;inset:24px;border:6px solid #C3272B;}
+  .border-inner{position:absolute;inset:40px;border:2px solid #C3272B;}
+  .wrap{position:absolute;inset:40px;display:flex;flex-direction:column;align-items:center;padding:52px 48px 44px;}
+  .title{font-size:72px;letter-spacing:20px;color:#425066;font-weight:700;text-indent:20px;}
+  .subtitle{margin-top:18px;font-size:26px;letter-spacing:8px;color:#8a6a4a;}
+  .zaojing{margin-top:52px;width:620px;height:620px;position:relative;}
+  .sq{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);box-shadow:0 8px 24px rgba(66,80,102,.16);}
+  .legend{margin-top:56px;display:flex;gap:34px;}
+  .chip{display:flex;flex-direction:column;align-items:center;gap:12px;}
+  .chip .dot{width:52px;height:52px;border-radius:50%;box-shadow:inset 0 0 0 2px rgba(255,255,255,.2),0 3px 8px rgba(66,80,102,.18);}
+  .chip .nm{font-size:24px;color:#425066;letter-spacing:2px;}
+  .foot{margin-top:auto;display:flex;align-items:center;gap:30px;}
+  .source{font-size:23px;letter-spacing:4px;color:#425066;}
+  .seal{width:88px;height:88px;background:#C3272B;transform:rotate(-6deg);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(195,39,43,.35), inset 0 0 0 3px rgba(255,255,255,.4);}
+  .seal span{writing-mode:vertical-rl;color:#fff;font-size:30px;letter-spacing:5px;font-weight:700;}
+</style>
+</head>
+<body>
+  <div class="paper-tex"></div>
+  <div class="border-outer"></div>
+  <div class="border-inner"></div>
+  <div class="wrap">
+    <div class="title">敦煌色卡</div>
+    <div class="subtitle">藻井 · 莫高窟第三二〇窟</div>
+    <div class="zaojing">
+      <div class="sq" style="width:600px;height:600px;background:#2F5D9E;"></div>
+      <div class="sq" style="width:424px;height:424px;background:#B83A2E;transform:translate(-50%,-50%) rotate(45deg);"></div>
+      <div class="sq" style="width:300px;height:300px;background:#45897A;"></div>
+      <div class="sq" style="width:212px;height:212px;background:#D9A441;transform:translate(-50%,-50%) rotate(45deg);"></div>
+      <div class="sq" style="width:150px;height:150px;background:#9C5B3C;"></div>
+      <div class="sq" style="width:84px;height:84px;background:#E5DCC8;border-radius:50%;"></div>
+    </div>
+    <div class="legend">
+      <div class="chip"><div class="dot" style="background:#2F5D9E"></div><div class="nm">石青</div></div>
+      <div class="chip"><div class="dot" style="background:#B83A2E"></div><div class="nm">朱砂</div></div>
+      <div class="chip"><div class="dot" style="background:#45897A"></div><div class="nm">石绿</div></div>
+      <div class="chip"><div class="dot" style="background:#D9A441"></div><div class="nm">雌黄</div></div>
+      <div class="chip"><div class="dot" style="background:#9C5B3C"></div><div class="nm">土红</div></div>
+    </div>
+    <div class="foot">
+      <div class="source">盛唐 · 矿物五色</div>
+      <div class="seal"><span>敦煌</span></div>
+    </div>
+  </div>
+</body>
+</html>
