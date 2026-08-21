@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>霓裳羽衣</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+  </style>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <section id="view-home" class="view is-active">
+      <div class="home-inner">
+        <p class="home-series">非遗手作坊 · 国风换装</p>
+        <h1 class="home-title"><span>霓</span><span>裳</span><span>羽</span><span>衣</span></h1>
+        <p class="home-sub">选发髻、配上衣、搭下裙、择一双鞋，妆点一身汉服</p>
+        <button id="btn-start" class="primary-btn" type="button">开始装扮</button>
+      </div>
+      <p class="home-foot">汉服 · 衣冠上国，礼仪之邦</p>
+    </section>
+
+    <section id="view-dress" class="view">
+      <div class="stage-area">
+        <div class="stage-wrap" id="stage-wrap">
+          <img id="bg-img" class="bg" alt="" />
+          <img id="char-img" class="char" alt="" />
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="tabs" id="tabs">
+          <button class="tab is-on" type="button" data-cat="hair">发髻</button>
+          <button class="tab" type="button" data-cat="top">上衣</button>
+          <button class="tab" type="button" data-cat="skirt">下裙</button>
+          <button class="tab" type="button" data-cat="shoe">鞋</button>
+          <button class="tab" type="button" data-cat="bg">背景</button>
+        </div>
+        <div class="options" id="options"></div>
+        <div class="actions">
+          <button id="btn-home" class="ghost-btn" type="button">回首页</button>
+          <button id="btn-next" class="primary-btn" type="button">下一步</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-intro" class="view">
+      <div class="intro-inner">
+        <p class="intro-kicker">这一身，皆有来历</p>
+        <div class="intro-list" id="intro-list"></div>
+        <div class="actions">
+          <button id="btn-back-dress" class="ghost-btn" type="button">返回改搭</button>
+          <button id="btn-generate" class="primary-btn" type="button">生成我的汉服</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-result" class="view">
+      <div class="result-inner">
+        <div class="result-card-wrap">
+          <img id="result-img" class="result-img" alt="" />
+        </div>
+        <div class="actions">
+          <button id="btn-save-album" class="primary-btn" type="button">存到相册</button>
+          <button id="btn-post-note" class="primary-btn" type="button">发笔记</button>
+        </div>
+        <button id="btn-back-intro" class="ghost-btn home-link" type="button">回首页</button>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="./assets/data.js"></script>
+  <script src="./assets/main.js"></script>
+</body>
+</html>

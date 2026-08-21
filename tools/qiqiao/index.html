@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>乞巧占卜局</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+  </style>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <section id="view-home" class="view is-active">
+      <div class="home-inner">
+        <p class="home-series">非遗手作坊 · 七夕</p>
+        <h1 class="home-title"><span>乞</span><span>巧</span><span>占</span><span>卜</span><span>局</span></h1>
+        <p class="home-sub">丢针试巧，占一缕巧运</p>
+        <p id="home-progress" class="home-progress"></p>
+        <button id="btn-start" class="primary-btn" type="button">起占</button>
+        <button id="btn-codex-home" class="ghost-btn" type="button">影形图鉴</button>
+        <button id="btn-mute-home" class="mute-btn" type="button">声</button>
+      </div>
+      <p class="home-foot">七夕 · 首批国家级非物质文化遗产</p>
+    </section>
+
+    <section id="view-ceremony" class="view">
+      <canvas id="stage"></canvas>
+      <p id="phase-hint" class="phase-hint"></p>
+      <div id="tutor" class="tutor"></div>
+    </section>
+
+    <section id="view-result" class="view">
+      <div class="result-inner">
+        <p class="result-kicker">丢针试巧 · 巧运签</p>
+        <div class="result-shadow-icon"><canvas id="result-shadow-icon" width="240" height="240"></canvas></div>
+        <h2 id="result-shadow-name" class="result-shadow-name"></h2>
+        <div class="result-seal"><span id="result-seal">中巧</span></div>
+        <p id="result-aspect" class="result-aspect"></p>
+        <p id="result-text" class="result-text"></p>
+        <div id="result-know" class="result-know"></div>
+        <p id="result-codex" class="result-codex"></p>
+        <div class="result-actions">
+          <button id="btn-again" class="primary-btn" type="button">再占一次</button>
+          <button id="btn-codex-result" class="ghost-btn" type="button">图鉴</button>
+        </div>
+        <div class="result-share">
+          <button id="btn-save-album" class="ghost-btn" type="button">存到相册</button>
+          <button id="btn-post-note" class="ghost-btn" type="button">发笔记</button>
+          <button id="btn-home-result" class="ghost-btn" type="button">回首页</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-codex" class="view">
+      <div class="codex-head">
+        <button id="btn-codex-back" class="chip-btn" type="button">返回</button>
+        <h2>影形图鉴</h2>
+        <span id="codex-count" class="codex-count"></span>
+      </div>
+      <div id="codex-grid" class="codex-grid"></div>
+      <div id="codex-card" class="codex-card">
+        <div id="codex-card-icon" class="codex-card-icon"><canvas id="codex-canvas" width="120" height="120"></canvas></div>
+        <h3 id="codex-card-name"></h3>
+        <p id="codex-card-text"></p>
+        <button id="codex-card-close" class="ghost-btn" type="button">合上</button>
+      </div>
+    </section>
+
+  </div>
+  <div id="toast" class="toast"></div>
+
+  <script src="./assets/data.js"></script>
+  <script src="./assets/save.js"></script>
+  <script src="./assets/rng.js"></script>
+  <script src="./assets/audio.js"></script>
+  <script src="./assets/scene.js"></script>
+  <script src="./assets/shadow.js"></script>
+  <script src="./assets/divine.js"></script>
+  <script src="./assets/share.js"></script>
+  <script src="./assets/main.js"></script>
+</body>
+</html>

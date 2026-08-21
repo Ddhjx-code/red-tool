@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>文物修复局</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+  </style>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- 3D 画布：work/report 共用持久层 -->
+    <canvas id="c3d"></canvas>
+
+    <!-- 选件 -->
+    <section id="view-select" class="view view-solid is-active">
+      <div class="select-inner">
+        <header class="home-head">
+          <p class="home-series">非遗手作坊 · 之三</p>
+          <h1 class="home-title">文物修复局</h1>
+          <p class="home-sub">亲手拼合，唤醒千年</p>
+        </header>
+        <p class="select-label">待修复文物</p>
+        <div id="artifact-list" class="artifact-list"></div>
+        <p class="select-note">拼合 · 显色 · 读纹 · 赏析</p>
+      </div>
+    </section>
+
+    <!-- 工作台（3D 拼合，画布透出） -->
+    <section id="view-work" class="view">
+      <header class="work-head">
+        <button id="btn-back" class="back-btn" type="button" aria-label="返回">←</button>
+        <div class="work-title-wrap">
+          <h2 id="work-name" class="work-name"></h2>
+          <p id="work-stage" class="work-stage"></p>
+        </div>
+        <div class="work-step" id="work-step"></div>
+        <button id="btn-mute" class="mute-btn" type="button" aria-label="声音开关">声</button>
+      </header>
+      <p id="work-hint" class="work-hint"></p>
+    </section>
+
+    <!-- 纹样推理 -->
+    <section id="view-quiz" class="view view-solid">
+      <div class="quiz-inner">
+        <p class="quiz-kicker">读纹</p>
+        <div class="quiz-motif-wrap">
+          <img id="quiz-motif" class="quiz-motif" alt="文物" />
+        </div>
+        <p id="quiz-q" class="quiz-q"></p>
+        <div id="quiz-opts" class="quiz-opts"></div>
+        <div id="quiz-explain" class="quiz-explain">
+          <p id="quiz-explain-text"></p>
+          <button id="btn-quiz-next" class="primary-btn" type="button">完成修复</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 修复报告 · 3D 转台（画布透出） -->
+    <section id="view-report" class="view">
+      <div class="report-panel">
+        <p class="report-kicker">修复完成</p>
+        <h2 id="report-name" class="report-name"></h2>
+        <p id="report-meta" class="report-meta"></p>
+        <p id="report-know" class="report-know"></p>
+        <p class="report-sign">非遗手作坊 · 文物修复局</p>
+        <div class="report-actions">
+          <button id="btn-save-album" class="action-btn" type="button">存到相册</button>
+          <button id="btn-post-note" class="action-btn action-primary" type="button">发笔记</button>
+        </div>
+        <button id="btn-report-back" class="primary-btn" type="button">再修一件</button>
+      </div>
+      <p class="report-drag-note">拖动文物可把玩</p>
+    </section>
+
+  </div>
+
+  <script src="./assets/vendor/three.min.js"></script>
+  <script src="./assets/data.js"></script>
+  <script src="./assets/models-data.js?v=9"></script>
+  <script src="./assets/audio.js"></script>
+  <script src="./assets/engine3d.js?v=9"></script>
+  <script src="./assets/main.js?v=9"></script>
+</body>
+</html>

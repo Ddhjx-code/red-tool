@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>剪纸工坊</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+  </style>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <section id="view-home" class="view is-active">
+      <div class="home-inner">
+        <header class="home-head">
+          <p class="home-series">非遗手作坊 · 之一</p>
+          <h1 class="home-title">剪纸工坊</h1>
+          <p class="home-sub">折一折，剪一剪，展开一朵窗花</p>
+        </header>
+
+        <div class="home-block">
+          <p class="home-label">选折法</p>
+          <div id="fold-list" class="fold-list"></div>
+        </div>
+
+        <div class="home-block">
+          <p class="home-label">怎么剪</p>
+          <div class="mode-list">
+            <button id="btn-free" class="mode-btn" type="button">
+              <span class="mode-name">自由剪裁</span>
+              <span class="mode-desc">随心下剪，拆纸见喜</span>
+            </button>
+            <button id="btn-tpl" class="mode-btn" type="button">
+              <span class="mode-name">模板剪</span>
+              <span class="mode-desc">跟着纹样，剪出经典</span>
+            </button>
+          </div>
+        </div>
+
+        <p class="home-foot">中国剪纸 · 国家级非物质文化遗产</p>
+      </div>
+
+      <div id="tpl-panel" class="tpl-panel">
+        <div class="tpl-head">
+          <h2>选一张纹样</h2>
+          <button id="tpl-close" class="tpl-close" type="button">返回</button>
+        </div>
+        <div id="tpl-list" class="tpl-list"></div>
+      </div>
+    </section>
+
+    <section id="view-studio" class="view">
+      <canvas id="stage"></canvas>
+
+      <div id="studio-top" class="studio-top">
+        <button id="btn-back" class="chip-btn" type="button">返回</button>
+        <p id="studio-title" class="studio-title"></p>
+        <span class="chip-placeholder"></span>
+      </div>
+
+      <canvas id="preview-mini" class="preview-mini" width="192" height="192"></canvas>
+
+      <div id="cut-toolbar" class="cut-toolbar">
+        <div class="brush-group" id="brush-group">
+          <button class="brush-btn" type="button" data-brush="0"><i class="dot dot-s"></i></button>
+          <button class="brush-btn is-on" type="button" data-brush="1"><i class="dot dot-m"></i></button>
+          <button class="brush-btn" type="button" data-brush="2"><i class="dot dot-l"></i></button>
+        </div>
+        <button id="btn-reset" class="tool-btn" type="button">重折</button>
+        <button id="btn-peek" class="tool-btn" type="button">预览</button>
+        <button id="btn-unfold" class="primary-btn" type="button">展开</button>
+      </div>
+
+      <div id="unfold-hint" class="unfold-hint">点按跳过</div>
+
+      <div id="result-panel" class="result-panel">
+        <div class="bg-swatches" id="bg-swatches">
+          <button class="swatch is-on" type="button" data-bg="window"><i class="sw sw-window"></i>窗花</button>
+          <button class="swatch" type="button" data-bg="paper"><i class="sw sw-paper"></i>白宣</button>
+          <button class="swatch" type="button" data-bg="night"><i class="sw sw-night"></i>夜景</button>
+        </div>
+        <p id="fact-card" class="fact-card"></p>
+        <div class="result-actions">
+          <button id="btn-again" class="tool-btn" type="button">再剪一张</button>
+          <button id="btn-home" class="tool-btn" type="button">换折法</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="./assets/templates.js"></script>
+  <script src="./assets/paper.js"></script>
+  <script src="./assets/unfold.js"></script>
+  <script src="./assets/main.js"></script>
+</body>
+</html>

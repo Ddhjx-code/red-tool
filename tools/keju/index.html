@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>科举合成</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+      overflow: hidden;
+      background: #F5F0E6;
+    }
+  </style>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+  <canvas id="stage"></canvas>
+
+  <button id="btn-settle" class="settle-btn" type="button">结算</button>
+
+  <div id="toast"></div>
+
+  <div id="overlay" class="is-on">
+    <div class="ov-card">
+      <p class="ov-kicker">非遗手作坊 · 国风合成</p>
+      <h1 class="ov-title" id="ov-title">科举合成</h1>
+      <p class="ov-sub" id="ov-sub">两个相同功名相合即晋升。从童生一路合到状元，独占鳌头。</p>
+      <p class="ov-chain">童生 → 秀才 → 举人 → 贡士 → 进士 → 探花 → 榜眼 → 状元</p>
+      <p class="ov-career" id="ov-career"></p>
+      <button id="ov-btn" class="ov-btn" type="button">开始赶考</button>
+      <div class="ov-share" id="ov-share">
+        <button id="btn-save-album" class="ov-share-btn" type="button">存到相册</button>
+        <button id="btn-post-note" class="ov-share-btn" type="button">发笔记</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./assets/matter.min.js"></script>
+  <script src="./assets/data.js"></script>
+  <script src="./assets/game.js"></script>
+</body>
+</html>

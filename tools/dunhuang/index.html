@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>敦煌拾色</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+  </style>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <section id="view-home" class="view is-active">
+      <div class="home-inner">
+        <p class="home-series">非遗手作坊 · 敦煌</p>
+        <h1 class="home-title"><span>敦</span><span>煌</span><span>拾</span><span>色</span></h1>
+        <p class="home-sub">拾取千年矿物色，拼一张敦煌色卡</p>
+        <p id="home-progress" class="home-progress"></p>
+        <button id="btn-start" class="primary-btn" type="button">拾色</button>
+        <button id="btn-codex-home" class="ghost-btn" type="button">矿物色谱</button>
+        <button id="btn-mute-home" class="mute-btn" type="button">声</button>
+      </div>
+      <p class="home-foot">敦煌 · 矿物色的千年回响</p>
+    </section>
+
+    <section id="view-select" class="view">
+      <div class="select-inner">
+        <h2 class="select-title">选一幅壁画</h2>
+        <div id="mural-list" class="mural-list"></div>
+      </div>
+    </section>
+
+    <section id="view-extract" class="view">
+      <canvas id="mural-canvas"></canvas>
+      <p id="extract-toast" class="extract-toast"></p>
+      <div class="extract-bar">
+        <div id="palette-bar" class="palette-bar"></div>
+        <div class="extract-actions">
+          <button id="btn-back-select" class="chip-btn" type="button">换壁画</button>
+          <button id="btn-build" class="primary-btn" type="button">拼色卡</button>
+          <button id="btn-codex-extract" class="chip-btn" type="button">图鉴</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-build" class="view">
+      <div class="build-inner">
+        <canvas id="build-preview" width="390" height="520"></canvas>
+        <div class="build-controls">
+          <div id="color-chips" class="color-chips"></div>
+          <div id="layout-opts" class="opt-row"></div>
+          <div id="bg-opts" class="opt-row"></div>
+          <div id="title-opts" class="opt-row"></div>
+          <div class="build-actions">
+            <button id="btn-back-extract" class="chip-btn" type="button">返回</button>
+            <button id="btn-make-card" class="primary-btn" type="button">成卡</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-result" class="view">
+      <div class="result-inner">
+        <canvas id="result-card" width="900" height="1200"></canvas>
+        <div class="result-actions">
+          <button id="btn-again" class="ghost-btn" type="button">再拼一张</button>
+          <button id="btn-home-result" class="ghost-btn" type="button">回首页</button>
+        </div>
+        <div class="result-share">
+          <button id="btn-save-album" class="ghost-btn" type="button">存到相册</button>
+          <button id="btn-post-note" class="ghost-btn" type="button">发笔记</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-codex" class="view">
+      <div class="codex-head">
+        <button id="btn-codex-back" class="chip-btn" type="button">返回</button>
+        <h2>矿物色谱</h2>
+        <span id="codex-count" class="codex-count"></span>
+      </div>
+      <div id="codex-grid" class="codex-grid"></div>
+      <div id="codex-card" class="codex-card">
+        <div class="codex-card-icon"><canvas id="codex-canvas" width="120" height="120"></canvas></div>
+        <h3 id="codex-card-name"></h3>
+        <p id="codex-card-text"></p>
+        <button id="codex-card-close" class="ghost-btn" type="button">合上</button>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="./assets/data.js"></script>
+  <script src="./assets/save.js"></script>
+  <script src="./assets/rng.js"></script>
+  <script src="./assets/audio.js"></script>
+  <script src="./assets/mural.js"></script>
+  <script src="./assets/extract.js"></script>
+  <script src="./assets/card.js"></script>
+  <script src="./assets/share.js"></script>
+  <script src="./assets/main.js"></script>
+</body>
+</html>

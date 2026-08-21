@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>龙舟破浪</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+  </style>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <section id="view-home" class="view is-active">
+      <div class="home-inner">
+        <p class="home-series">非遗手作坊 · 端午</p>
+        <h1 class="home-title"><span>龙</span><span>舟</span><span>破</span><span>浪</span></h1>
+        <p class="home-sub">击鼓奋楫，破浪夺标</p>
+        <p id="home-best" class="home-best"></p>
+        <button id="btn-start" class="primary-btn" type="button">起航</button>
+        <button id="btn-codex-home" class="ghost-btn" type="button">端午图鉴</button>
+        <button id="btn-mute-home" class="mute-btn" type="button">声</button>
+      </div>
+      <p class="home-foot">端午 · 联合国教科文组织人类非物质文化遗产</p>
+    </section>
+
+    <section id="view-game" class="view">
+      <canvas id="stage"></canvas>
+      <div id="hud" class="hud">
+        <div class="hud-left">
+          <div id="hud-steady" class="steady"></div>
+          <p id="hud-dist" class="hud-dist">0m</p>
+        </div>
+        <div class="hud-right">
+          <p id="hud-score" class="hud-score">0</p>
+          <p id="hud-combo" class="hud-combo"></p>
+        </div>
+      </div>
+      <div id="gauge-wrap" class="gauge-wrap"><div id="gauge-fill" class="gauge-fill"></div></div>
+      <button id="btn-drum" class="drum-btn" type="button"><span class="drum-face">鼓</span></button>
+      <div class="lane-btns">
+        <button id="btn-left" class="lane-btn" type="button">◀</button>
+        <button id="btn-right" class="lane-btn" type="button">▶</button>
+      </div>
+      <div id="toast" class="toast"></div>
+      <div id="tutor" class="tutor"></div>
+      <div id="pause-mask" class="pause-mask">
+        <p>暂停中</p>
+        <button id="btn-resume" class="primary-btn" type="button">继续</button>
+        <button id="btn-quit" class="ghost-btn" type="button">回首页</button>
+      </div>
+    </section>
+
+    <section id="view-codex" class="view">
+      <div class="codex-head">
+        <button id="btn-codex-back" class="chip-btn" type="button">返回</button>
+        <h2>端午图鉴</h2>
+        <span id="codex-count" class="codex-count"></span>
+      </div>
+      <div id="codex-grid" class="codex-grid"></div>
+      <div id="codex-card" class="codex-card">
+        <div id="codex-card-icon" class="codex-card-icon"><canvas id="codex-canvas" width="120" height="120"></canvas></div>
+        <h3 id="codex-card-name"></h3>
+        <p id="codex-card-text"></p>
+        <button id="codex-card-close" class="ghost-btn" type="button">合上</button>
+      </div>
+    </section>
+
+    <section id="view-result" class="view">
+      <div class="result-inner">
+        <p class="result-kicker">翻船了 · 战绩</p>
+        <div class="result-seal"><span id="result-title">见习桨手</span></div>
+        <div class="result-stats">
+          <div class="stat"><b id="result-dist">0m</b><i>航程</i></div>
+          <div class="stat"><b id="result-score">0</b><i>总分</i></div>
+          <div class="stat"><b id="result-zongzi">0</b><i>粽子</i></div>
+          <div class="stat"><b id="result-combo">0</b><i>最高连击</i></div>
+        </div>
+        <p id="result-best" class="result-best"></p>
+        <div id="result-know" class="result-know"></div>
+        <p id="result-codex" class="result-codex"></p>
+        <div class="result-actions">
+          <button id="btn-again" class="primary-btn" type="button">再战一局</button>
+          <button id="btn-codex-result" class="ghost-btn" type="button">图鉴</button>
+        </div>
+        <div class="result-share">
+          <button id="btn-save-album" class="ghost-btn" type="button">存到相册</button>
+          <button id="btn-post-note" class="ghost-btn" type="button">发笔记</button>
+          <button id="btn-home-result" class="ghost-btn" type="button">回首页</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="./assets/data.js"></script>
+  <script src="./assets/save.js"></script>
+  <script src="./assets/rng.js"></script>
+  <script src="./assets/audio.js"></script>
+  <script src="./assets/scene.js"></script>
+  <script src="./assets/sprites.js"></script>
+  <script src="./assets/game.js"></script>
+  <script src="./assets/share.js"></script>
+  <script src="./assets/main.js"></script>
+</body>
+</html>
