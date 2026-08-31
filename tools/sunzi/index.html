@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>孙子兵法·战棋</title>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <section id="view-home" class="view is-active">
+      <div class="home-inner hall">
+        <p class="home-series">非遗手作坊 · 战棋演武</p>
+        <h1 class="home-title"><span>孙</span><span>子</span><span>兵</span><span>法</span></h1>
+        <p class="home-sub">银雀山汉简 · 十三篇释读</p>
+        <figure class="exhibit">
+          <div class="exhibit-glow"></div>
+          <img class="exhibit-img" src="./assets/img/exhibit-case.webp" alt="银雀山汉墓竹简展柜" />
+          <figcaption class="exhibit-label">
+            <b>银雀山汉墓竹简 · 西汉</b>
+            <i>1972 年山东临沂出土 · 山东省博物馆藏</i>
+          </figcaption>
+        </figure>
+        <div class="museum-card">
+          <div id="museum-intro" class="museum-intro"></div>
+        </div>
+        <p id="home-progress" class="home-progress"></p>
+        <button id="btn-to-case" class="primary-btn" type="button">入 竹简展柜</button>
+      </div>
+      <p class="home-foot">以战棋演武 · 释读兵法十三篇</p>
+    </section>
+
+    <section id="view-case" class="view">
+      <div class="case-head">
+        <button id="btn-case-home" class="chip-btn" type="button">返回</button>
+        <h2>竹简展柜</h2>
+        <span id="case-count" class="case-count"></span>
+      </div>
+      <p class="case-tip">点选竹简，演武释读 · 通关即释读一卷</p>
+      <div id="case-grid" class="case-grid"></div>
+      <p class="case-lost-label">佚简（待复原）</p>
+      <div id="case-lost" class="case-lost"></div>
+    </section>
+
+    <section id="view-intro" class="view">
+      <div class="intro-inner">
+        <div class="intro-head">
+          <button id="btn-intro-back" class="chip-btn" type="button">展柜</button>
+          <div>
+            <p id="intro-order" class="intro-order"></p>
+            <h2 id="intro-name" class="intro-name"></h2>
+          </div>
+          <span class="intro-seal">简</span>
+        </div>
+        <figure class="intro-figure">
+          <img src="./assets/img/exhibit-closeup.webp" alt="竹简特写" />
+        </figure>
+        <div class="bamboo-card">
+          <p id="intro-quote" class="result-quote"></p>
+          <p id="intro-src" class="result-src"></p>
+        </div>
+        <p id="intro-vernacular" class="intro-vernacular"></p>
+        <div id="intro-brief" class="intro-brief"></div>
+        <div id="formation-box" class="formation-box">
+          <p class="formation-label">庙算 · 选定阵形</p>
+          <div id="formation-list" class="formation-list"></div>
+        </div>
+        <button id="btn-deploy" class="primary-btn" type="button">出 战</button>
+      </div>
+    </section>
+
+    <section id="view-battle" class="view">
+      <div class="battle-top">
+        <button id="btn-home-battle" class="chip-btn" type="button">回营</button>
+        <div class="battle-mid">
+          <span id="chapter"></span>
+          <span id="turninfo"></span>
+        </div>
+        <button id="btn-restart" class="chip-btn" type="button">重演</button>
+      </div>
+      <p id="hint" class="hint"></p>
+      <div class="board-wrap"><canvas id="stage"></canvas></div>
+      <div id="toast" class="toast"></div>
+      <div class="panel">
+        <p id="unit-info" class="unit-info">点选一枚己方棋子开始行动</p>
+        <p id="menu-tip" class="menu-tip"></p>
+        <div class="btns">
+          <button id="btn-undo" class="ghost-btn" type="button" disabled>撤销移动</button>
+          <button id="btn-fire" class="fire-btn" type="button" disabled>引火</button>
+          <button id="btn-wait" class="ghost-btn" type="button" disabled>待命</button>
+          <button id="btn-cancel" class="ghost-btn" type="button" disabled>取消</button>
+          <button id="btn-endturn" class="primary-btn small" type="button">结束回合</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-result" class="view">
+      <div class="result-inner">
+        <p class="result-kicker" id="result-kicker">战棋演武</p>
+        <h2 id="result-title" class="result-title">克敌制胜</h2>
+        <p id="result-stars" class="result-stars"></p>
+        <p id="result-turns" class="result-turns"></p>
+        <div class="bamboo-card slip-decoded">
+          <p class="slip-tag">释读竹简 · 一卷</p>
+          <p id="result-quote" class="result-quote"></p>
+          <p id="result-src" class="result-src"></p>
+        </div>
+        <div id="result-know" class="result-know"></div>
+        <div class="result-actions">
+          <button id="btn-next-result" class="primary-btn" type="button">释读下一卷</button>
+          <button id="btn-again-result" class="ghost-btn" type="button">再演本卷</button>
+          <button id="btn-case-result" class="ghost-btn" type="button">回展柜</button>
+        </div>
+        <div class="result-share">
+          <button id="btn-save-album" class="ghost-btn" type="button">存战报到相册</button>
+          <button id="btn-post-note" class="ghost-btn" type="button">发笔记</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="./assets/data.js"></script>
+  <script src="./assets/save.js"></script>
+  <script src="./assets/board.js"></script>
+  <script src="./assets/ai.js"></script>
+  <script src="./assets/game.js"></script>
+  <script src="./assets/audio.js"></script>
+  <script src="./assets/sprites.js"></script>
+  <script src="./assets/scene.js"></script>
+  <script src="./assets/share.js"></script>
+  <script src="./assets/main.js"></script>
+</body>
+</html>

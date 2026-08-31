@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>一盏河灯 · 中元</title>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <section id="view-home" class="view is-active">
+      <div class="home-inner">
+        <p class="home-series">非遗手作坊 · 中元</p>
+        <h1 class="home-title">一盏河灯</h1>
+        <p class="home-sub">中元不是鬼节，是思念的节日</p>
+        <div class="home-card">
+          <p>七月十五，旧俗放河灯：荷灯一盏，烛火一点，顺水而去——灯替人间，把未说完的话带给想见的人。</p>
+          <p>今天，在这里放一盏。</p>
+        </div>
+        <p id="home-progress" class="home-progress"></p>
+        <button id="btn-start" class="primary-btn" type="button">放 灯</button>
+        <button id="btn-codex-home" class="ghost-btn" type="button">灯谱</button>
+      </div>
+      <p class="home-foot">上元放灯祈福 · 中元放灯照冥 · 下元放灯解厄</p>
+    </section>
+
+    <section id="view-make" class="view">
+      <div class="make-inner">
+        <p class="step-label">一 · 选灯</p>
+        <div id="lantern-list" class="lantern-list"></div>
+        <p class="step-label">二 · 写给谁</p>
+        <div id="recipient-list" class="recipient-list"></div>
+        <p class="step-label">三 · 写一句话</p>
+        <textarea id="msg-input" class="msg-input" maxlength="20" placeholder="不写也可以，灯会替你说"></textarea>
+        <div class="make-actions">
+          <button id="btn-back-make" class="ghost-btn" type="button">回首页</button>
+          <button id="btn-to-light" class="primary-btn" type="button">点 灯</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-light" class="view">
+      <div id="light-zone" class="light-zone">
+        <canvas id="stage"></canvas>
+      </div>
+      <div class="light-actions">
+        <button id="btn-release" class="primary-btn" type="button">放 手 · 送灯入水</button>
+      </div>
+    </section>
+
+    <section id="view-release" class="view">
+      <div class="release-zone">
+        <canvas id="stage-release"></canvas>
+      </div>
+      <button id="btn-skip-release" class="skip-btn" type="button">目送即可 · 看灯笺</button>
+    </section>
+
+    <section id="view-result" class="view">
+      <div class="result-inner">
+        <p class="result-kicker">灯已入水</p>
+        <h2 id="result-grade" class="result-grade">灯暖</h2>
+        <p id="result-grade-text" class="result-grade-text"></p>
+        <div class="result-msg-card">
+          <p id="result-msg" class="result-msg"></p>
+          <p id="result-recipient" class="result-recipient"></p>
+        </div>
+        <p id="result-new" class="result-new">灯谱新录一盏 ✦</p>
+        <div id="result-know" class="result-know"></div>
+        <div class="result-actions">
+          <button id="btn-again" class="primary-btn" type="button">再放一盏</button>
+          <button id="btn-codex-result" class="ghost-btn" type="button">灯谱</button>
+          <button id="btn-home-result" class="ghost-btn" type="button">回首页</button>
+        </div>
+        <div class="result-share">
+          <button id="btn-save-album" class="ghost-btn" type="button">存灯笺到相册</button>
+          <button id="btn-post-note" class="ghost-btn" type="button">发笔记</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-codex" class="view">
+      <div class="codex-head">
+        <button id="btn-codex-back" class="chip-btn" type="button">返回</button>
+        <h2>灯谱</h2>
+        <span id="codex-count" class="codex-count"></span>
+      </div>
+      <p class="codex-tip">三种灯 × 四位故人 · 点亮过的，灯谱里长明</p>
+      <div id="codex-grid" class="codex-grid"></div>
+    </section>
+
+  </div>
+
+  <script src="./assets/data.js"></script>
+  <script src="./assets/rng.js"></script>
+  <script src="./assets/save.js"></script>
+  <script src="./assets/audio.js"></script>
+  <script src="./assets/scene.js"></script>
+  <script src="./assets/share.js"></script>
+  <script src="./assets/main.js"></script>
+</body>
+</html>

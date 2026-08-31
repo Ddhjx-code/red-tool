@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>鬼月 · 夜归路</title>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <section id="view-home" class="view is-active">
+      <div class="home-inner">
+        <p class="home-series">非遗手作坊 · 中元 · 怪谈</p>
+        <h1 class="home-title">夜归路</h1>
+        <p class="home-sub">七月半，老辈人留下五条规矩</p>
+        <div class="home-card">
+          <p>今晚加班到很晚。回家的路你走过很多遍，但中元夜的路，和平时不太一样。</p>
+          <p>守住规矩，天亮之前到家。</p>
+        </div>
+        <p id="home-progress" class="home-progress"></p>
+        <button id="btn-start" class="primary-btn" type="button">走 夜 路</button>
+      </div>
+      <p class="home-foot">禁忌属民俗传说 · 敬畏是真的</p>
+    </section>
+
+    <section id="view-rules" class="view">
+      <div class="rules-inner">
+        <p class="rules-kicker">出门前，默一遍规矩</p>
+        <ol id="rules-list" class="rules-list"></ol>
+        <button id="btn-walk" class="primary-btn" type="button">出 门</button>
+      </div>
+    </section>
+
+    <section id="view-scene" class="view">
+      <div class="scene-top">
+        <div id="yang-dots" class="yang-dots"></div>
+        <span id="scene-step" class="scene-step"></span>
+      </div>
+      <div class="scene-inner">
+        <h2 id="scene-title" class="scene-title"></h2>
+        <p id="scene-text" class="scene-text"></p>
+        <div id="choice-list" class="choice-list"></div>
+      </div>
+    </section>
+
+    <section id="view-outcome" class="view">
+      <div class="outcome-inner">
+        <p id="outcome-text" class="outcome-text"></p>
+        <button id="btn-next" class="primary-btn" type="button">继续走</button>
+      </div>
+    </section>
+
+    <section id="view-result" class="view">
+      <div class="result-inner">
+        <p class="result-kicker">夜路尽头</p>
+        <h2 id="result-ending" class="result-ending">安然无恙</h2>
+        <p id="result-cond" class="result-cond"></p>
+        <p id="result-stats" class="result-stats"></p>
+        <div class="result-text-card">
+          <p id="result-text" class="result-text"></p>
+        </div>
+        <p id="result-new" class="result-new">结局新录 ✦</p>
+        <div id="endings-list" class="endings-list"></div>
+        <div id="result-know" class="result-know"></div>
+        <div class="result-actions">
+          <button id="btn-again" class="primary-btn" type="button">再走一遍</button>
+          <button id="btn-home-result" class="ghost-btn" type="button">回首页</button>
+        </div>
+        <div class="result-share">
+          <button id="btn-save-album" class="ghost-btn" type="button">存生还报告</button>
+          <button id="btn-post-note" class="ghost-btn" type="button">发笔记</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="./assets/data.js"></script>
+  <script src="./assets/save.js"></script>
+  <script src="./assets/audio.js"></script>
+  <script src="./assets/share.js"></script>
+  <script src="./assets/main.js"></script>
+</body>
+</html>

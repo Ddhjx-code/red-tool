@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>节气塔防 · 守岁</title>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <section id="view-home" class="view is-active">
+      <div class="home-inner">
+        <p class="home-series">非遗手作坊 · 二十四节气</p>
+        <h1 class="home-title">守 岁</h1>
+        <p class="home-sub">节气为塔 · 灾害为敌 · 守我仓廪</p>
+        <div class="home-card">
+          <p>上古农人靠节气种田：何时播种，何时防虫，何时抢收，全在二十四节气里。</p>
+          <p>现在，虫害与天灾顺着田垄压下来了——把节气种成塔，守住一年的收成。</p>
+        </div>
+        <button id="btn-start" class="primary-btn" type="button">开 春 守 田</button>
+        <div class="home-sub-btns">
+          <button id="btn-codex-home" class="ghost-btn" type="button">百虫谱</button>
+          <button id="btn-ach-home" class="ghost-btn" type="button">功业</button>
+        </div>
+        <p id="home-progress" class="home-progress"></p>
+        <p class="home-foot">粒子素材：Kenney Particle Pack（CC0）</p>
+      </div>
+    </section>
+
+    <section id="view-levels" class="view">
+      <div class="list-inner">
+        <div class="list-head">
+          <button id="btn-levels-back" class="chip-btn" type="button">返回</button>
+          <h2>关卡图鉴</h2>
+          <span></span>
+        </div>
+        <div id="levels-list" class="levels-list"></div>
+      </div>
+    </section>
+
+    <section id="view-codex" class="view">
+      <div class="list-inner">
+        <div class="list-head">
+          <button id="btn-codex-back" class="chip-btn" type="button">返回</button>
+          <h2>百虫谱</h2>
+          <span id="codex-count" class="list-count"></span>
+        </div>
+        <div id="codex-list" class="codex-list"></div>
+      </div>
+    </section>
+
+    <section id="view-ach" class="view">
+      <div class="list-inner">
+        <div class="list-head">
+          <button id="btn-ach-back" class="chip-btn" type="button">返回</button>
+          <h2>功业</h2>
+          <span id="ach-count" class="list-count"></span>
+        </div>
+        <div id="ach-list" class="ach-list"></div>
+      </div>
+    </section>
+
+    <section id="view-intro" class="view">
+      <div class="intro-inner">
+        <p class="intro-kicker">节气塔防 · 守岁</p>
+        <h2 id="intro-name" class="intro-name"></h2>
+        <p id="intro-lore" class="intro-lore"></p>
+        <div class="intro-block">
+          <p class="intro-block-title">来袭灾害</p>
+          <div id="intro-enemies" class="intro-roster"></div>
+        </div>
+        <div class="intro-block">
+          <p class="intro-block-title">可用节气塔</p>
+          <div id="intro-towers" class="intro-roster"></div>
+        </div>
+        <p id="intro-howto" class="intro-howto"></p>
+        <button id="btn-deploy" class="primary-btn" type="button">布 防</button>
+        <button id="btn-intro-back" class="ghost-btn" type="button">回首页</button>
+      </div>
+    </section>
+
+    <section id="view-battle" class="view">
+      <div class="hud">
+        <div class="hud-left">
+          <span id="hud-level" class="hud-level"></span>
+          <span id="hud-wave" class="hud-wave"></span>
+        </div>
+        <div class="hud-right">
+          <span id="hud-grain-wrap" class="hud-grain-wrap">谷 <b id="hud-grain">150</b></span>
+          <span id="hud-canglin" class="hud-canglin"></span>
+        </div>
+      </div>
+      <canvas id="stage"></canvas>
+      <div id="enemy-banner" class="enemy-banner">
+        <b id="enemy-banner-name"></b>
+        <i id="enemy-banner-tip"></i>
+      </div>
+      <p id="tower-info" class="tower-info">点选节气塔查看介绍，再点田垄布防</p>
+      <div id="tower-cards" class="tower-cards"></div>
+    </section>
+
+    <section id="view-result" class="view">
+      <div class="result-inner">
+        <p class="result-kicker">节气塔防 · 守岁</p>
+        <h2 id="result-title" class="result-title">守住了</h2>
+        <p id="result-stars" class="result-stars"></p>
+        <p id="result-stats" class="result-stats"></p>
+        <div id="result-ach" class="result-ach"></div>
+        <div id="result-know" class="result-know"></div>
+        <div class="result-actions">
+          <button id="btn-next" class="primary-btn" type="button">下一关</button>
+          <button id="btn-again" class="ghost-btn" type="button">再守一遍</button>
+          <button id="btn-home" class="ghost-btn" type="button">回首页</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="./assets/data.js"></script>
+  <script src="./assets/save.js"></script>
+  <script src="./assets/engine.js"></script>
+  <script src="./assets/audio.js"></script>
+  <script src="./assets/scene.js"></script>
+  <script src="./assets/main.js"></script>
+</body>
+</html>
