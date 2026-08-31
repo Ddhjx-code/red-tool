@@ -175,7 +175,7 @@ body {
 .hud-mid { align-items: center; }
 .hud-right { align-items: flex-end; }
 .hud span { font-size: 13px; color: #e8e4d8; letter-spacing: 1px; }
-.hud-hp { color: #e07a52; }
+.hud-hearts { display: block; }
 .hud-bombs { color: #e8c56a; }
 .hud-shield { color: #a0d8c0; }
 #stage { display: block; margin: 0 auto; touch-action: none; }

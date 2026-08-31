@@ -72,12 +72,39 @@
   function updateHud() {
     var S = E.state();
     if (!S) return;
-    $("hud-hp").textContent = "命 " + Math.max(0, S.hp);
     $("hud-weapon").textContent = "飞剑 Lv" + S.weaponLv;
     $("hud-bombs").textContent = "雷符 ×" + S.bombs;
     $("hud-shield").textContent = S.shield > 0 ? "镜 ×" + S.shield : "";
     $("hud-score").textContent = "分 " + S.score;
-    $("hud-wave").textContent = "第 " + Math.min(S.waveIdx + 1, S.waveTotal) + "/" + S.waveTotal + " 波";
+    $("hud-wave").textContent = "第 " + Math.min(S.waveIdx + 1, S.level.waves) + "/" + S.level.waves + " 波";
+    drawHearts(S.hp);
+  }
+
+  function drawHearts(hp) {
+    var hc = $("hud-hearts");
+    if (!hc) return;
+    var hctx = hc.getContext("2d");
+    var dpr2 = window.devicePixelRatio || 1;
+    var max = D.player.hp;
+    var hw = 22, gap = 4;
+    var w = max * hw + (max - 1) * gap, h = 20;
+    if (hc.width !== w * dpr2) { hc.width = w * dpr2; hc.height = h * dpr2; hc.style.width = w + "px"; hc.style.height = h + "px"; }
+    hctx.setTransform(dpr2, 0, 0, dpr2, 0, 0);
+    hctx.clearRect(0, 0, w, h);
+    for (var i = 0; i < max; i++) {
+      var cx = i * (hw + gap) + hw / 2, cy = h / 2;
+      var filled = i < hp;
+      drawHeart(hctx, cx, cy, hw * 0.42, filled ? "#e04a4a" : "rgba(232,228,216,0.25)");
+    }
+  }
+
+  function drawHeart(c, x, y, r, color) {
+    c.fillStyle = color;
+    c.beginPath();
+    c.moveTo(x, y + r * 0.7);
+    c.bezierCurveTo(x - r * 1.4, y - r * 0.3, x - r * 0.6, y - r * 1.1, x, y - r * 0.2);
+    c.bezierCurveTo(x + r * 0.6, y - r * 1.1, x + r * 1.4, y - r * 0.3, x, y + r * 0.7);
+    c.fill();
   }
 
   function frame(t) {

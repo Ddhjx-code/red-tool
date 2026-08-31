@@ -139,10 +139,20 @@
       }
     }
 
-    ctx.fillStyle = "#e8e4d8";
+    var swordImg = IMGS["drop-sword"];
     for (var b = 0; b < S.bullets.length; b++) {
       var bl = S.bullets[b];
-      ctx.fillRect(bl.x - 2, bl.y - 8, 4, 12);
+      if (swordImg && swordImg.complete && swordImg.naturalWidth > 0) {
+        ctx.save();
+        ctx.translate(bl.x, bl.y);
+        var ang = Math.atan2(bl.vy, bl.vx) + Math.PI / 2;
+        ctx.rotate(ang);
+        ctx.drawImage(swordImg, -9, -11, 18, 22);
+        ctx.restore();
+      } else {
+        ctx.fillStyle = "#e8e4d8";
+        ctx.fillRect(bl.x - 2, bl.y - 8, 4, 12);
+      }
     }
     ctx.fillStyle = "#e07a52";
     for (var eb = 0; eb < S.ebullets.length; eb++) {
