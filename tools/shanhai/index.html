@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>山海御空</title>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <section id="view-home" class="view is-active">
+      <div class="home-inner">
+        <p class="home-series">非遗手作坊 · 山海经</p>
+        <h1 class="home-title">山 海 御 空</h1>
+        <p class="home-sub">御应龙而上 · 扫清山海妖氛</p>
+        <div class="home-card">
+          <p>《山海经》记山川神怪，存妖兽四百余种。穷奇、毕方、蛊雕、饕餮，皆上古凶兽。</p>
+          <p>今御应龙而上，一路向上，扫清妖氛。</p>
+        </div>
+        <button id="btn-start" class="primary-btn" type="button">御 空</button>
+        <p class="home-foot">纵版射击 · 火力升级 · 雷符清屏 · Boss 战</p>
+      </div>
+    </section>
+
+    <section id="view-levels" class="view">
+      <div class="list-inner">
+        <div class="list-head">
+          <button id="btn-levels-back" class="chip-btn" type="button">返回</button>
+          <h2>山海三关</h2>
+          <span></span>
+        </div>
+        <div id="levels-list" class="levels-list"></div>
+      </div>
+    </section>
+
+    <section id="view-intro" class="view">
+      <div class="intro-inner">
+        <p class="intro-kicker">山海御空</p>
+        <h2 id="intro-name" class="intro-name"></h2>
+        <p id="intro-lore" class="intro-lore"></p>
+        <p id="intro-brief" class="intro-brief"></p>
+        <div class="intro-tip">
+          <p>拖动应龙移动 · 自动开火</p>
+          <p>拾取法宝：飞剑升级 / 雷符 / 八卦镜</p>
+          <p>雷符按钮清屏，限用次数</p>
+        </div>
+        <button id="btn-deploy" class="primary-btn" type="button">御 空</button>
+        <button id="btn-intro-back" class="ghost-btn" type="button">回关卡</button>
+      </div>
+    </section>
+
+    <section id="view-battle" class="view">
+      <div class="hud">
+        <div class="hud-left">
+          <span id="hud-hp" class="hud-hp"></span>
+          <span id="hud-weapon" class="hud-weapon"></span>
+        </div>
+        <div class="hud-mid">
+          <span id="hud-wave" class="hud-wave"></span>
+          <span id="hud-score" class="hud-score"></span>
+        </div>
+        <div class="hud-right">
+          <span id="hud-bombs" class="hud-bombs"></span>
+          <span id="hud-shield" class="hud-shield"></span>
+        </div>
+      </div>
+      <canvas id="stage"></canvas>
+      <button id="btn-bomb" class="bomb-btn" type="button">雷符</button>
+    </section>
+
+    <section id="view-result" class="view">
+      <div class="result-inner">
+        <p class="result-kicker">山海御空</p>
+        <h2 id="result-title" class="result-title"></h2>
+        <p id="result-stats" class="result-stats"></p>
+        <div id="result-know" class="result-know"></div>
+        <div class="result-actions">
+          <button id="btn-next" class="primary-btn" type="button">下一关</button>
+          <button id="btn-again" class="ghost-btn" type="button">再战</button>
+          <button id="btn-home" class="ghost-btn" type="button">回首页</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="./assets/data.js"></script>
+  <script src="./assets/engine.js"></script>
+  <script src="./assets/audio.js"></script>
+  <script src="./assets/scene.js"></script>
+  <script src="./assets/main.js"></script>
+</body>
+</html>
