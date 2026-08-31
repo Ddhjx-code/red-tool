@@ -51,21 +51,18 @@
 
     var bgImg = IMGS["bg-clouds"];
     if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
-      ctx.globalAlpha = 0.5;
-      var off = (t * 20) % D.H;
-      ctx.drawImage(bgImg, 0, off - D.H, D.W, D.H);
-      ctx.drawImage(bgImg, 0, off, D.W, D.H);
+      ctx.globalAlpha = 0.6;
+      ctx.drawImage(bgImg, 0, 0, D.W, D.H);
       ctx.globalAlpha = 1;
-    } else {
-      for (var i = 0; i < clouds.length; i++) {
-        var c = clouds[i];
-        c.y += c.sp;
-        if (c.y > D.H + c.r) { c.y = -c.r; c.x = Math.random() * D.W; }
-        ctx.fillStyle = "rgba(220,230,240," + c.a + ")";
-        ctx.beginPath();
-        ctx.ellipse(c.x, c.y, c.r, c.r * 0.5, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
+    }
+    for (var i = 0; i < clouds.length; i++) {
+      var c = clouds[i];
+      c.y += c.sp;
+      if (c.y > D.H + c.r) { c.y = -c.r; c.x = Math.random() * D.W; }
+      ctx.fillStyle = "rgba(220,230,240," + c.a + ")";
+      ctx.beginPath();
+      ctx.ellipse(c.x, c.y, c.r, c.r * 0.5, 0, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     if (!S) return;
