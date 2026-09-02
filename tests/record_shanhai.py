@@ -4,7 +4,7 @@ import argparse, base64, json, os, subprocess, sys, threading, time
 import urllib.request
 from websocket import create_connection
 
-W, H, FPS = 720, 1280, 30
+W, H, FPS = 780, 1688, 60
 
 
 def cdp_target(port):
