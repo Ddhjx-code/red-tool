@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>漆扇 · 漂漆</title>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- ===== 首页 · 漆扇文化 ===== -->
+    <section id="view-home" class="view is-active">
+      <div class="home-inner">
+        <p id="home-series" class="home-series"></p>
+        <h1 class="home-title"><span>漆</span><span>扇</span></h1>
+        <p id="home-sub" class="home-sub"></p>
+
+        <figure class="home-basin">
+          <canvas id="home-fan"></canvas>
+          <figcaption class="home-basin-label">一盆水 · 一把扇 · 漆纹天成</figcaption>
+        </figure>
+
+        <div class="card">
+          <p class="card-title">漂漆 · 一半人为一半天成</p>
+          <div id="home-intro"></div>
+        </div>
+
+        <div class="works">
+          <p class="works-label">我的漆扇</p>
+          <div id="works-row" class="works-row"></div>
+        </div>
+
+        <p id="home-progress" class="home-progress"></p>
+        <button id="btn-start" class="primary-btn" type="button">开 始 创 作</button>
+      </div>
+      <p class="home-foot">大漆不溶于水 · 滴漆拉纹 · 入水拓印 · 每把独一无二</p>
+    </section>
+
+    <!-- ===== 创作台 · 水盆 + 调色 + 入水 ===== -->
+    <section id="view-create" class="view">
+      <canvas id="water"></canvas>
+      <canvas id="dip-fx"></canvas>
+
+      <div class="hud-top">
+        <div class="brand">
+          <div class="brand-title"><span class="seal">非遗</span>漆扇 · 漂漆</div>
+          <div class="brand-hint">点击水面 <b>滴漆</b> · 拖动水面 <b>拉纹</b></div>
+        </div>
+        <div class="hud-actions">
+          <button id="btn-back" class="chip-btn" type="button">返回</button>
+          <button id="btn-reset" class="chip-btn" type="button">重置水面</button>
+        </div>
+      </div>
+
+      <div class="studio">
+        <div class="panel-bar">
+          <div id="preset-row" class="preset-row"></div>
+          <p id="preset-desc" class="opt-desc"></p>
+          <div id="swatch-row" class="swatch-row"></div>
+          <p class="current-label">漆色：<b id="current-name">朱砂红</b> · <span id="current-mineral">朱砂</span></p>
+
+          <div class="opt-row">
+            <span class="opt-label">扇形</span>
+            <div id="shape-group" class="opt-group"></div>
+          </div>
+          <div class="opt-row">
+            <span class="opt-label">手法</span>
+            <div id="dip-group" class="opt-group"></div>
+          </div>
+          <p id="dip-desc" class="opt-desc"></p>
+        </div>
+        <div class="dip-row">
+          <button id="btn-dip" class="primary-btn" type="button">入 水 拓 印</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 成品 · 知识卡 + 起名 + 分享 ===== -->
+    <section id="view-result" class="view">
+      <div class="result-inner">
+        <div class="result-head">
+          <div>
+            <p id="result-kicker" class="result-kicker"></p>
+            <h2 class="result-title">漆扇已成</h2>
+          </div>
+          <span class="seal">天成</span>
+        </div>
+
+        <div class="fan-stage"><canvas id="fan-result"></canvas></div>
+
+        <p id="result-meta" class="result-meta"></p>
+
+        <div class="name-row">
+          <input id="fan-name" type="text" maxlength="8" placeholder="给这把扇子起个名字" />
+          <button id="btn-reroll" class="ghost-btn" type="button">另取一名</button>
+        </div>
+
+        <div id="result-know" class="card"></div>
+        <p id="result-extra" class="result-extra"></p>
+
+        <div class="result-share">
+          <button id="btn-save-album" class="ghost-btn" type="button">存相册</button>
+          <button id="btn-post-note" class="ghost-btn" type="button">发笔记</button>
+        </div>
+        <div class="result-actions">
+          <button id="btn-redo" class="primary-btn" type="button">再 创 作</button>
+          <button id="btn-result-home" class="ghost-btn" type="button">回首页</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <div id="err" class="webgl-err">此设备不支持 WebGL 浮点渲染，无法显示漂漆流体。</div>
+
+  <script src="./assets/data.js"></script>
+  <script src="./assets/engine.js"></script>
+  <script src="./assets/scene.js"></script>
+  <script src="./assets/share.js"></script>
+  <script src="./assets/main.js"></script>
+</body>
+</html>

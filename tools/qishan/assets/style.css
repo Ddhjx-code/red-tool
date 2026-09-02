@@ -1,0 +1,562 @@
+/* ============================================================
+   漆扇 · 样式表
+   设计系统：所有颜色 / 间距 / 字号 / 圆角 / 动效均取自 :root token
+   （契约见 docs/specs/2026-09-02-qishan-design.md §10）
+   ============================================================ */
+
+/* ---------- design tokens ---------- */
+:root {
+  /* palette · 水盆夜色 + 宣纸金 */
+  --water-deep: #060b12;
+  --water-mid: #0a1320;
+  --water-glow: #123047;
+  --paper: #f3e9d2;
+  --paper-dim: rgba(243, 233, 210, 0.62);
+  --paper-faint: rgba(243, 233, 210, 0.34);
+  --gold: #d9a62e;
+  --gold-soft: rgba(217, 166, 46, 0.55);
+  --gold-faint: rgba(217, 166, 46, 0.16);
+  --cinnabar: #e23d28;
+  --cinnabar-soft: rgba(226, 61, 40, 0.35);
+  --silk: #f6efdd;
+  --wood: #6b4a2f;
+  --panel: rgba(8, 12, 20, 0.46);
+  --panel-solid: #0b1119;
+  --line: rgba(243, 233, 210, 0.12);
+  --line-strong: rgba(243, 233, 210, 0.22);
+
+  /* spacing · 4px base */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+
+  /* type scale */
+  --fs-2xs: 10px;
+  --fs-xs: 11px;
+  --fs-sm: 12.5px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 20px;
+  --fs-2xl: 26px;
+  --fs-title: 38px;
+
+  /* radius */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 18px;
+  --r-pill: 999px;
+
+  /* motion */
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --dur-1: 0.16s;
+  --dur-2: 0.28s;
+  --dur-3: 0.5s;
+
+  /* type family · 楷体 */
+  --font: "Kaiti SC", "STKaiti", "KaiTi", -apple-system, BlinkMacSystemFont,
+          "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", serif;
+
+  --swatch: 38px;
+  --content-w: 340px;
+}
+
+/* ---------- base ---------- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: var(--water-deep); }
+body {
+  font-family: var(--font);
+  color: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+#app { height: 100%; }
+
+.view {
+  display: none;
+  position: fixed;
+  inset: 0;
+  flex-direction: column;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.view.is-active { display: flex; }
+
+/* ---------- buttons ---------- */
+.primary-btn {
+  font-family: var(--font);
+  font-size: var(--fs-lg);
+  letter-spacing: var(--sp-2);
+  padding: var(--sp-3) var(--sp-5);
+  color: var(--paper);
+  background: linear-gradient(180deg, var(--cinnabar) 0%, #b8281a 100%);
+  border: 1px solid var(--cinnabar-soft);
+  border-radius: var(--r-pill);
+  box-shadow: 0 var(--sp-1) var(--sp-4) var(--cinnabar-soft);
+  cursor: pointer;
+  transition: transform var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
+}
+.primary-btn:active { transform: translateY(2px); box-shadow: none; }
+.primary-btn:disabled { opacity: 0.42; cursor: default; box-shadow: none; }
+.primary-btn.wide { width: 100%; }
+
+.ghost-btn {
+  font-family: var(--font);
+  font-size: var(--fs-md);
+  letter-spacing: var(--sp-1);
+  padding: var(--sp-2) var(--sp-4);
+  color: var(--paper-dim);
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease),
+              transform var(--dur-1) var(--ease);
+}
+.ghost-btn:hover { color: var(--paper); border-color: var(--gold-soft); }
+.ghost-btn:active { transform: translateY(1px); }
+
+.chip-btn {
+  font-family: var(--font);
+  font-size: var(--fs-sm);
+  letter-spacing: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+  color: var(--paper-dim);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  backdrop-filter: blur(var(--sp-3));
+  -webkit-backdrop-filter: blur(var(--sp-3));
+}
+
+/* ============================================================
+   view-home · 漆扇文化
+   ============================================================ */
+#view-home {
+  background:
+    radial-gradient(120% 62% at 50% 18%, var(--water-glow) 0%, var(--water-mid) 46%, var(--water-deep) 100%);
+}
+.home-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-6) var(--sp-5) var(--sp-4);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.home-series { font-size: var(--fs-xs); letter-spacing: var(--sp-1); color: var(--paper-faint); }
+.home-title { display: flex; gap: var(--sp-3); }
+.home-title span {
+  font-size: var(--fs-title);
+  color: var(--paper);
+  width: 66px; height: 66px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--gold-faint);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  text-shadow: 0 0 var(--sp-5) var(--gold-faint);
+}
+.home-sub { font-size: var(--fs-md); letter-spacing: var(--sp-1); color: var(--gold); }
+
+/* 首页水盆预览：程序化流体静态意象 */
+.home-basin {
+  position: relative;
+  width: 100%;
+  max-width: 260px;
+  height: 150px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line-strong);
+  overflow: hidden;
+  box-shadow: 0 var(--sp-4) var(--sp-6) rgba(0, 0, 0, 0.5);
+  flex-shrink: 0;
+}
+.home-basin canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.home-basin-label {
+  position: absolute; left: 0; right: 0; bottom: var(--sp-2);
+  text-align: center;
+  font-size: var(--fs-2xs); letter-spacing: var(--sp-1);
+  color: var(--paper-faint);
+}
+
+.card {
+  width: 100%;
+  max-width: var(--content-w);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: var(--sp-1) solid var(--gold-soft);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+  backdrop-filter: blur(var(--sp-3));
+  -webkit-backdrop-filter: blur(var(--sp-3));
+}
+.card-title {
+  font-size: var(--fs-sm);
+  letter-spacing: var(--sp-1);
+  color: var(--gold);
+  margin-bottom: var(--sp-2);
+}
+.card p {
+  font-size: var(--fs-sm);
+  line-height: 1.85;
+  color: var(--paper-dim);
+  margin-top: var(--sp-2);
+}
+.card p:first-of-type { margin-top: 0; }
+.card p b { color: var(--paper); font-weight: normal; }
+
+.home-progress { font-size: var(--fs-sm); letter-spacing: var(--sp-1); color: var(--paper-faint); }
+
+/* 我的漆扇 */
+.works { width: 100%; max-width: var(--content-w); }
+.works-label { font-size: var(--fs-sm); letter-spacing: var(--sp-1); color: var(--gold); margin-bottom: var(--sp-2); }
+.works-row { display: flex; gap: var(--sp-2); overflow-x: auto; padding-bottom: var(--sp-2); }
+.works-row::-webkit-scrollbar { display: none; }
+.work-thumb {
+  position: relative;
+  flex-shrink: 0;
+  width: 76px; height: 92px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: var(--panel-solid);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+.work-thumb:hover { transform: translateY(-2px); border-color: var(--gold-soft); }
+.work-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.work-thumb .wn {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: var(--sp-1) 0;
+  text-align: center;
+  font-size: var(--fs-2xs);
+  color: var(--paper);
+  background: linear-gradient(to top, rgba(6, 11, 18, 0.86), rgba(6, 11, 18, 0));
+}
+.works-empty { font-size: var(--fs-sm); color: var(--paper-faint); }
+
+.home-foot {
+  text-align: center;
+  font-size: var(--fs-2xs);
+  letter-spacing: var(--sp-1);
+  color: var(--paper-faint);
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+}
+
+/* ============================================================
+   view-create · 创作台（水盆 + 调色 + 入水）
+   ============================================================ */
+#view-create { background: var(--water-deep); }
+#water {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: crosshair;
+}
+#dip-fx {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+.hud-top {
+  position: absolute; top: 0; left: 0; right: 0;
+  padding: var(--sp-4) var(--sp-4) var(--sp-3);
+  display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3);
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(6, 11, 18, 0.6), rgba(6, 11, 18, 0));
+}
+.brand-title {
+  font-size: var(--fs-xl);
+  letter-spacing: var(--sp-1);
+  display: flex; align-items: center; gap: var(--sp-2);
+}
+.seal {
+  font-size: var(--fs-2xs);
+  letter-spacing: var(--sp-1);
+  color: var(--paper);
+  background: var(--cinnabar);
+  padding: 2px var(--sp-2);
+  border-radius: var(--sp-1);
+  box-shadow: 0 2px var(--sp-3) var(--cinnabar-soft);
+}
+.brand-hint {
+  margin-top: var(--sp-1);
+  font-size: var(--fs-sm);
+  letter-spacing: var(--sp-1);
+  color: var(--paper-dim);
+}
+.brand-hint b { color: var(--gold); font-weight: normal; }
+.hud-actions { display: flex; gap: var(--sp-2); pointer-events: auto; }
+
+.studio {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: var(--sp-4) var(--sp-3) var(--sp-4);
+  display: flex; flex-direction: column; align-items: center; gap: var(--sp-3);
+  background: linear-gradient(to top, rgba(6, 11, 18, 0.72) 40%, rgba(6, 11, 18, 0));
+}
+.panel-bar {
+  width: 100%;
+  max-width: 420px;
+  padding: var(--sp-3);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  backdrop-filter: blur(var(--sp-4));
+  -webkit-backdrop-filter: blur(var(--sp-4));
+  box-shadow: 0 var(--sp-2) var(--sp-6) rgba(0, 0, 0, 0.42);
+}
+
+.preset-row { display: flex; gap: var(--sp-2); justify-content: center; }
+.preset {
+  font-family: var(--font);
+  flex: 1;
+  padding: var(--sp-2) var(--sp-1);
+  font-size: var(--fs-sm);
+  letter-spacing: var(--sp-1);
+  color: var(--paper-dim);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease),
+              background var(--dur-1) var(--ease);
+}
+.preset[aria-pressed="true"] {
+  color: var(--water-deep);
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+.swatch-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+}
+.swatch {
+  position: relative;
+  width: var(--swatch); height: var(--swatch);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: var(--c, #888);
+  cursor: pointer;
+  box-shadow: inset 0 2px var(--sp-2) rgba(255, 255, 255, 0.22),
+              inset 0 -3px var(--sp-2) rgba(0, 0, 0, 0.35);
+  transition: transform var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
+}
+.swatch:hover { transform: scale(1.08); }
+.swatch[aria-pressed="true"] {
+  transform: scale(1.12);
+  box-shadow: 0 0 0 2px var(--water-deep), 0 0 0 var(--sp-1) var(--gold),
+              inset 0 2px var(--sp-2) rgba(255, 255, 255, 0.3),
+              0 var(--sp-2) var(--sp-4) rgba(217, 166, 46, 0.35);
+}
+.swatch .nm {
+  position: absolute; left: 50%; bottom: -18px;
+  transform: translateX(-50%);
+  font-size: var(--fs-2xs);
+  white-space: nowrap;
+  color: var(--paper-faint);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-1) var(--ease);
+}
+.swatch:hover .nm, .swatch[aria-pressed="true"] .nm { opacity: 1; }
+.swatch.dim { opacity: 0.38; }
+.swatch.dim[aria-pressed="true"] { opacity: 1; }
+
+.current-label {
+  margin-top: var(--sp-3);
+  text-align: center;
+  font-size: var(--fs-sm);
+  letter-spacing: var(--sp-1);
+  color: var(--paper-dim);
+  min-height: var(--sp-4);
+}
+.current-label b { color: var(--gold); font-weight: normal; }
+
+.opt-row { display: flex; align-items: center; gap: var(--sp-2); margin-top: var(--sp-3); }
+.opt-label {
+  font-size: var(--fs-sm);
+  letter-spacing: var(--sp-1);
+  color: var(--paper-faint);
+  min-width: var(--sp-7);
+}
+.opt-group { display: flex; gap: var(--sp-2); flex: 1; }
+.opt {
+  font-family: var(--font);
+  flex: 1;
+  padding: var(--sp-2) var(--sp-1);
+  font-size: var(--fs-sm);
+  letter-spacing: var(--sp-1);
+  color: var(--paper-dim);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease),
+              background var(--dur-1) var(--ease);
+}
+.opt[aria-pressed="true"] {
+  color: var(--paper);
+  background: var(--gold-faint);
+  border-color: var(--gold-soft);
+}
+.opt-desc {
+  margin-top: var(--sp-2);
+  text-align: center;
+  font-size: var(--fs-xs);
+  color: var(--paper-faint);
+  min-height: var(--sp-4);
+}
+
+.dip-row { display: flex; gap: var(--sp-2); align-items: center; width: 100%; max-width: 420px; }
+.dip-row .primary-btn { flex: 1; }
+
+/* ============================================================
+   view-result · 成品 + 知识卡 + 起名 + 分享
+   ============================================================ */
+#view-result {
+  background:
+    radial-gradient(110% 58% at 50% 22%, var(--water-glow) 0%, var(--water-mid) 48%, var(--water-deep) 100%);
+}
+.result-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5) var(--sp-5);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.result-head {
+  width: 100%;
+  max-width: var(--content-w);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
+}
+.result-kicker { font-size: var(--fs-xs); letter-spacing: var(--sp-1); color: var(--paper-faint); }
+.result-title { font-size: var(--fs-2xl); letter-spacing: var(--sp-1); color: var(--paper); }
+
+.fan-stage {
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+}
+.fan-stage canvas { width: 100%; height: 100%; display: block; }
+
+.name-row {
+  width: 100%;
+  max-width: var(--content-w);
+  display: flex; gap: var(--sp-2); align-items: center;
+}
+#fan-name {
+  font-family: var(--font);
+  flex: 1;
+  min-width: 0;
+  padding: var(--sp-3) var(--sp-4);
+  font-size: var(--fs-lg);
+  letter-spacing: var(--sp-1);
+  color: var(--paper);
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  outline: none;
+  -webkit-user-select: text;
+  user-select: text;
+}
+#fan-name:focus { border-color: var(--gold-soft); }
+#fan-name::placeholder { color: var(--paper-faint); }
+.name-row .ghost-btn { flex-shrink: 0; }
+
+.result-meta {
+  width: 100%;
+  max-width: var(--content-w);
+  text-align: center;
+  font-size: var(--fs-sm);
+  letter-spacing: var(--sp-1);
+  color: var(--gold);
+}
+.result-extra {
+  width: 100%;
+  max-width: var(--content-w);
+  text-align: center;
+  font-size: var(--fs-xs);
+  color: var(--paper-faint);
+}
+.result-actions { display: flex; gap: var(--sp-2); flex-wrap: wrap; justify-content: center; }
+.result-share { display: flex; gap: var(--sp-2); flex-wrap: wrap; justify-content: center; }
+
+/* ============================================================
+   toast / webgl error
+   ============================================================ */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 190px;
+  transform: translateX(-50%) translateY(var(--sp-2));
+  max-width: 82%;
+  padding: var(--sp-2) var(--sp-4);
+  text-align: center;
+  font-size: var(--fs-sm);
+  letter-spacing: var(--sp-1);
+  color: var(--paper);
+  background: rgba(11, 17, 25, 0.94);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-2) var(--ease), transform var(--dur-2) var(--ease);
+  z-index: 9;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.webgl-err {
+  position: fixed; inset: 0;
+  display: none;
+  align-items: center; justify-content: center;
+  padding: var(--sp-6);
+  text-align: center;
+  font-size: var(--fs-md);
+  color: var(--paper);
+  background: var(--water-deep);
+  z-index: 20;
+}
+.webgl-err.show { display: flex; }
+
+/* ---------- compact screens ---------- */
+@media (max-width: 540px) {
+  :root { --swatch: 34px; --content-w: 320px; }
+  .swatch-row { gap: var(--sp-2); }
+  .home-title span { width: 58px; height: 58px; font-size: var(--fs-2xl); }
+}
+@media (max-height: 700px) {
+  .home-basin { height: 116px; }
+  .result-inner {
+    gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-4) var(--sp-4);
+  }
+  .fan-stage { max-width: 244px; }
+  .studio { padding: var(--sp-3) var(--sp-3); gap: var(--sp-2); }
+  .panel-bar { padding: var(--sp-2); }
+  .swatch-row { margin-top: var(--sp-2); }
+  .current-label { margin-top: var(--sp-2); }
+  .opt-row { margin-top: var(--sp-2); }
+  .opt-desc { min-height: 0; margin-top: var(--sp-1); }
+  .primary-btn { padding: var(--sp-2) var(--sp-4); font-size: var(--fs-md); }
+}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; }
+}
