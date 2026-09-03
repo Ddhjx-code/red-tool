@@ -49,13 +49,29 @@
     return null;
   }
 
-  /* 素材贴齐：图片中心 = 轮廓包围盒中心，尺寸 = 轮廓包围盒尺寸 */
+  /* 素材底色：填贴图透明空隙，避免轮廓内露出天空（碰撞仍生效） */
+  function artBase(b) {
+    var k = b.plugin.kind;
+    if (k === 'rilun') return C.rilunCore;
+    if (k === 'jinwu') return C.jinwuBody;
+    if (k === 'arrow') return C.arrowShaft;
+    return C.bark;
+  }
+
+  /* 素材贴齐：先 clip 到碰撞轮廓并集 -> 垫底色 -> 贴图上叠。
+     可见像素严格等于碰撞区域：贴图不会溢出到包围盒空白角（所见即所撞）。 */
   function drawArt(b) {
     var img = art(artNameFor(b));
     if (!img) return false;
     var box = b.plugin.box;
     if (!box) return false;
     ctx.save();
+    unionPath(b);
+    ctx.clip();
+    ctx.fillStyle = artBase(b);
+    var ps = b.parts, i;
+    var start = ps.length > 1 ? 1 : 0;
+    for (i = start; i < ps.length; i++) { partPath(ps[i]); ctx.fill(); }
     ctx.translate(b.position.x, b.position.y);
     ctx.rotate(b.angle);
     ctx.drawImage(img, box.dx - box.w / 2, box.dy - box.h / 2, box.w, box.h);
@@ -178,11 +194,13 @@
     ctx.closePath();
   }
 
-  /* 把全部凸块并进一条路径（用于 clip / 内描边） */
+  /* 把全部凸块并进一条路径（用于 clip / 内描边）
+     复合体 parts[0] 是聚合父体需跳过；单体（如 Bodies.circle）parts[0] 即自身，须从 0 起 */
   function unionPath(b) {
     var ps = b.parts, v, i, k;
+    var start = ps.length > 1 ? 1 : 0;
     ctx.beginPath();
-    for (i = 1; i < ps.length; i++) {
+    for (i = start; i < ps.length; i++) {
       v = ps[i].vertices;
       ctx.moveTo(v[0].x, v[0].y);
       for (k = 1; k < v.length; k++) ctx.lineTo(v[k].x, v[k].y);

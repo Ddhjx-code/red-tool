@@ -12,7 +12,8 @@ import urllib.request
 ENDPOINT = "https://token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/chat/completions"
 MODEL = "wan2.7-image-pro"
 ROOT = os.path.dirname(os.path.abspath(__file__))
-REF = os.path.join(ROOT, "..", "shanhai", "assets", "img", "yinglong.webp")
+REF = os.environ.get("HOUYI_REF") or os.path.join(
+    ROOT, "..", "shanhai", "assets", "img", "yinglong.webp")
 OUT = os.path.join(ROOT, "assets", "img", "raw")
 
 STYLE = (
@@ -50,8 +51,10 @@ TASKS = [
 
 
 def ref_data_uri():
+    ext = os.path.splitext(REF)[1].lower().lstrip(".")
+    mime = {"jpg": "jpeg", "jpeg": "jpeg", "png": "png", "webp": "webp"}.get(ext, "png")
     with open(REF, "rb") as fh:
-        return "data:image/webp;base64," + base64.b64encode(fh.read()).decode()
+        return "data:image/%s;base64," % mime + base64.b64encode(fh.read()).decode()
 
 
 def generate(name, prompt, key, ref):
@@ -70,10 +73,14 @@ def generate(name, prompt, key, ref):
         data=json.dumps(body).encode(),
         headers={"Content-Type": "application/json", "Authorization": "Bearer " + key},
     )
-    with urllib.request.urlopen(req, timeout=300) as resp:
-        data = json.loads(resp.read())
+    try:
+        with urllib.request.urlopen(req, timeout=300) as resp:
+            data = json.loads(resp.read())
+    except urllib.error.HTTPError as exc:
+        raise RuntimeError("HTTP %s: %s" % (exc.code, exc.read().decode()[:1200]))
 
-    msg = data["choices"][0]["message"]
+    out = data.get("output") or data
+    msg = out["choices"][0]["message"]
     content = msg.get("content")
     if isinstance(content, list):
         for part in content:

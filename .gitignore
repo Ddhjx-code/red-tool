@@ -5,3 +5,5 @@ __pycache__/
 tmp/
 test
 .omo/
+tools/*/assets/img/raw/
+skill_list.md
