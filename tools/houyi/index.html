@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>后羿射日</title>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- ===== 首页 · 神话引言 ===== -->
+    <section id="view-home" class="view is-active">
+      <div class="home-inner">
+        <p id="home-series" class="home-series"></p>
+        <h1 class="home-title"><span>后</span><span>羿</span><span>射</span><span>日</span></h1>
+        <p id="home-sub" class="home-sub"></p>
+        <div id="home-intro" class="home-card"></div>
+        <p id="home-progress" class="home-progress"></p>
+        <button id="btn-start" class="primary-btn" type="button">持 弓</button>
+        <p class="home-foot">拉弓蓄力 · 轨迹预览 · 扶桑倾颓 · 射九日留一日</p>
+      </div>
+    </section>
+
+    <!-- ===== 选关 ===== -->
+    <section id="view-levels" class="view">
+      <div class="list-inner">
+        <div class="list-head">
+          <button id="btn-levels-home" class="chip-btn" type="button">返回</button>
+          <h2>射 日 六 关</h2>
+          <span id="levels-count" class="list-count"></span>
+        </div>
+        <p class="list-tip">通关解锁下一关 · 十日并出，只留一日</p>
+        <div id="levels-list" class="levels-list"></div>
+      </div>
+    </section>
+
+    <!-- ===== 战前简报 ===== -->
+    <section id="view-intro" class="view">
+      <div class="intro-inner">
+        <div class="intro-head">
+          <button id="btn-intro-back" class="chip-btn" type="button">选关</button>
+          <div>
+            <p id="intro-order" class="intro-order"></p>
+            <h2 id="intro-name" class="intro-name"></h2>
+          </div>
+          <span class="intro-seal">羿</span>
+        </div>
+        <p id="intro-lore" class="intro-lore"></p>
+        <p id="intro-brief" class="intro-brief"></p>
+        <div id="intro-goal" class="intro-goal"></div>
+        <div class="intro-tip">
+          <p>按住弓弦向后拖，拉得越远箭速越快</p>
+          <p>金色虚线 = 素缯的真实抛物线，所见即所射</p>
+          <p>松手放箭 · 射断枝干可让扶桑自己塌下来砸落金乌</p>
+        </div>
+        <button id="btn-deploy" class="primary-btn" type="button">出 战</button>
+      </div>
+    </section>
+
+    <!-- ===== 对战 ===== -->
+    <section id="view-battle" class="view">
+      <div class="hud">
+        <div class="hud-left">
+          <span id="hud-level" class="hud-level"></span>
+          <span id="hud-goal" class="hud-goal"></span>
+        </div>
+        <div class="hud-mid">
+          <div id="hud-arrows" class="arrow-row"></div>
+          <span class="hud-label">彤弓素缯</span>
+        </div>
+        <div class="hud-right">
+          <span id="hud-target" class="hud-target"></span>
+          <div class="hud-btns">
+            <button id="btn-home" class="chip-btn" type="button">回选关</button>
+            <button id="btn-reset" class="chip-btn" type="button">重射</button>
+          </div>
+        </div>
+      </div>
+      <canvas id="stage"></canvas>
+      <div id="toast" class="toast"></div>
+      <div id="banner" class="banner">
+        <h1 id="banner-title"></h1>
+        <p id="banner-sub"></p>
+      </div>
+    </section>
+
+    <!-- ===== 战绩 · 知识卡 + 起名 + 分享 ===== -->
+    <section id="view-result" class="view">
+      <div class="result-inner">
+        <div class="result-head">
+          <div>
+            <p id="result-kicker" class="result-kicker"></p>
+            <h2 id="result-title" class="result-title"></h2>
+          </div>
+          <span id="result-seal" class="seal">羿</span>
+        </div>
+
+        <p id="result-stars" class="result-stars"></p>
+        <p id="result-stats" class="result-stats"></p>
+        <p id="result-narrative" class="result-narrative"></p>
+
+        <div class="name-row">
+          <input id="work-name" type="text" maxlength="8" placeholder="给这一战绩起个名字" />
+          <button id="btn-reroll" class="ghost-btn" type="button">另取一名</button>
+        </div>
+
+        <div class="know-card">
+          <p id="know-tag" class="know-tag"></p>
+          <p id="know-text" class="know-text"></p>
+        </div>
+
+        <p id="works-count" class="works-count"></p>
+
+        <div class="result-share">
+          <button id="btn-save-album" class="ghost-btn" type="button">存相册</button>
+          <button id="btn-post-note" class="ghost-btn" type="button">发笔记</button>
+        </div>
+        <div class="result-actions">
+          <button id="btn-next" class="primary-btn" type="button">下一关</button>
+          <button id="btn-again" class="ghost-btn" type="button">再战</button>
+          <button id="btn-result-levels" class="ghost-btn" type="button">回关卡</button>
+          <button id="btn-result-home" class="ghost-btn" type="button">回首页</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="./assets/matter.min.js"></script>
+  <script src="./assets/data.js"></script>
+  <script src="./assets/engine.js"></script>
+  <script src="./assets/scene.js"></script>
+  <script src="./assets/share.js"></script>
+  <script src="./assets/main.js"></script>
+</body>
+</html>
