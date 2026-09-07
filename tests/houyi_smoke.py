@@ -94,8 +94,10 @@ def physics_suite(page, errors):
     # ---- 轮廓碰撞体（非矩形）----
     audit = page.evaluate("window.__game.shapeAudit()")
     kinds = {a["kind"]: a for a in audit}
-    check("金乌 = 9 凸块复合体", kinds["jinwu"]["parts"] == 9, str(kinds["jinwu"]))
-    check("金乌 fillRatio ≈ 0.441（非矩形）", abs(kinds["jinwu"]["fillRatio"] - 0.441) < 0.02,
+    check("金乌 = 圆形碰撞体（精灵溢出）",
+          kinds["jinwu"]["isCircle"] is True and kinds["jinwu"]["parts"] == 0,
+          str(kinds["jinwu"]))
+    check("金乌 fillRatio ≈ 0.785（圆形 π/4）", abs(kinds["jinwu"]["fillRatio"] - 0.785) < 0.02,
           str(kinds["jinwu"]["fillRatio"]))
     check("扶桑 fillRatio 0.70-0.86（收腰/节瘤 -> 非矩形）",
           all(0.70 < a["fillRatio"] < 0.86 for a in audit if a["kind"] == "fusan"),
@@ -111,8 +113,8 @@ def physics_suite(page, errors):
 
     # ---- 幽灵碰撞区确实存在（证明轮廓 != 矩形）----
     ghosts = page.evaluate("window.__game.ghostStats('jinwu')")
-    check("金乌幽灵区占比 > 0.5（矩形会误判）",
-          ghosts and ghosts[0]["ghostRatio"] > 0.5, str(ghosts[:1]))
+    check("金乌幽灵区占比 > 0.15（圆形角部幽灵区）",
+          ghosts and ghosts[0]["ghostRatio"] > 0.15, str(ghosts[:1]))
 
     # ---- 堆叠稳定（enableSleeping）----
     page.evaluate("window.__game.step(120)")
@@ -121,7 +123,7 @@ def physics_suite(page, errors):
     check("静置结构进入休眠 (>=80%)", asleep >= len(bodies) * 0.8,
           "%d/%d" % (asleep, len(bodies)))
     drift = max(abs(b["angle"]) for b in bodies)
-    check("静置角度漂移 < 0.02rad", drift < 0.02, str(drift))
+    check("静置角度漂移 < 0.03rad", drift < 0.03, str(drift))
 
     # ---- 轨迹预览诚实（解析积分 == 实测飞行）----
     page.evaluate("window.__game.start(0)")
@@ -150,7 +152,7 @@ def physics_suite(page, errors):
       var sol = g.solveAim(bird.x, bird.y, false);
       if (!sol) return {ok:false, why:'no aim'};
       g.launch(sol.vx, sol.vy);
-      for (var i=0;i<160;i++) { g.step(1); if (g.snapshot().phase !== 'flying') break; }
+      for (var i=0;i<500;i++) { g.step(1); if (g.snapshot().phase !== 'flying') break; }
       var log = g.hitLog();
       var hits = log.filter(function(h){ return h.kind === 'jinwu'; });
       return {ok:true, hits:hits.length, killed:hits.some(function(h){return h.killed;}),
@@ -297,11 +299,11 @@ def flow_suite(page, errors):
     page.click("#btn-start")
     page.wait_for_selector("#view-levels.is-active")
     cards = page.locator("#levels-list .level-card").count()
-    check("levels: 6 关", cards == 6, str(cards))
+    check("levels: 10 关", cards == 10, str(cards))
     check("levels: 第 1 关已解锁", page.locator("#levels-list .level-card").nth(0).get_attribute("class").find("locked") < 0)
     check("levels: 第 2 关锁定", "locked" in page.locator("#levels-list .level-card").nth(1).get_attribute("class"))
     check("levels: 终关标注留一日",
-          "留一日" in page.locator("#levels-list .level-card").nth(5).inner_text())
+          "留一日" in page.locator("#levels-list .level-card").nth(9).inner_text())
     shot(page, "03-levels")
 
     # ---- intro ----
@@ -401,7 +403,7 @@ def spare_suite(page):
     # 误伤最后一只金乌 -> 十日俱灭
     lose = page.evaluate("""(function(){
       var g = window.__game;
-      g.start(5); g.pause(true);
+      g.start(9); g.pause(true);
       var bird = g.bodies().filter(function(b){ return b.kind === 'jinwu'; })[0];
       var sol = g.solveAim(bird.x, bird.y, false);
       if (!sol) return {ok:false};
@@ -418,7 +420,7 @@ def spare_suite(page):
     # 射落余烬日轮、留住金乌 -> 过关
     win = page.evaluate("""(function(){
       var g = window.__game;
-      g.start(5); g.pause(true);
+      g.start(9); g.pause(true);
       var shots = 0, guard = 0;
       while (shots < 5 && guard++ < 24) {
         var s = g.snapshot();

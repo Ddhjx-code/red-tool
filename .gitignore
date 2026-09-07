@@ -7,3 +7,16 @@ test
 .omo/
 tools/*/assets/img/raw/
 skill_list.md
+.playwright-mcp/
+tools/houyi/extract_collision_shapes.py
+tools/houyi/extract_shapes.py
+tools/houyi/manual_shapes.js
+tools/houyi/shapes.json
+tools/houyi/shapes/
+tools/houyi/shapes_shapes.js
+docs/superpowers/
+docs/specs/
+tools/houyi/assets/audio.js
+tools/houyi/assets/img/hawk.webp
+tools/houyi/assets/img/phoenix.webp
+tools/houyi/assets/img/sparrow.webp
