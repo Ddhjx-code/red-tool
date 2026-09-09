@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>中秋博饼</title>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+<canvas id="gl"></canvas>
+<canvas id="cv"></canvas>
+
+<div id="stage">
+  <header class="title-col">
+    <h1 class="vtitle">中秋博饼</h1>
+    <div class="title-sub">
+      <div class="vsub">厦门非遗</div>
+      <div class="sig-seal">手作坊</div>
+    </div>
+  </header>
+
+  <aside class="board">
+    <div class="board-head">会饼六十三</div>
+    <ul id="board-list"></ul>
+  </aside>
+
+  <button class="rule-btn" id="rule-btn" type="button">规则</button>
+
+  <section class="reveal" id="reveal">
+    <div class="rv-out">
+      <div class="rv-in">
+        <div class="rv-tier" id="rv-tier">状元</div>
+        <div class="rv-sub" id="rv-sub">状元</div>
+        <div class="rv-meta">
+          <div class="rv-prog" id="rv-prog">累计 <b>0</b>/63</div>
+          <div class="rv-cake" id="rv-cake">得会饼 <b>一</b>块</div>
+          <div class="rv-poem" id="rv-poem">蟾宫折桂</div>
+          <div class="rv-note" id="rv-note">四点红齐，独占鳌头</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="hint" id="hint">轻点掷骰</div>
+  <button class="cta" id="cta" type="button">掷骰</button>
+  <div class="seal" id="seal"><span id="seal-txt">状元</span></div>
+
+  <div class="progress" id="progress">
+    <div class="pg-cake"><i></i></div>
+    <div class="pg-txt">
+      <div class="pg-num"><b id="pg-n">0</b><span>/63</span></div>
+      <div class="pg-bar"><i id="pg-fill"></i></div>
+      <div class="pg-lab">会饼</div>
+    </div>
+  </div>
+
+  <section class="intro" id="intro">
+    <div class="intro-veil"></div>
+    <div class="intro-panel">
+      <div class="intro-row">
+        <div class="intro-seal">手作坊</div>
+        <div class="intro-cols" id="intro-cols"></div>
+        <h2 class="intro-title">中秋博饼</h2>
+      </div>
+      <div class="intro-rule" id="intro-rule">
+        <p id="intro-rule-1"></p>
+        <p id="intro-rule-2"></p>
+      </div>
+      <button class="cta intro-cta" id="intro-cta" type="button">入席博饼</button>
+    </div>
+  </section>
+
+  <section class="tuanyuan" id="tuanyuan">
+    <div class="ty-veil"></div>
+    <div class="ty-panel">
+      <div class="ty-row">
+        <div class="ty-seal">手作坊</div>
+        <div class="ty-cols">
+          <p>会饼六十三 · 满盘团圆</p>
+          <p>月满中秋 · 人亦团圆</p>
+        </div>
+        <h2 class="ty-title">团圆</h2>
+      </div>
+      <button class="cta ty-cta" id="ty-cta" type="button">再开一席</button>
+    </div>
+    <div class="ty-share">
+      <button id="btn-save-album" type="button">存相册</button>
+      <button id="btn-post-note" type="button">发笔记</button>
+    </div>
+  </section>
+
+  <section class="rule-panel" id="rule-panel" aria-hidden="true">
+    <div class="rule-veil" id="rule-veil"></div>
+    <div class="rule-out">
+      <div class="rule-in">
+        <header class="rule-head">
+          <h2 class="rule-title" id="rule-title">博饼怎么玩</h2>
+          <button class="rule-close" id="rule-close" type="button">收起</button>
+        </header>
+        <div class="rule-body" id="rule-body">
+          <h3 class="rule-h" id="rule-h-mechanic"></h3>
+          <div class="rule-p" id="rule-mechanic"></div>
+          <div class="rule-diagram" id="rule-diagram">
+            <figure class="die-cell" id="die-1">
+              <svg class="die-svg" viewBox="0 0 40 40" aria-hidden="true">
+                <rect class="die-body" x="1" y="1" width="38" height="38" rx="7" />
+                <circle class="die-pip red" cx="20" cy="20" r="8.6" />
+              </svg>
+              <figcaption class="die-cap">一点</figcaption>
+            </figure>
+            <figure class="die-cell" id="die-2">
+              <svg class="die-svg" viewBox="0 0 40 40" aria-hidden="true">
+                <rect class="die-body" x="1" y="1" width="38" height="38" rx="7" />
+                <circle class="die-pip" cx="11.2" cy="11.2" r="5.4" />
+                <circle class="die-pip" cx="28.8" cy="28.8" r="5.4" />
+              </svg>
+              <figcaption class="die-cap">二点</figcaption>
+            </figure>
+            <figure class="die-cell" id="die-3">
+              <svg class="die-svg" viewBox="0 0 40 40" aria-hidden="true">
+                <rect class="die-body" x="1" y="1" width="38" height="38" rx="7" />
+                <circle class="die-pip" cx="11.2" cy="11.2" r="5.4" />
+                <circle class="die-pip" cx="20" cy="20" r="5.4" />
+                <circle class="die-pip" cx="28.8" cy="28.8" r="5.4" />
+              </svg>
+              <figcaption class="die-cap">三点</figcaption>
+            </figure>
+            <figure class="die-cell hot" id="die-4">
+              <svg class="die-svg" viewBox="0 0 40 40" aria-hidden="true">
+                <rect class="die-body" x="1" y="1" width="38" height="38" rx="7" />
+                <circle class="die-pip red" cx="11.2" cy="11.2" r="6.2" />
+                <circle class="die-pip red" cx="28.8" cy="11.2" r="6.2" />
+                <circle class="die-pip red" cx="11.2" cy="28.8" r="6.2" />
+                <circle class="die-pip red" cx="28.8" cy="28.8" r="6.2" />
+              </svg>
+              <figcaption class="die-cap">四点</figcaption>
+            </figure>
+            <figure class="die-cell" id="die-5">
+              <svg class="die-svg" viewBox="0 0 40 40" aria-hidden="true">
+                <rect class="die-body" x="1" y="1" width="38" height="38" rx="7" />
+                <circle class="die-pip" cx="11.2" cy="11.2" r="5.4" />
+                <circle class="die-pip" cx="28.8" cy="11.2" r="5.4" />
+                <circle class="die-pip" cx="20" cy="20" r="5.4" />
+                <circle class="die-pip" cx="11.2" cy="28.8" r="5.4" />
+                <circle class="die-pip" cx="28.8" cy="28.8" r="5.4" />
+              </svg>
+              <figcaption class="die-cap">五点</figcaption>
+            </figure>
+            <figure class="die-cell" id="die-6">
+              <svg class="die-svg" viewBox="0 0 40 40" aria-hidden="true">
+                <rect class="die-body" x="1" y="1" width="38" height="38" rx="7" />
+                <circle class="die-pip" cx="11.2" cy="9.6" r="5.4" />
+                <circle class="die-pip" cx="28.8" cy="9.6" r="5.4" />
+                <circle class="die-pip" cx="11.2" cy="20" r="5.4" />
+                <circle class="die-pip" cx="28.8" cy="20" r="5.4" />
+                <circle class="die-pip" cx="11.2" cy="30.4" r="5.4" />
+                <circle class="die-pip" cx="28.8" cy="30.4" r="5.4" />
+              </svg>
+              <figcaption class="die-cap">六点</figcaption>
+            </figure>
+          </div>
+          <p class="rule-side" id="rule-redone"></p>
+          <p class="rule-side" id="rule-order"></p>
+
+          <h3 class="rule-h" id="rule-h-tier"></h3>
+          <table class="rule-table">
+            <thead><tr id="rule-tier-head"></tr></thead>
+            <tbody id="rule-tier-table"></tbody>
+          </table>
+          <p class="rule-side" id="rule-tier-foot"></p>
+
+          <h3 class="rule-h" id="rule-h-goal"></h3>
+          <div class="rule-p" id="rule-goal"></div>
+
+          <h3 class="rule-h" id="rule-h-fun"></h3>
+          <div class="rule-p" id="rule-fun"></div>
+
+          <h3 class="rule-h" id="rule-h-prog"></h3>
+          <div class="rule-p" id="rule-prog"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="err" id="err">此设备不支持 WebGL2，无法显示墨金夜宴画面。</div>
+
+  <script src="./assets/data.js"></script>
+  <script src="./assets/engine.js"></script>
+  <script src="./assets/scene.js"></script>
+  <script src="./assets/share.js"></script>
+  <script src="./assets/main.js"></script>
+</body>
+</html>
