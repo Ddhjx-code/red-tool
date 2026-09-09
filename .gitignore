@@ -6,7 +6,13 @@ tmp/
 test
 .omo/
 tools/*/assets/img/raw/
+docs/research/yuegong-drafts/
 skill_list.md
 .playwright-mcp/
 docs/superpowers/
 docs/specs/
+
+.env
+.env.*
+*.key
+*.pem

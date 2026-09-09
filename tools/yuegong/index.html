@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>月宫一夜</title>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+<canvas id="stage"></canvas>
+
+<div id="ui">
+
+  <section id="view-intro" class="view is-active">
+    <p class="kicker">非遗手作坊 · 中秋 · 唐人传奇</p>
+    <h1 id="intro-title" class="intro-title"></h1>
+    <p id="intro-sub" class="intro-sub"></p>
+    <p id="intro-body" class="intro-body"></p>
+    <button id="btn-gloss-intro" class="btn-gloss" type="button">白 话</button>
+    <p id="intro-gloss" class="gloss"></p>
+    <hr class="rule" />
+    <div class="actions">
+      <button id="btn-start" class="btn btn-primary" type="button">开 始</button>
+    </div>
+    <p class="foot">三源两说不同 · 备录于此</p>
+  </section>
+
+  <section id="view-node" class="view">
+    <div class="res-bar">
+      <div class="res"><span class="res-label">暖意</span><span id="dots-warmth" class="dots"></span></div>
+      <div class="res"><span class="res-label">记曲</span><span id="dots-tune" class="dots"></span></div>
+      <div class="res"><span class="res-label">观舞</span><span id="dots-dance" class="dots"></span></div>
+      <span id="node-step" class="node-step"></span>
+    </div>
+    <h2 id="node-title" class="node-title"></h2>
+    <p id="node-text" class="node-text"></p>
+    <button id="btn-gloss-node" class="btn-gloss" type="button">白 话</button>
+    <p id="node-gloss" class="gloss"></p>
+    <div id="choice-list" class="choice-list"></div>
+  </section>
+
+  <section id="view-outcome" class="view">
+    <div class="res-bar">
+      <div class="res"><span class="res-label">暖意</span><span id="dots-warmth-o" class="dots"></span></div>
+      <div class="res"><span class="res-label">记曲</span><span id="dots-tune-o" class="dots"></span></div>
+      <div class="res"><span class="res-label">观舞</span><span id="dots-dance-o" class="dots"></span></div>
+    </div>
+    <p id="outcome-delta" class="delta-line"></p>
+    <p id="outcome-text" class="outcome-text"></p>
+    <button id="btn-gloss-outcome" class="btn-gloss" type="button">白 话</button>
+    <p id="outcome-gloss" class="gloss"></p>
+    <div class="actions">
+      <button id="btn-advance" class="btn btn-primary" type="button">继 续</button>
+    </div>
+  </section>
+
+  <section id="view-ending" class="view">
+    <p class="kicker">一夜将尽</p>
+    <h2 id="end-name" class="end-name"></h2>
+    <p id="end-cond" class="end-cond"></p>
+    <p id="end-stats" class="end-stats"></p>
+    <p id="end-text" class="end-text"></p>
+    <button id="btn-gloss-end" class="btn-gloss" type="button">白 话</button>
+    <p id="end-gloss" class="gloss"></p>
+    <div id="end-know" class="end-know">
+      <p id="end-know-t" class="end-know-t"></p>
+      <p id="end-know-x" class="end-know-x"></p>
+    </div>
+    <div id="endings-list" class="endings-list"></div>
+    <div id="card-wrap" class="card-wrap"></div>
+    <p id="card-note" class="card-note"></p>
+    <div class="actions">
+      <button id="btn-restart" class="btn btn-primary" type="button">再 游 一 夜</button>
+      <button id="btn-home" class="btn btn-ghost" type="button">回 首 页</button>
+      <button id="btn-save" class="btn btn-ghost" type="button">存 图</button>
+      <button id="btn-note" class="btn btn-ghost" type="button">发 笔 记</button>
+    </div>
+    <p class="foot">唐人传奇 · 非史实 · 非遗手作坊</p>
+  </section>
+
+</div>
+
+  <script src="./assets/data.js"></script>
+  <script src="./assets/rng.js"></script>
+  <script src="./assets/engine.js"></script>
+  <script src="./assets/audio.js"></script>
+  <script src="./assets/scene.js"></script>
+  <script src="./assets/share.js"></script>
+  <script src="./assets/main.js"></script>
+</body>
+</html>
