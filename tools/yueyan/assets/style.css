@@ -1,0 +1,254 @@
+:root {
+  --paper: #F7EFE2;
+  --amber: #B8733A;
+  --cinnabar: #C9483C;
+  --ink: #3A2E26;
+  --moon: #F2E4C4;
+  --osmanthus: #E8B84B;
+  --lantern: #F5C77E;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+               "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#ui { position: relative; width: 100%; min-height: 100%; }
+.view { display: none; padding: 24px 20px calc(24px + env(safe-area-inset-bottom)); }
+.view.is-active { display: block; }
+
+.kicker { font-size: 12px; letter-spacing: 0.18em; opacity: 0.62; }
+.intro-title { font-size: 44px; font-weight: 700; letter-spacing: 0.12em; margin-top: 14px; }
+.intro-sub { font-size: 16px; margin-top: 10px; }
+.intro-howto { font-size: 14px; line-height: 1.75; margin-top: 14px; }
+.toggle-row { display: flex; align-items: flex-start; gap: 10px; margin-top: 18px; }
+.toggle-text { font-size: 13px; line-height: 1.6; }
+.save-hint { font-size: 12px; line-height: 1.6; margin-top: 14px; opacity: 0.7; }
+
+.actions { display: flex; gap: 12px; margin-top: 22px; }
+.btn {
+  border: 1.5px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15px;
+  padding: 12px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.btn-primary { background: var(--amber); color: var(--paper); }
+.btn-feast { background: var(--cinnabar); color: var(--paper); }
+.btn[disabled] { opacity: 0.38; cursor: default; }
+
+.meter-bar { display: flex; gap: 14px; }
+.meter { display: flex; flex-direction: column; gap: 2px; }
+.meter-label { font-size: 11px; opacity: 0.66; }
+.meter-val { font-size: 18px; font-weight: 700; }
+
+.res-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; font-size: 12px; }
+
+.day-label { font-size: 22px; font-weight: 700; margin-top: 18px; letter-spacing: 0.08em; }
+
+/* §8.4：排程格无动效。此块内禁止出现 transition / animation */
+.slot-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.slot {
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  min-height: 56px;
+  padding: 6px;
+  font-size: 11px;
+  background: var(--paper);
+}
+.slot.is-filled { background: var(--moon); }
+
+.drawer { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+.drawer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 14px;
+  padding: 12px 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.drawer-row[disabled] { opacity: 0.38; cursor: default; }
+.row-name { font-weight: 500; }
+.row-reason { font-size: 11px; opacity: 0.7; }
+.buy-sub { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.filling-list, .assign-cakes, .assign-family { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.batch-row { display: flex; gap: 10px; margin-top: 14px; }
+.step-index { font-size: 13px; margin-top: 16px; }
+
+/* §4.3.3：单程 2.0 秒。alternate 逐程计时，故 duration 就是单程时长；从容模式下不改 */
+.lin-bar {
+  position: relative;
+  height: 34px;
+  margin-top: 14px;
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  background: var(--paper);
+  overflow: hidden;
+}
+.lin-bar .target { position: absolute; left: 40%; width: 20%; top: 0; bottom: 0; background: var(--moon); }
+.lin-bar .marker { position: absolute; top: 0; bottom: 0; width: 3px; left: 0; background: var(--ink); }
+.lin-bar.is-swinging .marker { animation: swing 2s linear infinite alternate; }
+@keyframes swing { from { left: 0; } to { left: calc(100% - 3px); } }
+
+.pad {
+  position: relative;
+  height: 200px;
+  margin-top: 14px;
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  background: var(--paper);
+  touch-action: none;
+}
+.pad .ring {
+  position: absolute; left: 50%; top: 50%;
+  width: 140px; height: 140px; margin: -70px 0 0 -70px;
+  border: 1.5px solid var(--ink); border-radius: 50%;
+}
+.pad .knob {
+  position: absolute; left: 50%; top: 50%;
+  width: 46px; height: 46px; margin: -23px 0 0 -23px;
+  border-radius: 50%; background: var(--amber); border: 1.5px solid var(--ink);
+}
+
+.craft-grade { font-size: 16px; font-weight: 700; margin-top: 16px; }
+
+.preview-cakes, .preview-seats, .preview-banquet, .preview-lanterns { margin-top: 14px; font-size: 13px; line-height: 1.8; }
+
+/* ---------- §6.6 分饼 · §6.2 宴前一览 ---------- */
+.cake-row {
+  display: flex; align-items: center; width: 100%;
+  min-height: 56px; padding: 10px 14px;
+  background: var(--paper); border: 1.5px solid var(--ink);
+  font: inherit; font-size: 14px; text-align: left;
+}
+.cake-row:focus-visible { outline: 2px solid var(--osmanthus); outline-offset: 2px; }
+.cake-row[aria-pressed="true"] { background: var(--osmanthus); }
+
+.fam-row { display: flex; align-items: center; justify-content: space-between; }
+.fam-name { font-size: 15px; }
+.fam-cake { font-size: 12px; }
+
+.preview-cake { padding-left: 12px; border-left: 2px solid var(--amber); }
+.seat { padding: 6px 10px; border: 1px dashed var(--ink); }
+.seat.is-filled { border-style: solid; background: var(--moon); }
+.banquet-item { display: inline-block; padding: 2px 8px; margin-right: 6px; border: 1px solid var(--ink); }
+.banquet-item.is-on { background: var(--lantern); }
+.lantern {
+  display: inline-block; width: 14px; height: 14px; margin-right: 6px;
+  border: 1px solid var(--ink); border-radius: 50%;
+}
+.lantern.is-on { background: var(--lantern); }
+
+.end-moon { display: block; max-width: 100%; height: auto; margin: 0 auto; opacity: 0; }
+.end-moon.is-revealing { opacity: 1; transition: opacity 1.2s ease; }
+.end-name { font-size: 30px; font-weight: 700; text-align: center; margin-top: 16px; letter-spacing: 0.1em; }
+.end-text { font-size: 15px; line-height: 1.9; text-align: center; margin-top: 12px; }
+
+.card-wrap { margin-top: 18px; text-align: center; }
+.card-wrap img { max-width: 100%; border: 1.5px solid var(--ink); }
+
+/* ---------- §3.3 drawer sheet · §5.2 shell · thumb-zone controls ---------- */
+.view { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+}
+.btn-ghost { background: var(--moon); }
+
+.btn:focus-visible,
+.drawer-row:focus-visible,
+.slot:focus-visible { outline: 2px solid var(--osmanthus); outline-offset: 2px; }
+
+.drawer-row {
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  min-height: 56px;
+  padding: 10px 14px;
+}
+.buy-sub, .craft-branch, .craft-fillings { flex-basis: 100%; }
+.is-collapsed > .buy-sub,
+.is-collapsed > .craft-branch { display: none; }
+.craft-fillings { display: none; }
+.craft-fillings.is-open { display: flex; flex-wrap: wrap; gap: 8px; }
+.craft-branch { display: flex; gap: 8px; }
+.craft-branch .drawer-row,
+.craft-fillings .btn { flex: 1 1 auto; min-height: 56px; }
+.filling-reason, .branch-reason { font-size: 11px; opacity: 0.7; margin-left: 6px; }
+
+.slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 56px;
+  font-family: inherit;
+  color: var(--ink);
+  cursor: pointer;
+}
+.slot-text { font-size: 12px; text-align: center; }
+.slot-mark {
+  width: 14px; height: 14px;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+}
+.slot.is-filled .slot-mark { background: var(--amber); }
+
+#sheet-backdrop {
+  position: fixed; inset: 0; z-index: 5;
+  display: none;
+  background: var(--ink);
+  opacity: 0.42;
+}
+#sheet-backdrop.is-open { display: block; }
+
+#drawer {
+  position: fixed;
+  left: 0; right: 0;
+  bottom: calc(80px + env(safe-area-inset-bottom));
+  z-index: 6;
+  display: none;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 12px 16px 16px;
+  background: var(--paper);
+  border-top: 1.5px solid var(--ink);
+}
+#drawer.is-open { display: block; }
+
+.day-bar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 7;
+  display: flex;
+  gap: 10px;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  background: var(--paper);
+  border-top: 1.5px solid var(--ink);
+}
+.day-bar .btn { flex: 1 1 0; }
+.day-bar.is-hidden { display: none; }
+
+/* §4.1 三步选择的可见选中态，只用既有 token */
+.btn[aria-pressed="true"] { background: var(--osmanthus); }
+.batch-row .btn { flex: 1 1 0; }
+.filling-reason { font-size: 11px; opacity: 0.7; margin-left: 6px; }

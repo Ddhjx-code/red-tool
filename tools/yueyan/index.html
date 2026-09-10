@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>月宴</title>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+
+<div id="ui">
+
+  <section id="view-intro" class="view is-active">
+    <p class="kicker">非遗手作坊 · 中秋 · 家宴</p>
+    <h1 id="intro-title" class="intro-title"></h1>
+    <p id="intro-sub" class="intro-sub"></p>
+    <p id="intro-howto" class="intro-howto"></p>
+    <label class="toggle-row" for="toggle-congrong">
+      <input id="toggle-congrong" type="checkbox" />
+      <span id="toggle-congrong-text" class="toggle-text"></span>
+    </label>
+    <p id="intro-save-hint" class="save-hint"></p>
+    <div class="actions">
+      <button id="btn-start" class="btn btn-primary" type="button"></button>
+    </div>
+  </section>
+
+  <section id="view-schedule" class="view">
+    <div class="meter-bar">
+      <span class="meter"><span class="meter-label">饼品</span><span id="meter-q" class="meter-val"></span></span>
+      <span class="meter"><span class="meter-label">宴备</span><span id="meter-b" class="meter-val"></span></span>
+      <span class="meter"><span class="meter-label">心意</span><span id="meter-h" class="meter-val"></span></span>
+    </div>
+    <div class="res-bar">
+      <span id="silver-count" class="res"></span>
+      <span id="cake-count" class="res"></span>
+      <span id="stock-putong" class="res"></span>
+      <span id="stock-haoliao" class="res"></span>
+      <span id="stock-xiandanhuang" class="res"></span>
+      <span id="stock-guihua" class="res"></span>
+    </div>
+    <h2 id="day-label" class="day-label"></h2>
+    <div id="slot-grid" class="slot-grid"></div>
+    <div id="drawer" class="drawer">
+      <div id="row-buy" class="drawer-row">
+        <span class="row-name"></span>
+        <div class="buy-sub">
+          <button id="buy-putong" class="btn btn-ghost" type="button"></button>
+          <button id="buy-haoliao" class="btn btn-ghost" type="button"></button>
+          <button id="buy-xiandanhuang" class="btn btn-ghost" type="button"></button>
+          <button id="buy-guihua" class="btn btn-ghost" type="button"></button>
+        </div>
+      </div>
+      <button id="row-shishi" class="drawer-row" type="button"></button>
+      <button id="row-daizuo" class="drawer-row" type="button"></button>
+      <button id="row-shouzuo" class="drawer-row" type="button"></button>
+      <button id="row-xiexin" class="drawer-row" type="button"></button>
+      <button id="row-beiyan" class="drawer-row" type="button"></button>
+      <button id="row-buzhi" class="drawer-row" type="button"></button>
+    </div>
+    <div class="actions">
+      <button id="btn-finish-day" class="btn btn-primary" type="button"></button>
+    </div>
+  </section>
+
+  <section id="view-craft" class="view">
+    <div id="craft-filling-list" class="filling-list"></div>
+    <div class="batch-row">
+      <button id="craft-batch-normal" class="btn btn-ghost" type="button"></button>
+      <button id="craft-batch-premium" class="btn btn-ghost" type="button"></button>
+    </div>
+    <p id="step-index" class="step-index"></p>
+    <div id="bar-s1" class="lin-bar"><span class="target"></span><span class="marker"></span></div>
+    <div id="pad-s2" class="pad"><span class="ring"></span><span class="knob"></span></div>
+    <div id="pad-s3" class="pad"><span class="ring"></span><span class="knob"></span></div>
+    <div id="bar-s4" class="lin-bar"><span class="target"></span><span class="marker"></span></div>
+    <div class="actions">
+      <button id="btn-craft-start" class="btn btn-primary" type="button"></button>
+      <button id="btn-step-confirm" class="btn btn-primary" type="button"></button>
+      <button id="btn-craft-abort" class="btn btn-ghost" type="button"></button>
+    </div>
+    <p id="craft-grade" class="craft-grade"></p>
+  </section>
+
+  <section id="view-assign" class="view">
+    <div id="assign-cake-list" class="assign-cakes"></div>
+    <div id="assign-family-list" class="assign-family"></div>
+    <div class="actions">
+      <button id="btn-assign-confirm" class="btn btn-primary" type="button"></button>
+    </div>
+  </section>
+
+  <section id="view-preview" class="view">
+    <div id="preview-cakes" class="preview-cakes"></div>
+    <div id="preview-seats" class="preview-seats"></div>
+    <div id="preview-banquet" class="preview-banquet"></div>
+    <div id="preview-lanterns" class="preview-lanterns"></div>
+    <div class="meter-bar">
+      <span class="meter"><span class="meter-label">饼品</span><span id="preview-q" class="meter-val"></span></span>
+      <span class="meter"><span class="meter-label">宴备</span><span id="preview-b" class="meter-val"></span></span>
+      <span class="meter"><span class="meter-label">心意</span><span id="preview-h" class="meter-val"></span></span>
+    </div>
+    <div class="actions">
+      <button id="btn-open-feast" class="btn btn-feast" type="button">开席</button>
+    </div>
+  </section>
+
+  <section id="view-ending" class="view">
+    <canvas id="end-moon" class="end-moon" width="390" height="390"></canvas>
+    <h2 id="end-name" class="end-name"></h2>
+    <p id="end-text" class="end-text"></p>
+    <div id="card-wrap" class="card-wrap"></div>
+    <div class="actions">
+      <button id="btn-share" class="btn btn-ghost" type="button">生成分享卡</button>
+    </div>
+  </section>
+
+</div>
+
+  <script src="./assets/data.js"></script>
+  <script src="./assets/engine.js"></script>
+  <script src="./assets/audio.js"></script>
+  <script src="./assets/scene.js"></script>
+  <script src="./assets/save.js"></script>
+  <script src="./assets/share.js"></script>
+  <script src="./assets/main.js"></script>
+</body>
+</html>
