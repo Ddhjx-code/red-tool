@@ -39,11 +39,16 @@ def main():
 
     with sync_playwright() as p:
         b = p.chromium.launch(args=ARGS)
+        # record_video_size 必须等于视口尺寸：Playwright 的录像把页面按 CSS 像素
+        # 1:1 铺在画面左上角，既不按 deviceScaleFactor 放大、也不缩放填满。
+        # 曾误设为 2×（780x1688），结果 390x844 的画面只占左上四分之一，其余是
+        # 透明区，转 H.264/yuv420p 后变成中灰 —— 用户看到的「压缩到只有左上角」。
+        # 放大交给 ffmpeg（源为 2× 渲染后降采样的画面，放大后仍清晰）。
         ctx = b.new_context(
             viewport={"width": 390, "height": 844},
             device_scale_factor=2,
             record_video_dir=str(RAW),
-            record_video_size={"width": 780, "height": 1688},
+            record_video_size={"width": 390, "height": 844},
         )
         pg = ctx.new_page()
         pg.goto(TOOL.as_uri())
