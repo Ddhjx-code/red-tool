@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>月下灯会 · 彩灯</title>
+  <link rel="stylesheet" href="./assets/style.css" />
+  <link rel="stylesheet" href="./assets/finale.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- ===== 首页 · 中秋灯会文化 ===== -->
+    <section id="view-home" class="view is-active">
+      <div class="home-inner">
+        <p id="home-series" class="home-series">非遗手作坊 · 第十八作</p>
+        <h1 class="home-title"><span>月</span><span>下</span><span>灯</span><span>会</span></h1>
+        <p id="home-sub" class="home-sub">彩漆绘纹 · 灯下透光 · 放入月下灯会</p>
+
+        <figure class="home-vig" aria-hidden="true">
+          <span class="vig-star s1"></span>
+          <span class="vig-star s2"></span>
+          <span class="vig-star s3"></span>
+          <span class="vig-star s4"></span>
+          <span class="vig-halo"></span>
+          <div class="vig-moon"></div>
+          <div class="vig-lamp">
+            <span class="vl-glow"></span>
+            <span class="vl-cap"></span>
+            <span class="vl-body"></span>
+            <span class="vl-base"></span>
+            <span class="vl-tassel"></span>
+          </div>
+          <figcaption class="home-vig-label">月下点灯 · 纹样透光 · 群灯齐明</figcaption>
+        </figure>
+
+        <div class="card">
+          <p class="card-title">中秋灯会 · 赏月观灯放灯</p>
+          <div id="home-intro">
+            <p>中秋赏月、观灯、放灯，是流传千年的节令盛事。灯会起源可上溯汉代，中秋灯会盛于唐宋，月下群灯齐明，正是人间团圆夜。</p>
+            <p>月是中秋的核心意象，月满象征团圆。灯借月色，月映灯辉，二者共成中秋盛景。</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <p class="card-title">灯笼 · 竹骨纸面彩绘</p>
+          <div id="home-craft">
+            <p>传统灯笼以竹篾为骨、纸绢为面，彩绘纹样，内置蜡烛。光透纹样，明暗相生。</p>
+            <p>中秋灯笼常见纹样为月、桂、兔、云、花鸟；灯色取月白、桂金、朱砂、青金、黛蓝。</p>
+          </div>
+        </div>
+
+        <div class="works">
+          <p class="works-label">我的彩灯</p>
+          <div id="works-row" class="works-row"></div>
+        </div>
+
+        <button id="btn-start" class="primary-btn" type="button">开 始 制 灯</button>
+      </div>
+      <p class="home-foot">竹篾为骨 · 纸绢为面 · 彩绘灯纹 · 月下透光</p>
+    </section>
+
+    <!-- ===== 创作台 · 夜空 + 灯面绘纹 + 点亮 ===== -->
+    <section id="view-create" class="view">
+      <div class="top">
+        <div class="brand">
+          <span class="seal">非遗</span>
+          <span class="brand-title">月下灯会</span>
+        </div>
+        <div class="top-actions">
+          <button id="btn-back" class="chip-btn" type="button">返回</button>
+          <button id="phase-btn" type="button" aria-label="切换月相">
+            <span class="pdot"></span><span class="pname">满月无云</span>
+          </button>
+          <button id="btn-release" class="chip-btn chip-gold" type="button">放灯</button>
+        </div>
+      </div>
+
+      <div class="stage" id="stage">
+        <div class="stars" id="stars"></div>
+
+        <div class="moon" id="moon" data-phase="P1" style="--cover:0">
+          <div class="m-halo"></div>
+          <div class="m-rim"></div>
+          <div class="m-disc"></div>
+          <div class="m-clouds">
+            <span class="m-wisp m-w1"></span>
+            <span class="m-wisp m-w2"></span>
+            <span class="m-wisp m-w3"></span>
+            <div class="m-band"></div>
+          </div>
+        </div>
+
+        <canvas id="lamp"></canvas>
+
+        <div class="rig">
+          <div class="lamp-handle"></div>
+          <div class="lamp-cap"></div>
+          <div class="lamp-base"></div>
+          <div class="lamp-tassel">
+            <span class="cord"></span><span class="knot"></span><span class="fringe"></span>
+          </div>
+        </div>
+
+        <div class="place-ctx" id="place-ctx"></div>
+        <div class="skyline"></div>
+        <div class="far-lamps" id="far-lamps"></div>
+        <div class="fest-lamps" id="fest-lamps"></div>
+      </div>
+
+      <div class="dock">
+        <div class="panel-bar">
+          <div class="pal-row" id="palette"></div>
+          <div class="motif-row" id="motifs"></div>
+          <div class="shape-row" id="shapes"></div>
+          <div class="act-row">
+            <div class="place-group" id="placements"></div>
+            <button id="spin-btn" class="act" type="button" aria-pressed="true" aria-label="转动灯体">转动</button>
+            <button id="light-btn" class="act" type="button">点 亮</button>
+            <button id="reset-btn" class="act" type="button">重 画</button>
+          </div>
+          <div class="current-label" id="current-label">灯色 <b>月白</b> · 拖动灯面绘纹，彩漆自会扩散</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 成品 · 彩灯 + 起名 + 分享 ===== -->
+    <section id="view-result" class="view">
+      <div class="result-inner">
+        <div class="result-head">
+          <div>
+            <p id="result-kicker" class="result-kicker"></p>
+            <h2 class="result-title">彩灯已成</h2>
+          </div>
+          <span class="seal">灯成</span>
+        </div>
+
+        <div class="lamp-stage" id="result-stage">
+          <div class="stars" id="result-stars"></div>
+
+          <div class="moon" id="result-moon" data-phase="P1" style="--cover:0">
+            <div class="m-halo"></div>
+            <div class="m-rim"></div>
+            <div class="m-disc"></div>
+            <div class="m-clouds">
+              <span class="m-wisp m-w1"></span>
+              <span class="m-wisp m-w2"></span>
+              <span class="m-wisp m-w3"></span>
+              <div class="m-band"></div>
+            </div>
+          </div>
+
+          <canvas id="lamp-result"></canvas>
+
+          <div class="rig">
+            <div class="lamp-handle"></div>
+            <div class="lamp-cap"></div>
+            <div class="lamp-base"></div>
+            <div class="lamp-tassel">
+              <span class="cord"></span><span class="knot"></span><span class="fringe"></span>
+            </div>
+          </div>
+
+          <div class="place-ctx" id="result-place-ctx"></div>
+        </div>
+
+        <p id="result-meta" class="result-meta"></p>
+
+        <div class="name-row">
+          <input id="lamp-name" type="text" maxlength="8" placeholder="给这盏灯起个名字" />
+          <button id="btn-reroll" class="ghost-btn" type="button">另取一名</button>
+        </div>
+
+        <div id="result-know" class="card"></div>
+        <p id="result-extra" class="result-extra"></p>
+
+        <div class="result-share">
+          <button id="btn-save-album" class="ghost-btn" type="button">存相册</button>
+          <button id="btn-post-note" class="ghost-btn" type="button">发笔记</button>
+        </div>
+        <div class="result-actions">
+          <button id="btn-redo" class="primary-btn" type="button">再 制 一 盏</button>
+          <button id="btn-result-home" class="ghost-btn" type="button">回首页</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CG 结局 · 树中秋（§10）===== -->
+    <section id="view-finale" class="view">
+      <div class="fin-stage" id="fin-stage">
+        <div class="fin-sky" id="fin-sky">
+          <div class="fin-stars" id="fin-stars"></div>
+          <div class="fin-moon" id="fin-moon"></div>
+        </div>
+        <div class="fin-city" id="fin-city"></div>
+        <div class="fin-near" id="fin-near"></div>
+        <img class="fin-lantern" id="fin-lantern" alt="" />
+        <canvas class="fin-particles" id="fin-particles"></canvas>
+        <div class="fin-caption" id="fin-caption"></div>
+      </div>
+      <button class="fin-skip" id="fin-skip" type="button">跳过</button>
+    </section>
+
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <div id="err" class="webgl-err">此设备不支持 WebGL 浮点渲染，无法显示透光流体。</div>
+
+  <script src="./assets/data.js"></script>
+  <script src="./assets/engine.js"></script>
+  <script src="./assets/scene.js"></script>
+  <script src="./assets/save.js"></script>
+  <script src="./assets/share.js"></script>
+  <script src="./assets/main.js"></script>
+  <script src="./assets/finale.js"></script>
+</body>
+</html>

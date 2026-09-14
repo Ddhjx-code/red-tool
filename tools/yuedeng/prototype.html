@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>月下灯会 · 透光原型</title>
+<style>
+  /* ============================================================
+     design tokens — 传统调色盘（设计文档 §5）+ 月宴像素风
+     ============================================================ */
+  :root {
+    /* 传统五色（灯色） */
+    --c-yuebai:  #DCE9E4;   /* 月白 */
+    --c-guijin:  #E8B84B;   /* 桂金 */
+    --c-zhusha:  #C9483C;   /* 朱砂 */
+    --c-qingjin: #35619E;   /* 青金 */
+    --c-dailan:  #2B3A55;   /* 黛蓝 */
+
+    /* 夜空 */
+    --night-0: #05070F;
+    --night-1: #0A1024;
+    --night-2: #111B36;
+    --night-3: #17233F;
+    --horizon: #0C1220;
+
+    /* 月（与月宴同源） */
+    --moon:      #F2E4C4;
+    --moon-dk:   #C8B795;
+    --moon-rim:  #3A2E26;
+    --halo:      #E8B84B;
+    --cloud-lt:  #DCD3C2;
+    --cloud-md:  #B6AB97;
+    --cloud-dk:  #8C8272;
+
+    /* 灯 / 纸 */
+    --paper:     #F7EFE2;
+    --lamp-warm: #F5C77E;
+    --ink:       #3A2E26;
+    --ink-soft:  #221A15;
+    --wood:      #B8733A;
+    --wood-dk:   #7A4A24;
+
+    /* 间距（4px 基准） */
+    --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+    --sp-5: 24px; --sp-6: 32px;
+
+    /* 圆角 */
+    --r-sm: 6px;  --r-md: 10px; --r-lg: 18px; --r-pill: 999px;
+
+    /* 动效（与漆扇同源） */
+    --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --dur-1: 0.16s;
+    --dur-2: 0.28s;
+    --dur-3: 0.5s;
+
+    /* 面板 / 描边 / 文字层级（与漆扇同源） */
+    --panel:        rgba(8, 12, 20, 0.46);
+    --line:         rgba(242, 228, 196, 0.12);
+    --line-strong:  rgba(242, 228, 196, 0.22);
+    --paper-dim:    rgba(247, 239, 226, 0.62);
+    --paper-faint:  rgba(247, 239, 226, 0.34);
+    --gold-soft:    rgba(232, 184, 75, 0.55);
+    --gold-faint:   rgba(232, 184, 75, 0.16);
+    --cinnabar-soft: rgba(201, 72, 60, 0.35);
+
+    /* 字体 · 楷体（与漆扇同源；仅取系统本地字体，无网络引用） */
+    --font: "Kaiti SC", "STKaiti", "KaiTi", -apple-system, BlinkMacSystemFont,
+            "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", serif;
+
+    --swatch: 38px;
+
+    /* 灯几何：JS 写入实际像素值 */
+    --cx: 195px; --cy: 318px; --hw: 123px; --hh: 132px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; background: var(--night-0); }
+  body {
+    font-family: var(--font);
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none; user-select: none;
+    color: var(--paper);
+  }
+
+  #app {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    /* 整幅夜空底色：顶栏与操作台的渐变都淡出到它，
+       于是界面不再是一块实心板，夜空可以透过来 */
+    background: linear-gradient(to bottom,
+      var(--night-0) 0%,
+      var(--night-1) 30%,
+      var(--night-2) 62%,
+      var(--night-3) 100%);
+  }
+
+  /* ============================================================
+     顶栏：匾额 + 月相
+     ============================================================ */
+  .top {
+    flex: none; height: 52px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: var(--sp-3);
+    padding: 0 var(--sp-4);
+    background: linear-gradient(to bottom, rgba(6,11,18,0.6), rgba(6,11,18,0));
+  }
+  .brand { display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
+  .seal {
+    flex: none;
+    font-size: 10px; letter-spacing: 0.10em; line-height: 1;
+    color: var(--paper); background: var(--c-zhusha);
+    padding: 4px 6px; border-radius: var(--sp-1);
+    box-shadow: 0 2px var(--sp-3) var(--cinnabar-soft);
+  }
+  .brand-title {
+    font-size: 20px; letter-spacing: var(--sp-1);
+    color: var(--moon); white-space: nowrap;
+    text-shadow: 0 0 var(--sp-5) rgba(232,184,75,0.20);
+  }
+
+  /* 月相：一枚按钮循环五档（月宴 MOON_COVER 同源） */
+  #phase-btn {
+    flex: none; min-height: 44px; min-width: 44px;
+    display: flex; align-items: center; gap: var(--sp-2);
+    font-family: var(--font);
+    font-size: 14px; letter-spacing: var(--sp-1);
+    color: var(--paper-dim);
+    background: transparent;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-pill);
+    padding: var(--sp-2) var(--sp-4);
+    cursor: pointer;
+    transition: color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease),
+                transform var(--dur-1) var(--ease);
+  }
+  #phase-btn:hover { color: var(--moon); border-color: var(--gold-soft); }
+  #phase-btn:active { transform: translateY(1px); }
+  #phase-btn .pdot {
+    flex: none; width: 10px; height: 10px;
+    background: var(--moon); border-radius: 50%;
+    box-shadow: 0 0 var(--sp-2) rgba(242,228,196,0.48);
+  }
+  #phase-btn .pname { white-space: nowrap; }
+
+  /* ============================================================
+     舞台：夜空 + 月 + 灯
+     ============================================================ */
+  .stage {
+    position: relative; flex: 1 1 auto; min-height: 0;
+    overflow: hidden;
+    /* 三层夜空：月位的暖光晕（径向）→ 月位的冷光晕（径向）→ 原线性渐变。
+       线性渐变留在最底，所以地平线一侧依旧更暗，月始终是焦点。 */
+    background:
+      radial-gradient(120% 62% at 50% 124px,
+        rgba(232,184,75,0.13) 0%,
+        rgba(232,184,75,0.045) 38%,
+        rgba(232,184,75,0) 70%),
+      radial-gradient(140% 70% at 50% 124px,
+        var(--night-3) 0%,
+        var(--night-2) 44%,
+        rgba(17,27,54,0) 78%),
+      linear-gradient(to bottom,
+        var(--night-0) 0%,
+        var(--night-1) 34%,
+        var(--night-2) 68%,
+        var(--night-3) 100%);
+  }
+
+  /* --- 星（固定表，零随机；闪烁为固定排程的 CSS 动效） --- */
+  .stars { position: absolute; inset: 0; pointer-events: none; }
+  .star {
+    position: absolute;
+    background: var(--moon);
+    opacity: 0.55;
+    animation: twinkle 4.8s steps(4, end) infinite;
+  }
+  @keyframes twinkle {
+    0%   { opacity: 0.30; }
+    25%  { opacity: 0.78; }
+    50%  { opacity: 0.42; }
+    75%  { opacity: 0.90; }
+    100% { opacity: 0.30; }
+  }
+
+  /* --- 月：像素块月轮 + 五档云量（复用月宴 em-* 结构） --- */
+  .moon {
+    position: absolute; left: 50%; top: 124px;
+    width: 228px; height: 228px; margin-left: -114px; margin-top: -114px;
+    pointer-events: none;
+  }
+  .m-halo, .m-rim, .m-disc, .m-clouds {
+    position: absolute; left: 50%; top: 50%;
+    clip-path: polygon(34% 0, 66% 0, 86% 14%, 100% 34%, 100% 66%,
+                       86% 86%, 66% 100%, 34% 100%, 14% 86%, 0 66%, 0 34%, 14% 14%);
+  }
+  .m-halo {
+    width: 228px; height: 228px; margin: -114px 0 0 -114px;
+    background: var(--halo); opacity: 0.28;
+  }
+  .m-rim {
+    width: 212px; height: 212px; margin: -106px 0 0 -106px;
+    background: var(--moon-rim);
+  }
+  .m-disc {
+    width: 198px; height: 198px; margin: -99px 0 0 -99px;
+    background: var(--moon);
+    box-shadow: inset 0 0 0 6px var(--moon-dk);
+  }
+  .m-crater { position: absolute; background: var(--moon-dk); }
+  .m-crater.k1 { left: 52px;  top: 46px;  width: 30px; height: 24px; }
+  .m-crater.k2 { left: 124px; top: 88px;  width: 22px; height: 20px; }
+  .m-crater.k3 { left: 74px;  top: 128px; width: 18px; height: 16px; }
+  .m-crater.k4 { left: 132px; top: 140px; width: 14px; height: 12px; }
+  .m-clouds {
+    width: 198px; height: 198px; margin: -99px 0 0 -99px;
+    overflow: hidden; background: transparent;
+  }
+  .m-band {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    height: calc(var(--cover, 0) * 100%);
+    background: var(--cloud-md);
+    box-shadow: inset 0 5px 0 0 var(--cloud-lt);
+    clip-path: polygon(0 30%, 16% 30%, 16% 12%, 32% 12%, 32% 0, 50% 0, 50% 18%,
+                       68% 18%, 68% 6%, 84% 6%, 84% 22%, 100% 22%, 100% 100%, 0 100%);
+  }
+  .m-wisp {
+    position: absolute; background: var(--cloud-dk); opacity: 0;
+    clip-path: polygon(0 42%, 24% 42%, 24% 0, 58% 0, 58% 56%, 80% 56%, 80% 18%,
+                       100% 18%, 100% 100%, 0 100%);
+  }
+  .m-w1 { left: 6%;  top: 12%; width: 36%; height: 15%; }
+  .m-w2 { right: 4%; top: 30%; width: 32%; height: 13%; }
+  .m-w3 { left: 20%; top: 52%; width: 46%; height: 13%; }
+
+  /* 五档月相逐档锁定（云带高度由 JS 依 MOON_COVER 写入 --cover） */
+  .moon[data-phase="P1"] .m-halo { opacity: 0.58; }
+  .moon[data-phase="P2"] .m-halo { opacity: 0.44; }
+  .moon[data-phase="P2"] .m-w1   { opacity: 0.78; }
+  .moon[data-phase="P3"] .m-halo { opacity: 0.34; }
+  .moon[data-phase="P3"] .m-w1,
+  .moon[data-phase="P3"] .m-w2   { opacity: 0.78; }
+  .moon[data-phase="P4"] .m-halo { opacity: 0.24; }
+  .moon[data-phase="P4"] .m-disc { opacity: 0.92; }
+  .moon[data-phase="P4"] .m-w1,
+  .moon[data-phase="P4"] .m-w2   { opacity: 0.72; }
+  .moon[data-phase="P5"] .m-halo { opacity: 0.14; }
+  .moon[data-phase="P5"] .m-disc { opacity: 0.78; }
+  .moon[data-phase="P5"] .m-band { background: var(--cloud-dk); }
+  .moon[data-phase="P5"] .m-w1,
+  .moon[data-phase="P5"] .m-w2,
+  .moon[data-phase="P5"] .m-w3   { opacity: 0.62; }
+
+  /* --- 远景灯会：一条像素屋檐 + 六盏小灯（固定表，零随机） --- */
+  .skyline {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 64px;
+    background: var(--horizon);
+    clip-path: polygon(0 44%, 9% 44%, 9% 26%, 15% 14%, 21% 26%, 21% 40%,
+                       30% 40%, 30% 22%, 38% 22%, 38% 34%, 47% 34%, 47% 18%,
+                       55% 8%, 63% 18%, 63% 36%, 72% 36%, 72% 24%, 80% 24%,
+                       80% 38%, 88% 38%, 88% 28%, 100% 28%, 100% 100%, 0 100%);
+    pointer-events: none;
+  }
+  .far-lamps { position: absolute; left: 0; right: 0; bottom: 0; height: 64px; pointer-events: none; }
+  .fl {
+    position: absolute; width: 8px; height: 10px;
+    background: #6A4A2A; border: 1px solid var(--ink);
+    clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+    transition: background var(--dur-3) var(--ease), box-shadow var(--dur-3) var(--ease);
+  }
+  .stage.is-lit .fl {
+    background: var(--lamp-warm);
+    box-shadow: 0 0 10px 3px rgba(245,199,126,0.34);
+  }
+
+  /* --- 灯的骨架：提梁 / 灯盖 / 灯底 / 流苏（像素块） --- */
+  .rig { position: absolute; inset: 0; pointer-events: none; }
+  .rig > * { position: absolute; left: var(--cx); transform: translateX(-50%); }
+
+  .lamp-handle {
+    top: calc(var(--cy) - var(--hh) - 26px);
+    width: 62px; height: 20px;
+    border: 4px solid var(--wood-dk);
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+  }
+  .lamp-cap {
+    top: calc(var(--cy) - var(--hh) - 12px);
+    width: calc(var(--hw) * 0.62); height: 14px;
+    background: var(--wood);
+    border: 3px solid var(--wood-dk);
+    box-shadow: inset 0 3px 0 0 rgba(247,239,226,0.30), 3px 3px 0 0 rgba(5,7,15,0.55);
+  }
+  .lamp-base {
+    top: calc(var(--cy) + var(--hh) - 2px);
+    width: calc(var(--hw) * 0.54); height: 12px;
+    background: var(--wood);
+    border: 3px solid var(--wood-dk);
+    box-shadow: inset 0 -3px 0 0 rgba(5,7,15,0.30);
+  }
+  .lamp-tassel {
+    top: calc(var(--cy) + var(--hh) + 10px);
+    width: 10px; height: 54px;
+    transform-origin: 50% 0;
+    animation: sway 6.4s ease-in-out infinite;
+  }
+  .lamp-tassel .cord { position: absolute; left: 3px; top: 0; width: 4px; height: 14px; background: var(--wood-dk); }
+  .lamp-tassel .knot { position: absolute; left: 0; top: 14px; width: 10px; height: 10px; background: var(--c-zhusha); border: 2px solid var(--ink); }
+  .lamp-tassel .fringe { position: absolute; left: 0; top: 24px; width: 10px; height: 30px; background: var(--c-zhusha);
+    clip-path: polygon(0 0, 100% 0, 100% 72%, 84% 100%, 84% 72%, 66% 100%, 66% 72%,
+                       50% 100%, 50% 72%, 34% 100%, 34% 72%, 16% 100%, 16% 72%, 0 72%); }
+  @keyframes sway {
+    0%   { transform: translateX(-50%) rotate(-3deg); }
+    50%  { transform: translateX(-50%) rotate(3deg); }
+    100% { transform: translateX(-50%) rotate(-3deg); }
+  }
+
+  /* --- 流体画布：覆盖整个舞台，形状外全透明，让 CSS 月与星透出 --- */
+  #lamp {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    display: block;
+    touch-action: none;
+  }
+
+  /* ============================================================
+     操作台：渐变淡出到夜空 + 一枚悬浮磨砂卡片（漆扇 .studio / .panel-bar 同源）
+     ============================================================ */
+  .dock {
+    flex: none;
+    display: flex; flex-direction: column; align-items: center;
+    padding: var(--sp-3) var(--sp-3) calc(var(--sp-3) + env(safe-area-inset-bottom));
+    background: linear-gradient(to top, rgba(6,11,18,0.72) 40%, rgba(6,11,18,0));
+  }
+  .panel-bar {
+    width: 100%;
+    max-width: 420px;
+    padding: var(--sp-3);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    backdrop-filter: blur(var(--sp-4));
+    -webkit-backdrop-filter: blur(var(--sp-4));
+    box-shadow: 0 var(--sp-2) var(--sp-6) rgba(0, 0, 0, 0.42);
+  }
+
+  /* 灯色：颜料滴（圆形 + 内高光，名字悬停/选中时浮出） */
+  .pal-row {
+    display: flex; align-items: center; justify-content: center;
+    gap: var(--sp-3);
+  }
+  .swatch {
+    position: relative;
+    width: var(--swatch); height: var(--swatch);
+    background: var(--c, #888);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 50%;
+    font-family: var(--font);
+    box-shadow: inset 0 2px var(--sp-2) rgba(255, 255, 255, 0.22),
+                inset 0 -3px var(--sp-2) rgba(0, 0, 0, 0.35);
+    cursor: pointer;
+    transition: transform var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
+  }
+  .swatch:hover { transform: scale(1.08); }
+  .swatch:active { transform: scale(1.04); }
+  .swatch[aria-pressed="true"] {
+    transform: scale(1.12);
+    box-shadow: 0 0 0 2px var(--night-0), 0 0 0 var(--sp-1) var(--halo),
+                inset 0 2px var(--sp-2) rgba(255, 255, 255, 0.30),
+                0 var(--sp-2) var(--sp-4) rgba(232, 184, 75, 0.35);
+  }
+  .swatch .nm {
+    position: absolute; left: 50%; bottom: -18px;
+    transform: translateX(-50%);
+    font-size: 10px; letter-spacing: 0.08em;
+    white-space: nowrap;
+    color: var(--paper-faint);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-1) var(--ease);
+  }
+  .swatch:hover .nm, .swatch[aria-pressed="true"] .nm { opacity: 1; }
+
+  /* 灯形：药丸选项（漆扇 .opt 同源） */
+  .shape-row {
+    display: flex; align-items: center; gap: var(--sp-2);
+    margin-top: 20px;   /* 给颜料滴的名字留出浮出的位置 */
+  }
+  .shape-btn {
+    flex: 1; min-height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 5px;
+    font-family: var(--font);
+    font-size: 12px; letter-spacing: 0.04em;
+    color: var(--paper-dim);
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: var(--r-pill);
+    cursor: pointer;
+    transition: color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease),
+                background var(--dur-1) var(--ease), transform var(--dur-1) var(--ease);
+  }
+  .shape-btn svg { display: block; width: 20px; height: 20px; opacity: 0.78; }
+  .shape-btn:hover { color: var(--moon); border-color: var(--gold-soft); }
+  .shape-btn:active { transform: translateY(1px); }
+  .shape-btn[aria-pressed="true"] {
+    color: var(--moon);
+    background: var(--gold-faint);
+    border-color: var(--gold-soft);
+  }
+  .shape-btn[aria-pressed="true"] svg { opacity: 1; }
+
+  /* 动作：主按钮渐变带辉光，次按钮幽灵描边 */
+  .act-row { display: flex; gap: var(--sp-2); margin-top: var(--sp-3); }
+  .act {
+    min-height: 44px;
+    font-family: var(--font);
+    border-radius: var(--r-pill);
+    cursor: pointer;
+    transition: transform var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease),
+                background var(--dur-2) var(--ease), color var(--dur-1) var(--ease),
+                border-color var(--dur-1) var(--ease);
+  }
+  .act:active { transform: translateY(2px); box-shadow: none; }
+  #light-btn {
+    flex: 1 1 auto;
+    font-size: 16px; letter-spacing: var(--sp-1);
+    color: var(--night-0);
+    background: linear-gradient(180deg, var(--halo) 0%, #C08A22 100%);
+    border: 1px solid var(--gold-soft);
+    box-shadow: 0 var(--sp-1) var(--sp-4) rgba(232, 184, 75, 0.32);
+  }
+  #light-btn.is-on {
+    color: var(--paper);
+    background: linear-gradient(180deg, var(--c-zhusha) 0%, #9E2F26 100%);
+    border-color: var(--cinnabar-soft);
+    box-shadow: 0 var(--sp-1) var(--sp-4) var(--cinnabar-soft);
+  }
+  #reset-btn {
+    flex: none; width: 92px;
+    font-size: 14px; letter-spacing: var(--sp-1);
+    color: var(--paper-dim);
+    background: transparent;
+    border: 1px solid var(--line-strong);
+  }
+  #reset-btn:hover { color: var(--moon); border-color: var(--gold-soft); }
+
+  /* 单行上下文标签（漆扇 .current-label 同源） */
+  .current-label {
+    margin-top: var(--sp-3);
+    text-align: center;
+    font-size: 12.5px; letter-spacing: 0.08em;
+    color: var(--paper-dim);
+    min-height: 18px;
+  }
+  .current-label b { color: var(--halo); font-weight: normal; }
+
+  /* WebGL 不可用时的兜底 */
+  #err {
+    position: fixed; inset: 0; display: none;
+    align-items: center; justify-content: center; text-align: center;
+    padding: var(--sp-6); font-size: 15px; line-height: 1.7;
+    color: var(--paper); background: var(--night-0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .star, .lamp-tassel { animation: none; }
+    *, *::before, *::after { transition-duration: 0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+  <div id="app">
+
+    <div class="top">
+      <div class="brand">
+        <span class="seal">非遗</span>
+        <span class="brand-title">月下灯会</span>
+      </div>
+      <button id="phase-btn" type="button" aria-label="切换月相">
+        <span class="pdot"></span><span class="pname">满月无云</span>
+      </button>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="stars" id="stars"></div>
+
+      <div class="moon" id="moon" data-phase="P1" style="--cover:0">
+        <div class="m-halo"></div>
+        <div class="m-rim"></div>
+        <div class="m-disc">
+          <span class="m-crater k1"></span>
+          <span class="m-crater k2"></span>
+          <span class="m-crater k3"></span>
+          <span class="m-crater k4"></span>
+        </div>
+        <div class="m-clouds">
+          <span class="m-wisp m-w1"></span>
+          <span class="m-wisp m-w2"></span>
+          <span class="m-wisp m-w3"></span>
+          <div class="m-band"></div>
+        </div>
+      </div>
+
+      <canvas id="lamp"></canvas>
+
+      <div class="rig">
+        <div class="lamp-handle"></div>
+        <div class="lamp-cap"></div>
+        <div class="lamp-base"></div>
+        <div class="lamp-tassel">
+          <span class="cord"></span><span class="knot"></span><span class="fringe"></span>
+        </div>
+      </div>
+
+      <div class="skyline"></div>
+      <div class="far-lamps" id="far-lamps"></div>
+    </div>
+
+    <div class="dock">
+      <div class="panel-bar">
+        <div class="pal-row" id="palette"></div>
+        <div class="shape-row" id="shapes"></div>
+        <div class="act-row">
+          <button id="light-btn" class="act" type="button">点 亮</button>
+          <button id="reset-btn" class="act" type="button">重 画</button>
+        </div>
+        <div class="current-label" id="current-label">灯色 <b>月白</b> · 拖动灯面绘纹，彩漆自会扩散</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="err">此设备不支持 WebGL 浮点渲染，无法显示透光流体。</div>
+
+<script>
+'use strict';
+
+/* ============================================================
+   月下灯会 · 透光效应原型
+   ------------------------------------------------------------
+   流体：漆扇同款 stable-fluids (Navier-Stokes) GPU 求解器
+        （velocity + dye，advection / divergence / pressure(Jacobi)
+         / gradient-subtract / vorticity confinement）。
+   透光：display 着色器把灯内烛火的光场乘进颜料——厚颜料吸收多
+        → 饱和色光，薄颜料让白热光透过；再叠一趟 1/4 分辨率的
+        bright-pass + 双向高斯 bloom 做加性辉光；灯轮廓外溢出的
+        光晕带颜料色相，洒进夜空。
+   月：CSS 像素块月轮 + 五档云量（复用月宴 em-* / MOON_COVER）。
+   确定性：零随机。所有运动都是 elapsed time 或固定排程的函数。
+   ============================================================ */
+
+/* ---------- 传统调色盘（设计文档 §5，五色） ---------- */
+const PALETTE = [
+  { name: '月白', en: 'MoonWhite', hex: '#DCE9E4' },
+  { name: '桂金', en: 'Osmanthus', hex: '#E8B84B' },
+  { name: '朱砂', en: 'Cinnabar',  hex: '#C9483C' },
+  { name: '青金', en: 'Lapis',     hex: '#35619E' },
+  { name: '黛蓝', en: 'Indigo',    hex: '#2B3A55' }
+];
+
+/* ---------- 灯形 ---------- */
+const SHAPES = [
+  { name: '圆灯',   glyph: 'M12 3 A9 9 0 1 1 11.99 3 Z' },
+  { name: '方灯',   glyph: 'M5 5 H19 V19 H5 Z' },
+  { name: '六角灯', glyph: 'M12 3 L20 7.5 L20 16.5 L12 21 L4 16.5 L4 7.5 Z' },
+  { name: '莲花灯', glyph: 'M12 3 C16 6 20 8 20 12 C20 17 16 21 12 21 C8 21 4 17 4 12 C4 8 8 6 12 3 Z' }
+];
+
+/* ---------- 五档月相（月宴 MOON_COVER 同源） ---------- */
+const PHASES = [
+  { code: 'P1', name: '满月无云', cover: 0.00, bright: 1.00 },
+  { code: 'P2', name: '满月薄云', cover: 0.16, bright: 0.96 },
+  { code: 'P3', name: '明月半云', cover: 0.34, bright: 0.88 },
+  { code: 'P4', name: '月出云中', cover: 0.54, bright: 0.76 },
+  { code: 'P5', name: '薄云遮月', cover: 0.74, bright: 0.58 }
+];
+
+/* ---------- 星：固定表，零随机 ---------- */
+const STARS = [
+  [ 7,  6, 2, 0.0], [16, 12, 1, 1.1], [25,  4, 2, 2.3], [33, 15, 1, 0.6],
+  [43,  8, 2, 1.7], [54,  3, 1, 2.9], [62, 13, 2, 0.3], [71,  6, 1, 1.4],
+  [80, 11, 2, 2.1], [89,  5, 1, 0.9], [11, 22, 1, 2.6], [21, 27, 2, 1.2],
+  [30, 21, 1, 0.4], [39, 26, 2, 2.0], [49, 20, 1, 1.5], [58, 25, 2, 0.7],
+  [67, 22, 1, 2.4], [76, 27, 2, 1.0], [85, 20, 1, 1.8], [93, 24, 2, 0.2],
+  [ 4, 33, 1, 1.3], [14, 37, 2, 2.7], [24, 32, 1, 0.5], [69, 34, 2, 1.9],
+  [79, 38, 1, 2.2], [90, 33, 2, 0.8], [36, 35, 1, 2.5], [55, 31, 2, 1.6],
+  [46, 41, 1, 0.1], [63, 42, 1, 2.8]
+];
+
+/* ---------- 远景灯会：固定表 ---------- */
+const FAR_LAMPS = [
+  [ 8, 30], [19, 22], [31, 34], [52, 26], [66, 32], [78, 20], [88, 36]
+];
+
+/* ---------- 灯几何（画布 uv 空间；GL y 向上） ---------- */
+const LAMP_C  = { u: 0.5, v: 0.46 };
+const LAMP_HW = 0.315;   // 半宽 = 画布宽的比例
+const LAMP_HH = 0.225;   // 半高 = 画布高的比例
+const PIXEL_BLOCK = 3;   // 像素块边长（CSS px）
+
+/* ---------- 流体配置 ---------- */
+const config = {
+  SIM_RESOLUTION: 128,
+  DYE_RESOLUTION: 640,
+  DENSITY_DISSIPATION: 0.020,   // 灯面上的彩漆不消失
+  VELOCITY_DISSIPATION: 0.40,   // 笔势收住后流会停下
+  PRESSURE: 0.8,
+  PRESSURE_ITERATIONS: 20,
+  CURL: 26,
+  SPLAT_RADIUS: 0.13,
+  SPLAT_FORCE: 3600,
+  COLOR_INTENSITY: 1.30,
+  CONVECT_FORCE: 300,           // 点亮后的烛火对流（确定性）
+  BLOOM_PASSES: 2
+};
+
+function hexToRgb(hex) {
+  const v = parseInt(hex.slice(1), 16);
+  return { r: ((v >> 16) & 255) / 255, g: ((v >> 8) & 255) / 255, b: (v & 255) / 255 };
+}
+
+/* ============================================================
+   WebGL
+   ============================================================ */
+const canvas = document.getElementById('lamp');
+const stage  = document.getElementById('stage');
+
+function supportRenderTextureFormat(g, internalFormat, format, type) {
+  const tex = g.createTexture();
+  g.bindTexture(g.TEXTURE_2D, tex);
+  g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MIN_FILTER, g.NEAREST);
+  g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MAG_FILTER, g.NEAREST);
+  g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_S, g.CLAMP_TO_EDGE);
+  g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_T, g.CLAMP_TO_EDGE);
+  g.texImage2D(g.TEXTURE_2D, 0, internalFormat, 4, 4, 0, format, type, null);
+  const fbo = g.createFramebuffer();
+  g.bindFramebuffer(g.FRAMEBUFFER, fbo);
+  g.framebufferTexture2D(g.FRAMEBUFFER, g.COLOR_ATTACHMENT0, g.TEXTURE_2D, tex, 0);
+  const ok = g.checkFramebufferStatus(g.FRAMEBUFFER) === g.FRAMEBUFFER_COMPLETE;
+  g.bindFramebuffer(g.FRAMEBUFFER, null);
+  g.deleteFramebuffer(fbo); g.deleteTexture(tex);
+  return ok;
+}
+function getSupportedFormat(g, internalFormat, format, type) {
+  if (!supportRenderTextureFormat(g, internalFormat, format, type)) {
+    if (internalFormat === g.R16F)  return getSupportedFormat(g, g.RG16F, g.RG, type);
+    if (internalFormat === g.RG16F) return getSupportedFormat(g, g.RGBA16F, g.RGBA, type);
+    return null;
+  }
+  return { internalFormat, format };
+}
+function getWebGLContext(c) {
+  // alpha:true —— 灯形之外输出 alpha=0，让 CSS 的月与星透出来
+  const params = { alpha: true, depth: false, stencil: false, antialias: false,
+                   premultipliedAlpha: true, preserveDrawingBuffer: true };
+  let g = c.getContext('webgl2', params);
+  const isWebGL2 = !!g;
+  if (!isWebGL2) g = c.getContext('webgl', params) || c.getContext('experimental-webgl', params);
+  if (!g) return null;
+
+  let halfFloat, supportLinearFiltering;
+  if (isWebGL2) {
+    g.getExtension('EXT_color_buffer_float');
+    supportLinearFiltering = g.getExtension('OES_texture_float_linear');
+  } else {
+    halfFloat = g.getExtension('OES_texture_half_float');
+    supportLinearFiltering = g.getExtension('OES_texture_half_float_linear');
+  }
+  g.clearColor(0, 0, 0, 0);
+
+  const halfFloatTexType = isWebGL2 ? g.HALF_FLOAT : (halfFloat ? halfFloat.HALF_FLOAT_OES : g.UNSIGNED_BYTE);
+  let formatRGBA, formatRG, formatR;
+  if (isWebGL2) {
+    formatRGBA = getSupportedFormat(g, g.RGBA16F, g.RGBA, halfFloatTexType);
+    formatRG   = getSupportedFormat(g, g.RG16F,   g.RG,   halfFloatTexType);
+    formatR    = getSupportedFormat(g, g.R16F,    g.RED,  halfFloatTexType);
+  } else {
+    formatRGBA = getSupportedFormat(g, g.RGBA, g.RGBA, halfFloatTexType);
+    formatRG   = getSupportedFormat(g, g.RGBA, g.RGBA, halfFloatTexType);
+    formatR    = getSupportedFormat(g, g.RGBA, g.RGBA, halfFloatTexType);
+  }
+  return { gl: g, isWebGL2,
+           ext: { formatRGBA, formatRG, formatR, halfFloatTexType,
+                  supportLinearFiltering: !!supportLinearFiltering } };
+}
+
+const ctx = getWebGLContext(canvas);
+if (!ctx || !ctx.ext.formatRGBA) {
+  document.getElementById('err').style.display = 'flex';
+  throw new Error('WebGL float unsupported');
+}
+const gl = ctx.gl;
+const ext = ctx.ext;
+
+/* ---------- shader 工具 ---------- */
+function addKeywords(source, keywords) {
+  if (!keywords) return source;
+  let prefix = '';
+  for (const k of keywords) prefix += '#define ' + k + '\n';
+  return prefix + source;
+}
+function compileShader(type, source, keywords) {
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, addKeywords(source, keywords));
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    console.error('shader:', gl.getShaderInfoLog(shader), source);
+  }
+  return shader;
+}
+function createProgram(vs, fs) {
+  const p = gl.createProgram();
+  gl.attachShader(p, vs); gl.attachShader(p, fs);
+  gl.bindAttribLocation(p, 0, 'aPosition');
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) console.error('link:', gl.getProgramInfoLog(p));
+  return p;
+}
+function getUniforms(p) {
+  const u = {};
+  const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+  for (let i = 0; i < n; i++) { const nm = gl.getActiveUniform(p, i).name; u[nm] = gl.getUniformLocation(p, nm); }
+  return u;
+}
+class Program {
+  constructor(vs, fs, keywords) {
+    this.program = createProgram(vs, compileShader(gl.FRAGMENT_SHADER, fs, keywords));
+    this.uniforms = getUniforms(this.program);
+  }
+  bind() { gl.useProgram(this.program); }
+}
+
+/* 模拟用顶点着色器（带四邻 uv） */
+const baseVertex = compileShader(gl.VERTEX_SHADER, `
+  precision highp float;
+  attribute vec2 aPosition;
+  varying vec2 vUv;
+  varying vec2 vL; varying vec2 vR; varying vec2 vT; varying vec2 vB;
+  uniform vec2 texelSize;
+  void main () {
+    vUv = aPosition * 0.5 + 0.5;
+    vL = vUv - vec2(texelSize.x, 0.0);
+    vR = vUv + vec2(texelSize.x, 0.0);
+    vT = vUv + vec2(0.0, texelSize.y);
+    vB = vUv - vec2(0.0, texelSize.y);
+    gl_Position = vec4(aPosition, 0.0, 1.0);
+  }
+`);
+
+/* 后处理用顶点着色器（只要 vUv） */
+const postVertex = compileShader(gl.VERTEX_SHADER, `
+  precision highp float;
+  attribute vec2 aPosition;
+  varying vec2 vUv;
+  void main () {
+    vUv = aPosition * 0.5 + 0.5;
+    gl_Position = vec4(aPosition, 0.0, 1.0);
+  }
+`);
+
+const clearFrag = `
+  precision mediump float; precision mediump sampler2D;
+  varying highp vec2 vUv;
+  uniform sampler2D uTexture; uniform float value;
+  void main () { gl_FragColor = value * texture2D(uTexture, vUv); }
+`;
+
+const splatFrag = `
+  precision highp float; precision highp sampler2D;
+  varying vec2 vUv;
+  uniform sampler2D uTarget;
+  uniform float aspectRatio; uniform vec3 color; uniform vec2 point; uniform float radius;
+  void main () {
+    vec2 p = vUv - point.xy;
+    p.x *= aspectRatio;
+    vec3 splat = exp(-dot(p, p) / radius) * color;
+    vec3 base = texture2D(uTarget, vUv).xyz;
+    gl_FragColor = vec4(base + splat, 1.0);
+  }
+`;
+
+const advectionFrag = `
+  precision highp float; precision highp sampler2D;
+  varying vec2 vUv;
+  uniform sampler2D uVelocity; uniform sampler2D uSource;
+  uniform vec2 texelSize; uniform vec2 dyeTexelSize;
+  uniform float dt; uniform float dissipation;
+  vec4 bilerp (sampler2D sam, vec2 uv, vec2 tsize) {
+    vec2 st = uv / tsize - 0.5;
+    vec2 iuv = floor(st); vec2 fuv = fract(st);
+    vec4 a = texture2D(sam, (iuv + vec2(0.5, 0.5)) * tsize);
+    vec4 b = texture2D(sam, (iuv + vec2(1.5, 0.5)) * tsize);
+    vec4 c = texture2D(sam, (iuv + vec2(0.5, 1.5)) * tsize);
+    vec4 d = texture2D(sam, (iuv + vec2(1.5, 1.5)) * tsize);
+    return mix(mix(a, b, fuv.x), mix(c, d, fuv.x), fuv.y);
+  }
+  void main () {
+  #ifdef MANUAL_FILTERING
+    vec2 coord = vUv - dt * bilerp(uVelocity, vUv, texelSize).xy * texelSize;
+    vec4 result = bilerp(uSource, coord, dyeTexelSize);
+  #else
+    vec2 coord = vUv - dt * texture2D(uVelocity, vUv).xy * texelSize;
+    vec4 result = texture2D(uSource, coord);
+  #endif
+    float decay = 1.0 + dissipation * dt;
+    gl_FragColor = result / decay;
+  }
+`;
+
+const divergenceFrag = `
+  precision mediump float; precision mediump sampler2D;
+  varying highp vec2 vUv; varying highp vec2 vL; varying highp vec2 vR; varying highp vec2 vT; varying highp vec2 vB;
+  uniform sampler2D uVelocity;
+  void main () {
+    float L = texture2D(uVelocity, vL).x;
+    float R = texture2D(uVelocity, vR).x;
+    float T = texture2D(uVelocity, vT).y;
+    float B = texture2D(uVelocity, vB).y;
+    vec2 C = texture2D(uVelocity, vUv).xy;
+    if (vL.x < 0.0) { L = -C.x; }
+    if (vR.x > 1.0) { R = -C.x; }
+    if (vT.y > 1.0) { T = -C.y; }
+    if (vB.y < 0.0) { B = -C.y; }
+    float div = 0.5 * (R - L + T - B);
+    gl_FragColor = vec4(div, 0.0, 0.0, 1.0);
+  }
+`;
+
+const curlFrag = `
+  precision mediump float; precision mediump sampler2D;
+  varying highp vec2 vUv; varying highp vec2 vL; varying highp vec2 vR; varying highp vec2 vT; varying highp vec2 vB;
+  uniform sampler2D uVelocity;
+  void main () {
+    float L = texture2D(uVelocity, vL).y;
+    float R = texture2D(uVelocity, vR).y;
+    float T = texture2D(uVelocity, vT).x;
+    float B = texture2D(uVelocity, vB).x;
+    float vorticity = R - L - T + B;
+    gl_FragColor = vec4(0.5 * vorticity, 0.0, 0.0, 1.0);
+  }
+`;
+
+const vorticityFrag = `
+  precision highp float; precision highp sampler2D;
+  varying vec2 vUv; varying vec2 vL; varying vec2 vR; varying vec2 vT; varying vec2 vB;
+  uniform sampler2D uVelocity; uniform sampler2D uCurl;
+  uniform float curl; uniform float dt;
+  void main () {
+    float L = texture2D(uCurl, vL).x;
+    float R = texture2D(uCurl, vR).x;
+    float T = texture2D(uCurl, vT).x;
+    float B = texture2D(uCurl, vB).x;
+    float C = texture2D(uCurl, vUv).x;
+    vec2 force = 0.5 * vec2(abs(T) - abs(B), abs(R) - abs(L));
+    force /= length(force) + 0.0001;
+    force *= curl * C;
+    force.y *= -1.0;
+    vec2 velocity = texture2D(uVelocity, vUv).xy;
+    velocity += force * dt;
+    velocity = min(max(velocity, -1000.0), 1000.0);
+    gl_FragColor = vec4(velocity, 0.0, 1.0);
+  }
+`;
+
+const pressureFrag = `
+  precision mediump float; precision mediump sampler2D;
+  varying highp vec2 vUv; varying highp vec2 vL; varying highp vec2 vR; varying highp vec2 vT; varying highp vec2 vB;
+  uniform sampler2D uPressure; uniform sampler2D uDivergence;
+  void main () {
+    float L = texture2D(uPressure, vL).x;
+    float R = texture2D(uPressure, vR).x;
+    float T = texture2D(uPressure, vT).x;
+    float B = texture2D(uPressure, vB).x;
+    float divergence = texture2D(uDivergence, vUv).x;
+    float pressure = (L + R + B + T - divergence) * 0.25;
+    gl_FragColor = vec4(pressure, 0.0, 0.0, 1.0);
+  }
+`;
+
+const gradientFrag = `
+  precision mediump float; precision mediump sampler2D;
+  varying highp vec2 vUv; varying highp vec2 vL; varying highp vec2 vR; varying highp vec2 vT; varying highp vec2 vB;
+  uniform sampler2D uPressure; uniform sampler2D uVelocity;
+  void main () {
+    float L = texture2D(uPressure, vL).x;
+    float R = texture2D(uPressure, vR).x;
+    float T = texture2D(uPressure, vT).x;
+    float B = texture2D(uPressure, vB).x;
+    vec2 velocity = texture2D(uVelocity, vUv).xy;
+    velocity.xy -= vec2(R - L, T - B);
+    gl_FragColor = vec4(velocity, 0.0, 1.0);
+  }
+`;
+
+/* ---------- bloom：bright-pass + 双向高斯（1/4 分辨率） ---------- */
+const brightFrag = `
+  precision highp float; precision highp sampler2D;
+  varying vec2 vUv;
+  uniform sampler2D uDye;
+  void main () {
+    vec3 dye = texture2D(uDye, vUv).rgb;
+    float density = max(dye.r, max(dye.g, dye.b));
+    float mn = min(dye.r, min(dye.g, dye.b));
+    float chroma = density - mn;
+    float sat = chroma / max(density, 0.0001);
+    vec3 tint = dye / max(density, 0.0001);
+    float boost = 1.0 + 2.0 * (1.0 - smoothstep(0.35, 1.0, density));
+    vec3 vivid = tint * clamp(density * boost, 0.0, 1.0);
+    vec3 col = mix(clamp(dye, 0.0, 1.0), vivid, smoothstep(0.18, 0.42, sat));
+    float a = smoothstep(0.015, 0.22, density);
+    gl_FragColor = vec4(col * a, 1.0);
+  }
+`;
+
+const blurFrag = `
+  precision highp float; precision highp sampler2D;
+  varying vec2 vUv;
+  uniform sampler2D uTexture;
+  uniform vec2 uDir;
+  void main () {
+    vec3 s = texture2D(uTexture, vUv).rgb * 0.2270270270;
+    s += (texture2D(uTexture, vUv + uDir * 1.3846153846).rgb
+        + texture2D(uTexture, vUv - uDir * 1.3846153846).rgb) * 0.3162162162;
+    s += (texture2D(uTexture, vUv + uDir * 3.2307692308).rgb
+        + texture2D(uTexture, vUv - uDir * 3.2307692308).rgb) * 0.0702702703;
+    gl_FragColor = vec4(s, 1.0);
+  }
+`;
+
+/* ---------- display：透光效应 ---------- */
+const displayFrag = `
+  precision highp float; precision highp sampler2D;
+  varying vec2 vUv;
+
+  uniform sampler2D uDye;
+  uniform sampler2D uBloom;
+  uniform float uTime;
+  uniform float uLit;      /* 0..1 点亮进度 */
+  uniform float uFlash;    /* 火苗刚着的那一下 */
+  uniform vec4  uShapeW;   /* 四盏灯形的混合权重，和为 1 */
+  uniform vec2  uLampC;    /* 灯心（画布 uv） */
+  uniform vec2  uLampH;    /* 灯半宽 / 半高（画布 uv） */
+  uniform vec2  uPix;      /* 像素块尺寸（uv），用于把轮廓量化成像素边 */
+  uniform float uMoon;     /* 月相明度 0..1 */
+
+  const vec3 LAMP   = vec3(1.00, 0.84, 0.55);   /* 烛火暖光 */
+  const vec3 PAPER  = vec3(0.97, 0.91, 0.79);   /* 灯纸 */
+  const vec3 MOONLT = vec3(0.42, 0.50, 0.72);   /* 月光冷调 */
+
+  float sdRoundBox (vec2 p, vec2 b, float r) {
+    vec2 q = abs(p) - b + r;
+    return min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - r;
+  }
+  float sdHexagon (vec2 p, float r) {
+    const vec3 k = vec3(-0.866025404, 0.5, 0.577350269);
+    p = abs(p);
+    p -= 2.0 * min(dot(k.xy, p), 0.0) * k.xy;
+    p -= vec2(clamp(p.x, -k.z * r, k.z * r), r);
+    return length(p) * sign(p.y);
+  }
+  float sdfAt (vec2 q) {
+    vec2 p = (q - uLampC) / uLampH;
+    float d0 = length(p * vec2(1.00, 1.05)) - 1.00;            /* 圆灯 */
+    float d1 = sdRoundBox(p, vec2(0.82, 0.86), 0.15);          /* 方灯 */
+    float d2 = sdHexagon(p, 0.98);                             /* 六角灯 */
+    float a  = atan(p.y, p.x);
+    float d3 = length(p) - (0.84 + 0.16 * cos(a * 8.0 + 0.3926994));  /* 莲花灯 */
+    return uShapeW.x * d0 + uShapeW.y * d1 + uShapeW.z * d2 + uShapeW.w * d3;
+  }
+
+  void main () {
+    /* ---- 颜料：来自流体染料场 ---- */
+    vec3 dye = texture2D(uDye, vUv).rgb;
+    float density = max(dye.r, max(dye.g, dye.b));
+    float mn = min(dye.r, min(dye.g, dye.b));
+    float chroma = density - mn;
+    float sat = chroma / max(density, 0.0001);
+    vec3 tint = dye / max(density, 0.0001);
+    float boost = 1.0 + 2.0 * (1.0 - smoothstep(0.35, 1.0, density));
+    vec3 vivid = tint * clamp(density * boost, 0.0, 1.0);
+    vec3 pigment = mix(clamp(dye, 0.0, 1.0), vivid, smoothstep(0.18, 0.42, sat));
+    float cover = smoothstep(0.00, 0.10, density);
+
+    /* ---- 灯轮廓：像素量化边缘 + 连续边缘（供光晕用） ---- */
+    vec2 q = (floor(vUv / uPix) + 0.5) * uPix;
+    float sdq = sdfAt(q);
+    float sdc = sdfAt(vUv);
+    float mask = smoothstep(0.010, -0.010, sdq);
+
+    /* ---- 烛火光场（确定性闪烁：只由 uTime 驱动） ---- */
+    vec2 fp = uLampC + vec2(0.0, -uLampH.y * 0.30);
+    vec2 fd = (vUv - fp) / uLampH;
+    float fr = length(fd);
+    float flick = 0.900
+                + 0.062 * sin(uTime * 6.70)
+                + 0.040 * sin(uTime * 10.90 + 1.30)
+                + 0.026 * sin(uTime * 2.90 + 0.60);
+    /* 光场：一层铺满整盏灯的暖底光 + 烛火正上方的一团热芯。
+       旧版只有高斯衰减，灯面边缘 lamp 掉到 0.14，整盏灯于是发灰——
+       点亮的灯笼必须是亮的，这是这个原型的全部意义。 */
+    float lamp = (0.52 + 0.48 * exp(-fr * fr * 1.30)) * flick;
+    lamp *= 0.86 + 0.20 * (1.0 - smoothstep(-1.10, 0.90, fd.y));   /* 靠烛火处更热 */
+    lamp += uFlash;
+    lamp = clamp(lamp, 0.0, 1.25);
+
+    vec3 bloom = texture2D(uBloom, vUv).rgb;
+
+    /* ---- 未点亮：月光下的干颜料 ---- */
+    vec3 dryPaper = PAPER * (0.20 + 0.22 * uMoon);
+    vec3 dryPig   = pigment * (0.50 + 0.38 * uMoon);
+    vec3 unlit = mix(dryPaper, dryPig, cover);
+    /* 灯面是鼓的：中间受光多，边缘转暗，于是读得出体积而不是一张平片 */
+    unlit *= 1.0 - 0.34 * clamp(length((vUv - uLampC) / uLampH), 0.0, 1.0);
+    vec2 sd2 = vUv - uLampC + vec2(0.0001);
+    float sheen = 0.5 + 0.5 * dot(normalize(sd2), vec2(-0.70, 0.70));
+    unlit += MOONLT * (1.0 - cover) * sheen * 0.11 * uMoon;
+
+    /* ---- 点亮：透光效应 ----
+       烛火在灯内，颜料是滤光片：厚颜料吸收多 → 深而饱和的色光，
+       薄颜料让暖白烛光透过来 → 发烫的浅色。透射色相比颜料自身的
+       反射色更饱和（真实透光就是如此），故先把色相饱和度推一把。
+       全程把结果压在 1.0 附近留余量——只有烛火正上方那一小点烧到白，
+       整盏灯不能冲成一片白（那会把纹样抹平，正是这个原型要避免的）。 */
+    float tmax = max(tint.r, max(tint.g, tint.b));
+    vec3 hue = tint / max(tmax, 0.0001);
+    hue = mix(hue, hue * hue, 0.45);
+    float absorb  = clamp(density, 0.0, 1.0);
+    float through = 1.0 - 0.62 * absorb;                   /* 透过颜料的总光量 */
+    vec3 transmit = hue * through * (0.55 + 0.75 * absorb) * 1.35;
+    vec3 litPig   = mix(LAMP * 1.05, transmit, smoothstep(0.02, 0.35, absorb));
+    vec3 litPaper = vec3(1.00, 0.88, 0.66);                /* 空白灯纸：暖白，不是纯白 */
+    vec3 lit = mix(litPaper, litPig, cover);
+    /* 0.40 + 0.78*lamp 的峰值正好落在 1.00：空白灯纸烧到 (255,224,168)
+       的暖白而不是纯白——纸的蓝通道只有 0.66，怎么乘都到不了 252，
+       所以「整盏灯冲成一片白」这个失败模式在数学上被封死了。 */
+    lit *= 0.40 + 0.78 * lamp;
+    /* 加性辉光：颜料自己的光向外溢出、流变（克制，不把画面冲白） */
+    lit += bloom * 0.30 * lamp;
+
+    /* 竹篾：受光的竖向骨条（像素阶跃） */
+    float lx = (q.x - uLampC.x) / uLampH.x;
+    float rib = smoothstep(0.80, 0.97, abs(sin(lx * 10.995574)));
+    lit += LAMP * rib * 0.16 * lamp;
+    lit *= 1.0 - rib * cover * 0.10;
+
+    vec3 body = mix(unlit, lit, uLit);
+
+    /* 像素描边：未点亮时压深轮廓，点亮时让位给热边 */
+    float edgeQ = 1.0 - smoothstep(0.00, 0.085, abs(sdq));
+    body = mix(body, vec3(0.075, 0.060, 0.055), edgeQ * (0.50 - 0.34 * uLit));
+
+    /* 热边：光从灯纸边缘逃出来 */
+    float rim = (1.0 - smoothstep(0.0, 0.075, abs(sdc))) * uLit;
+    body += vec3(1.00, 0.78, 0.46) * rim * (0.30 + 0.40 * lamp);
+
+    /* ---- 溢进夜空的光晕：灯会的光就是靠这一圈读出来的 ----
+       SDF 的单位是「灯半宽」，所以指数必须小（3.0），否则光晕在
+       8px 内就死掉了；旧值 15.0 让夜空一点变化都没有。 */
+    float spill = exp(-max(sdc, 0.0) * 3.0) * uLit;
+    float bl = max(bloom.r, max(bloom.g, bloom.b));
+    vec3 glowHue = bloom / max(bl, 0.0001);
+    vec3 spillTint = mix(LAMP, glowHue, 0.55 * smoothstep(0.0, 0.20, bl));
+    vec3 spillCol = spillTint * spill * (0.55 + 0.55 * lamp);
+    float spillA = clamp(spill * 0.95, 0.0, 1.0);
+
+    vec3 straight = mix(spillCol, body, mask);
+    float a = mix(spillA, 1.0, mask);
+    gl_FragColor = vec4(straight * a, a);   /* premultiplied */
+  }
+`;
+
+/* ---------- programs ---------- */
+const clearProgram      = new Program(baseVertex, clearFrag);
+const splatProgram      = new Program(baseVertex, splatFrag);
+const advectionProgram  = new Program(baseVertex, advectionFrag, ext.supportLinearFiltering ? null : ['MANUAL_FILTERING']);
+const divergenceProgram = new Program(baseVertex, divergenceFrag);
+const curlProgram       = new Program(baseVertex, curlFrag);
+const vorticityProgram  = new Program(baseVertex, vorticityFrag);
+const pressureProgram   = new Program(baseVertex, pressureFrag);
+const gradientProgram   = new Program(baseVertex, gradientFrag);
+const brightProgram     = new Program(postVertex, brightFrag);
+const blurProgram       = new Program(postVertex, blurFrag);
+const displayProgram    = new Program(baseVertex, displayFrag);
+
+/* ---------- blit ---------- */
+const blit = (() => {
+  const vb = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vb);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, -1, 1, 1, 1, 1, -1]), gl.STATIC_DRAW);
+  const eb = gl.createBuffer();
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, eb);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 2, 0, 2, 3]), gl.STATIC_DRAW);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(0);
+  return (target) => {
+    if (target == null) {
+      gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    } else {
+      gl.viewport(0, 0, target.width, target.height);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, target.fbo);
+    }
+    gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+  };
+})();
+
+/* ---------- framebuffers ---------- */
+function createFBO(w, h, internalFormat, format, type, param) {
+  gl.activeTexture(gl.TEXTURE0);
+  const texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, param);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, param);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, w, h, 0, format, type, null);
+  const fbo = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+  gl.viewport(0, 0, w, h);
+  gl.clearColor(0, 0, 0, 1);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  return {
+    texture, fbo, width: w, height: h, texelSizeX: 1.0 / w, texelSizeY: 1.0 / h,
+    attach(id) { gl.activeTexture(gl.TEXTURE0 + id); gl.bindTexture(gl.TEXTURE_2D, texture); return id; }
+  };
+}
+function createDoubleFBO(w, h, internalFormat, format, type, param) {
+  let fbo1 = createFBO(w, h, internalFormat, format, type, param);
+  let fbo2 = createFBO(w, h, internalFormat, format, type, param);
+  return {
+    width: w, height: h, texelSizeX: 1.0 / w, texelSizeY: 1.0 / h,
+    get read() { return fbo1; }, set read(v) { fbo1 = v; },
+    get write() { return fbo2; }, set write(v) { fbo2 = v; },
+    swap() { const t = fbo1; fbo1 = fbo2; fbo2 = t; }
+  };
+}
+function getResolution(res) {
+  let aspect = gl.drawingBufferWidth / gl.drawingBufferHeight;
+  if (aspect < 1) aspect = 1.0 / aspect;
+  const min = Math.round(res), max = Math.round(res * aspect);
+  return gl.drawingBufferWidth > gl.drawingBufferHeight
+    ? { width: max, height: min } : { width: min, height: max };
+}
+
+let dye, velocity, divergence, curl, pressure, bloomA, bloomB;
+function initFramebuffers() {
+  const simRes  = getResolution(config.SIM_RESOLUTION);
+  const dyeRes  = getResolution(config.DYE_RESOLUTION);
+  const bloomRes = { width: Math.max(2, Math.round(dyeRes.width / 4)),
+                     height: Math.max(2, Math.round(dyeRes.height / 4)) };
+  const texType = ext.halfFloatTexType;
+  const RGBA = ext.formatRGBA, RG = ext.formatRG, R = ext.formatR;
+  const filtering = ext.supportLinearFiltering ? gl.LINEAR : gl.NEAREST;
+
+  dye        = createDoubleFBO(dyeRes.width, dyeRes.height, RGBA.internalFormat, RGBA.format, texType, filtering);
+  velocity   = createDoubleFBO(simRes.width, simRes.height, RG.internalFormat, RG.format, texType, filtering);
+  divergence = createFBO(simRes.width, simRes.height, R.internalFormat, R.format, texType, gl.NEAREST);
+  curl       = createFBO(simRes.width, simRes.height, R.internalFormat, R.format, texType, gl.NEAREST);
+  pressure   = createDoubleFBO(simRes.width, simRes.height, R.internalFormat, R.format, texType, gl.NEAREST);
+  bloomA     = createFBO(bloomRes.width, bloomRes.height, RGBA.internalFormat, RGBA.format, texType, filtering);
+  bloomB     = createFBO(bloomRes.width, bloomRes.height, RGBA.internalFormat, RGBA.format, texType, filtering);
+}
+
+function resizeCanvas() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = Math.floor(canvas.clientWidth * dpr) || 1;
+  const h = Math.floor(canvas.clientHeight * dpr) || 1;
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; return true; }
+  return false;
+}
+
+resizeCanvas();
+initFramebuffers();
+
+/* ---------- simulation step ---------- */
+function step(dt) {
+  gl.disable(gl.BLEND);
+
+  curlProgram.bind();
+  gl.uniform2f(curlProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+  gl.uniform1i(curlProgram.uniforms.uVelocity, velocity.read.attach(0));
+  blit(curl);
+
+  vorticityProgram.bind();
+  gl.uniform2f(vorticityProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+  gl.uniform1i(vorticityProgram.uniforms.uVelocity, velocity.read.attach(0));
+  gl.uniform1i(vorticityProgram.uniforms.uCurl, curl.attach(1));
+  gl.uniform1f(vorticityProgram.uniforms.curl, config.CURL);
+  gl.uniform1f(vorticityProgram.uniforms.dt, dt);
+  blit(velocity.write); velocity.swap();
+
+  divergenceProgram.bind();
+  gl.uniform2f(divergenceProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+  gl.uniform1i(divergenceProgram.uniforms.uVelocity, velocity.read.attach(0));
+  blit(divergence);
+
+  clearProgram.bind();
+  gl.uniform1i(clearProgram.uniforms.uTexture, pressure.read.attach(0));
+  gl.uniform1f(clearProgram.uniforms.value, config.PRESSURE);
+  blit(pressure.write); pressure.swap();
+
+  pressureProgram.bind();
+  gl.uniform2f(pressureProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+  gl.uniform1i(pressureProgram.uniforms.uDivergence, divergence.attach(0));
+  for (let i = 0; i < config.PRESSURE_ITERATIONS; i++) {
+    gl.uniform1i(pressureProgram.uniforms.uPressure, pressure.read.attach(1));
+    blit(pressure.write); pressure.swap();
+  }
+
+  gradientProgram.bind();
+  gl.uniform2f(gradientProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+  gl.uniform1i(gradientProgram.uniforms.uPressure, pressure.read.attach(0));
+  gl.uniform1i(gradientProgram.uniforms.uVelocity, velocity.read.attach(1));
+  blit(velocity.write); velocity.swap();
+
+  // advect velocity
+  advectionProgram.bind();
+  gl.uniform2f(advectionProgram.uniforms.texelSize, velocity.texelSizeX, velocity.texelSizeY);
+  if (!ext.supportLinearFiltering) gl.uniform2f(advectionProgram.uniforms.dyeTexelSize, velocity.texelSizeX, velocity.texelSizeY);
+  const velId = velocity.read.attach(0);
+  gl.uniform1i(advectionProgram.uniforms.uVelocity, velId);
+  gl.uniform1i(advectionProgram.uniforms.uSource, velId);
+  gl.uniform1f(advectionProgram.uniforms.dt, dt);
+  gl.uniform1f(advectionProgram.uniforms.dissipation, config.VELOCITY_DISSIPATION);
+  blit(velocity.write); velocity.swap();
+
+  // advect dye
+  if (!ext.supportLinearFiltering) gl.uniform2f(advectionProgram.uniforms.dyeTexelSize, dye.texelSizeX, dye.texelSizeY);
+  gl.uniform1i(advectionProgram.uniforms.uVelocity, velocity.read.attach(0));
+  gl.uniform1i(advectionProgram.uniforms.uSource, dye.read.attach(1));
+  gl.uniform1f(advectionProgram.uniforms.dissipation, config.DENSITY_DISSIPATION);
+  blit(dye.write); dye.swap();
+}
+
+/* ---------- bloom passes ---------- */
+function renderBloom() {
+  gl.disable(gl.BLEND);
+
+  brightProgram.bind();
+  gl.uniform1i(brightProgram.uniforms.uDye, dye.read.attach(0));
+  blit(bloomA);
+
+  blurProgram.bind();
+  gl.uniform1i(blurProgram.uniforms.uTexture, 0);
+  for (let i = 0; i < config.BLOOM_PASSES; i++) {
+    const spread = i === 0 ? 1.0 : 2.6;
+    gl.uniform2f(blurProgram.uniforms.uDir, bloomA.texelSizeX * spread, 0.0);
+    gl.uniform1i(blurProgram.uniforms.uTexture, bloomA.attach(0));
+    blit(bloomB);
+
+    gl.uniform2f(blurProgram.uniforms.uDir, 0.0, bloomB.texelSizeY * spread);
+    gl.uniform1i(blurProgram.uniforms.uTexture, bloomB.attach(0));
+    blit(bloomA);
+  }
+}
+
+function render() {
+  displayProgram.bind();
+  gl.uniform1i(displayProgram.uniforms.uDye, dye.read.attach(0));
+  gl.uniform1i(displayProgram.uniforms.uBloom, bloomA.attach(1));
+  gl.uniform1f(displayProgram.uniforms.uTime, time);
+  gl.uniform1f(displayProgram.uniforms.uLit, litLevel);
+  gl.uniform1f(displayProgram.uniforms.uFlash, litFlash);
+  gl.uniform4f(displayProgram.uniforms.uShapeW, shapeW[0], shapeW[1], shapeW[2], shapeW[3]);
+  gl.uniform2f(displayProgram.uniforms.uLampC, LAMP_C.u, LAMP_C.v);
+  gl.uniform2f(displayProgram.uniforms.uLampH, LAMP_HW, LAMP_HH);
+  gl.uniform2f(displayProgram.uniforms.uPix, pixU, pixV);
+  gl.uniform1f(displayProgram.uniforms.uMoon, moonBright);
+  blit(null);
+}
+
+/* ---------- splats ---------- */
+function correctRadius(radius) {
+  const aspect = canvas.width / canvas.height;
+  return aspect > 1 ? radius * aspect : radius;
+}
+function splatVelocity(x, y, dx, dy) {
+  splatProgram.bind();
+  gl.uniform1i(splatProgram.uniforms.uTarget, velocity.read.attach(0));
+  gl.uniform1f(splatProgram.uniforms.aspectRatio, canvas.width / canvas.height);
+  gl.uniform2f(splatProgram.uniforms.point, x, y);
+  gl.uniform3f(splatProgram.uniforms.color, dx, dy, 0.0);
+  gl.uniform1f(splatProgram.uniforms.radius, correctRadius(config.SPLAT_RADIUS / 100.0));
+  blit(velocity.write); velocity.swap();
+}
+function splatDye(x, y, color) {
+  splatProgram.bind();
+  gl.uniform1i(splatProgram.uniforms.uTarget, dye.read.attach(0));
+  gl.uniform1f(splatProgram.uniforms.aspectRatio, canvas.width / canvas.height);
+  gl.uniform2f(splatProgram.uniforms.point, x, y);
+  gl.uniform3f(splatProgram.uniforms.color, color.r, color.g, color.b);
+  gl.uniform1f(splatProgram.uniforms.radius, correctRadius(config.SPLAT_RADIUS / 100.0));
+  blit(dye.write); dye.swap();
+}
+
+/* ============================================================
+   交互状态
+   ============================================================ */
+let time = 0;
+let lastTime = performance.now();
+
+let pixU = 1 / 130, pixV = 1 / 187;
+let moonBright = PHASES[0].bright;
+let phaseIndex = 0;
+
+/* 点亮过渡（固定排程：时长 + 缓动，零随机） */
+let litLevel = 0, litTarget = 0, litFrom = 0, litT = 0, litFlash = 0;
+function setLit(on) {
+  litTarget = on ? 1 : 0;
+  litFrom = litLevel;
+  litT = 0;
+  stage.classList.toggle('is-lit', on);
+  const btn = document.getElementById('light-btn');
+  btn.classList.toggle('is-on', on);
+  btn.textContent = on ? '熄 灯' : '点 亮';
+}
+function updateLit(dt) {
+  if (litLevel === litTarget) { litFlash = 0; return; }
+  litT += dt;
+  const dur = litTarget === 1 ? 1.15 : 0.70;
+  const p = Math.min(1, litT / dur);
+  const e = litTarget === 1 ? 1 - Math.pow(1 - p, 3) : 1 - Math.pow(1 - p, 2);
+  litLevel = litFrom + (litTarget - litFrom) * e;
+  litFlash = litTarget === 1 ? Math.exp(-litT * 5.0) * 0.55 * (1 - p) : 0;
+  if (p >= 1) { litLevel = litTarget; litFlash = 0; }
+}
+
+/* 灯形过渡：四个 SDF 按权重混合，于是换灯形是一次形变而不是一次跳变 */
+let shapeW     = [1, 0, 0, 0];
+let shapeFrom  = [1, 0, 0, 0];
+let shapeTo    = [1, 0, 0, 0];
+let shapeT     = 1;
+const SHAPE_DUR = 0.45;
+function setShape(i) {
+  shapeFrom = shapeW.slice();
+  shapeTo = [0, 0, 0, 0];
+  shapeTo[i] = 1;
+  shapeT = 0;
+}
+function updateShape(dt) {
+  if (shapeT >= 1) return;
+  shapeT = Math.min(1, shapeT + dt / SHAPE_DUR);
+  const e = 1 - Math.pow(1 - shapeT, 3);
+  for (let i = 0; i < 4; i++) shapeW[i] = shapeFrom[i] + (shapeTo[i] - shapeFrom[i]) * e;
+}
+
+/* 烛火对流：点亮后灯内热气上升，颜料在光里持续流变。
+   三个相位固定的正弦单元，零随机、连续无跳变。 */
+function convection(t) {
+  for (let i = 0; i < 3; i++) {
+    const ph = t * 0.52 + i * 2.0943951;
+    const x = LAMP_C.u + Math.sin(ph) * LAMP_HW * 0.55;
+    const y = LAMP_C.v + Math.sin(ph * 0.77 + 1.0471975) * LAMP_HH * 0.62;
+    splatVelocity(x, y,
+                  Math.cos(ph * 1.7) * config.CONVECT_FORCE * 0.6,
+                  config.CONVECT_FORCE);
+  }
+}
+
+/* ---------- 指针：绘纹 ---------- */
+let colorIndex = 0;
+let currentColor = (() => {
+  const c = hexToRgb(PALETTE[0].hex);
+  return { r: c.r * config.COLOR_INTENSITY, g: c.g * config.COLOR_INTENSITY, b: c.b * config.COLOR_INTENSITY };
+})();
+
+const pointer = { down: false, id: -1, x: 0, y: 0, prevX: 0, prevY: 0 };
+
+function uvOf(clientX, clientY) {
+  const r = canvas.getBoundingClientRect();
+  return { x: (clientX - r.left) / r.width, y: 1.0 - (clientY - r.top) / r.height };
+}
+function onLamp(uv) {
+  return Math.abs(uv.x - LAMP_C.u) <= LAMP_HW * 1.02 &&
+         Math.abs(uv.y - LAMP_C.v) <= LAMP_HH * 1.02;
+}
+function paint(x, y, dx, dy) {
+  if (Math.abs(dx) > 0.00005 || Math.abs(dy) > 0.00005) {
+    splatVelocity(x, y, dx * config.SPLAT_FORCE, dy * config.SPLAT_FORCE);
+  }
+  splatDye(x, y, currentColor);
+}
+
+canvas.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  const uv = uvOf(e.clientX, e.clientY);
+  if (!onLamp(uv)) return;
+  pointer.down = true;
+  pointer.id = e.pointerId;
+  if (canvas.setPointerCapture) { try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* window listeners still track */ } }
+  pointer.x = uv.x; pointer.y = uv.y; pointer.prevX = uv.x; pointer.prevY = uv.y;
+  paint(uv.x, uv.y, 0, 0);
+});
+
+window.addEventListener('pointermove', (e) => {
+  if (!pointer.down || e.pointerId !== pointer.id) return;
+  e.preventDefault();
+  const uv = uvOf(e.clientX, e.clientY);
+  const cx = Math.max(LAMP_C.u - LAMP_HW, Math.min(LAMP_C.u + LAMP_HW, uv.x));
+  const cy = Math.max(LAMP_C.v - LAMP_HH, Math.min(LAMP_C.v + LAMP_HH, uv.y));
+  const dx = cx - pointer.prevX, dy = cy - pointer.prevY;
+  pointer.prevX = pointer.x; pointer.prevY = pointer.y;
+  pointer.x = cx; pointer.y = cy;
+  // 沿折线补两笔，笔触不断线
+  paint(pointer.prevX + dx * 0.33, pointer.prevY + dy * 0.33, dx * 0.33, dy * 0.33);
+  paint(pointer.prevX + dx * 0.66, pointer.prevY + dy * 0.66, dx * 0.33, dy * 0.33);
+  paint(cx, cy, dx * 0.34, dy * 0.34);
+});
+
+function releasePointer(e) {
+  if (!pointer.down || (e && e.pointerId !== pointer.id)) return;
+  pointer.down = false; pointer.id = -1;
+}
+window.addEventListener('pointerup', releasePointer);
+window.addEventListener('pointercancel', releasePointer);
+
+/* ============================================================
+   DOM：星 / 远景灯 / 调色盘 / 灯形 / 月相 / 灯几何
+   ============================================================ */
+(function buildStars() {
+  const host = document.getElementById('stars');
+  STARS.forEach((s) => {
+    const d = document.createElement('span');
+    d.className = 'star';
+    d.style.left = s[0] + '%';
+    d.style.top = s[1] + '%';
+    d.style.width = s[2] + 'px';
+    d.style.height = s[2] + 'px';
+    d.style.animationDelay = s[3].toFixed(1) + 's';
+    host.appendChild(d);
+  });
+})();
+
+(function buildFarLamps() {
+  const host = document.getElementById('far-lamps');
+  FAR_LAMPS.forEach((l) => {
+    const d = document.createElement('span');
+    d.className = 'fl';
+    d.style.left = l[0] + '%';
+    d.style.bottom = l[1] + 'px';
+    host.appendChild(d);
+  });
+})();
+
+const paletteEl = document.getElementById('palette');
+const labelEl   = document.getElementById('current-label');
+
+/* 单行上下文标签：灯色高亮为暖金，后半句随点亮状态切换 */
+function updateLabel() {
+  const tip = litTarget === 1
+    ? '灯光透过纹样，色彩在光里流变'
+    : '拖动灯面绘纹，彩漆自会扩散';
+  labelEl.innerHTML = '灯色 <b>' + PALETTE[colorIndex].name + '</b> · ' + tip;
+}
+
+function selectColor(i) {
+  colorIndex = i;
+  const base = hexToRgb(PALETTE[i].hex);
+  currentColor = { r: base.r * config.COLOR_INTENSITY,
+                   g: base.g * config.COLOR_INTENSITY,
+                   b: base.b * config.COLOR_INTENSITY };
+  Array.prototype.forEach.call(paletteEl.children, (el, idx) => {
+    el.setAttribute('aria-pressed', idx === i ? 'true' : 'false');
+  });
+  updateLabel();
+}
+
+PALETTE.forEach((c, i) => {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'swatch';
+  btn.dataset.colorIndex = String(i);
+  btn.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
+  btn.setAttribute('aria-label', '灯色 ' + c.name + ' ' + c.en);
+  btn.style.setProperty('--c', c.hex);
+  const nm = document.createElement('span');
+  nm.className = 'nm';
+  nm.textContent = c.name;
+  btn.appendChild(nm);
+  btn.addEventListener('click', () => selectColor(i));
+  paletteEl.appendChild(btn);
+});
+
+const shapesEl = document.getElementById('shapes');
+let shapeIndex = 0;
+SHAPES.forEach((s, i) => {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'shape-btn';
+  btn.dataset.shapeIndex = String(i);
+  btn.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
+  btn.setAttribute('aria-label', '灯形 ' + s.name);
+  btn.innerHTML =
+    '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+      '<path d="' + s.glyph + '" fill="none" stroke="currentColor" stroke-width="1.5"/>' +
+    '</svg><span>' + s.name + '</span>';
+  btn.addEventListener('click', () => {
+    shapeIndex = i;
+    setShape(i);
+    Array.prototype.forEach.call(shapesEl.children, (el, idx) => {
+      el.setAttribute('aria-pressed', idx === i ? 'true' : 'false');
+    });
+  });
+  shapesEl.appendChild(btn);
+});
+
+const moonEl   = document.getElementById('moon');
+const phaseBtn = document.getElementById('phase-btn');
+function setPhase(i) {
+  phaseIndex = i;
+  const p = PHASES[i];
+  moonEl.setAttribute('data-phase', p.code);
+  moonEl.style.setProperty('--cover', String(p.cover));
+  moonBright = p.bright;
+  phaseBtn.querySelector('.pname').textContent = p.name;
+}
+phaseBtn.addEventListener('click', () => setPhase((phaseIndex + 1) % PHASES.length));
+setPhase(0);
+
+document.getElementById('light-btn').addEventListener('click', () => {
+  setLit(litTarget === 0);
+  updateLabel();
+});
+
+document.getElementById('reset-btn').addEventListener('click', () => {
+  initFramebuffers();
+  setLit(false);
+  updateLabel();
+});
+
+updateLabel();
+
+/* 灯几何同步给 CSS（骨架与着色器同源同值） */
+function syncGeometry() {
+  const r = stage.getBoundingClientRect();
+  const cx = LAMP_C.u * r.width;
+  const cy = (1 - LAMP_C.v) * r.height;
+  const hw = LAMP_HW * r.width;
+  const hh = LAMP_HH * r.height;
+  stage.style.setProperty('--cx', cx.toFixed(1) + 'px');
+  stage.style.setProperty('--cy', cy.toFixed(1) + 'px');
+  stage.style.setProperty('--hw', hw.toFixed(1) + 'px');
+  stage.style.setProperty('--hh', hh.toFixed(1) + 'px');
+  pixU = PIXEL_BLOCK / Math.max(1, r.width);
+  pixV = PIXEL_BLOCK / Math.max(1, r.height);
+}
+syncGeometry();
+
+window.addEventListener('resize', () => {
+  syncGeometry();
+  if (resizeCanvas()) initFramebuffers();
+});
+
+/* ============================================================
+   主循环（唯一的 rAF）
+   ============================================================ */
+function frame() {
+  const now = performance.now();
+  let dt = (now - lastTime) / 1000;
+  lastTime = now;
+  dt = Math.min(dt, 1 / 60);
+  time += dt;
+
+  updateLit(dt);
+  updateShape(dt);
+  if (litLevel > 0.001) convection(time);
+
+  step(dt);
+  renderBloom();
+  render();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ============================================================
+   验证探针（原型专用，只读）
+   ============================================================ */
+window.YDProbe = {
+  ok: true,
+  state: function () {
+    return { color: colorIndex, shape: shapeIndex, lit: litTarget,
+             litLevel: litLevel, phase: phaseIndex,
+             glLost: gl.isContextLost() };
+  },
+  /* 灯面矩形内的像素统计：亮度 / 有色像素数（判断绘纹与透光） */
+  lampPixels: function () {
+    const w = canvas.width, h = canvas.height;
+    const x0 = Math.max(0, Math.floor((LAMP_C.u - LAMP_HW * 0.62) * w));
+    const x1 = Math.min(w, Math.ceil((LAMP_C.u + LAMP_HW * 0.62) * w));
+    const y0 = Math.max(0, Math.floor((LAMP_C.v - LAMP_HH * 0.62) * h));
+    const y1 = Math.min(h, Math.ceil((LAMP_C.v + LAMP_HH * 0.62) * h));
+    const rw = x1 - x0, rh = y1 - y0;
+    if (rw <= 0 || rh <= 0) return null;
+    const buf = new Uint8Array(rw * rh * 4);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.readPixels(x0, y0, rw, rh, gl.RGBA, gl.UNSIGNED_BYTE, buf);
+    let sum = 0, chromaHits = 0, brightHits = 0, aSum = 0;
+    const n = rw * rh;
+    for (let i = 0; i < buf.length; i += 4) {
+      const r = buf[i], g = buf[i + 1], b = buf[i + 2], a = buf[i + 3];
+      const mx = Math.max(r, g, b), mn2 = Math.min(r, g, b);
+      sum += (r + g + b) / 3;
+      aSum += a;
+      if (a > 40 && mx - mn2 > 18) chromaHits++;
+      if ((r + g + b) / 3 > 150) brightHits++;
+    }
+    return { luma: sum / n, alpha: aSum / n,
+             chromaPixels: chromaHits, brightPixels: brightHits, total: n };
+  }
+};
+</script>
+</body>
+</html>

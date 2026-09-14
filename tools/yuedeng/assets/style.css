@@ -1,0 +1,1069 @@
+/* ============================================================
+   月下灯会 · 样式表
+   设计系统：所有颜色 / 间距 / 字号 / 圆角 / 动效均取自 :root token。
+   设计语言与已验证原型 tools/yuedeng/prototype.html 同源
+   （契约见 docs/specs/2026-09-13-yuedeng-design.md）。
+   ============================================================ */
+
+/* ---------- design tokens · 传统调色盘（设计文档 §5）+ 像素月夜 ---------- */
+:root {
+  /* 传统五色（灯色） */
+  --c-yuebai:  #DCE9E4;   /* 月白 */
+  --c-guijin:  #E8B84B;   /* 桂金 */
+  --c-zhusha:  #C9483C;   /* 朱砂 */
+  --c-qingjin: #35619E;   /* 青金 */
+  --c-dailan:  #2B3A55;   /* 黛蓝 */
+
+  /* 夜空 */
+  --night-0: #05070F;
+  --night-1: #0A1024;
+  --night-2: #111B36;
+  --night-3: #17233F;
+  --horizon: #0C1220;
+
+  /* 月（与月宴同源） */
+  --moon:      #F2E4C4;
+  --moon-dk:   #C8B795;
+  --moon-rim:  #3A2E26;
+  --halo:      #E8B84B;
+  --cloud-lt:  #DCD3C2;
+  --cloud-md:  #B6AB97;
+  --cloud-dk:  #8C8272;
+
+  /* 灯 / 纸 */
+  --paper:     #F7EFE2;
+  --lamp-warm: #F5C77E;
+  --ink:       #3A2E26;
+  --ink-soft:  #221A15;
+  --wood:      #B8733A;
+  --wood-dk:   #7A4A24;
+
+  /* 间距（4px 基准） */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 24px; --sp-6: 32px; --sp-7: 48px;
+
+  /* 字号（与漆扇同源） */
+  --fs-2xs: 10px;
+  --fs-xs: 11px;
+  --fs-sm: 12.5px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 20px;
+  --fs-2xl: 26px;
+  --fs-title: 38px;
+
+  /* 圆角 */
+  --r-sm: 6px;  --r-md: 10px; --r-lg: 18px; --r-pill: 999px;
+
+  /* 动效（与漆扇同源） */
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --dur-1: 0.16s;
+  --dur-2: 0.28s;
+  --dur-3: 0.5s;
+
+  /* 面板 / 描边 / 文字层级（与漆扇同源） */
+  --panel:        rgba(8, 12, 20, 0.46);
+  --panel-solid:  #0A1024;
+  --line:         rgba(242, 228, 196, 0.12);
+  --line-strong:  rgba(242, 228, 196, 0.22);
+  --paper-dim:    rgba(247, 239, 226, 0.62);
+  --paper-faint:  rgba(247, 239, 226, 0.34);
+  --gold-soft:    rgba(232, 184, 75, 0.55);
+  --gold-faint:   rgba(232, 184, 75, 0.16);
+  --cinnabar-soft: rgba(201, 72, 60, 0.35);
+
+  /* 字体 · 楷体（与漆扇同源；仅取系统本地字体，无网络引用） */
+  --font: "Kaiti SC", "STKaiti", "KaiTi", -apple-system, BlinkMacSystemFont,
+          "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", serif;
+
+  --swatch: 38px;
+  --content-w: 340px;
+
+  /* 灯几何：JS 写入实际像素值 */
+  --cx: 195px; --cy: 318px; --hw: 123px; --hh: 132px;
+}
+
+/* ---------- base ---------- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: var(--night-0); }
+body {
+  font-family: var(--font);
+  color: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+#app { height: 100%; }
+
+.view {
+  display: none;
+  position: fixed;
+  inset: 0;
+  flex-direction: column;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.view.is-active { display: flex; }
+
+/* ---------- buttons ---------- */
+.primary-btn {
+  font-family: var(--font);
+  font-size: var(--fs-lg);
+  letter-spacing: var(--sp-1);
+  padding: var(--sp-3) var(--sp-5);
+  min-height: 44px;
+  color: var(--night-0);
+  background: linear-gradient(180deg, var(--halo) 0%, #C08A22 100%);
+  border: 1px solid var(--gold-soft);
+  border-radius: var(--r-pill);
+  box-shadow: 0 var(--sp-1) var(--sp-4) rgba(232, 184, 75, 0.32);
+  cursor: pointer;
+  transition: transform var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
+}
+.primary-btn:active { transform: translateY(2px); box-shadow: none; }
+.primary-btn:disabled { opacity: 0.42; cursor: default; box-shadow: none; }
+.primary-btn.wide { width: 100%; }
+
+.ghost-btn {
+  font-family: var(--font);
+  font-size: var(--fs-md);
+  letter-spacing: var(--sp-1);
+  padding: var(--sp-2) var(--sp-4);
+  min-height: 44px;
+  color: var(--paper-dim);
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease),
+              transform var(--dur-1) var(--ease);
+}
+.ghost-btn:hover { color: var(--moon); border-color: var(--gold-soft); }
+.ghost-btn:active { transform: translateY(1px); }
+
+.chip-btn {
+  font-family: var(--font);
+  font-size: var(--fs-sm);
+  letter-spacing: 2px;
+  padding: var(--sp-2) var(--sp-3);
+  min-height: 44px;
+  color: var(--paper-dim);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  backdrop-filter: blur(var(--sp-3));
+  -webkit-backdrop-filter: blur(var(--sp-3));
+  transition: color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+.chip-btn:hover { color: var(--moon); border-color: var(--gold-soft); }
+.chip-gold { color: var(--moon); border-color: var(--gold-soft); }
+
+/* ============================================================
+   view-home · 中秋灯会文化
+   ============================================================ */
+#view-home {
+  background:
+    radial-gradient(120% 62% at 50% 16%,
+      rgba(232, 184, 75, 0.10) 0%,
+      rgba(232, 184, 75, 0.03) 42%,
+      rgba(232, 184, 75, 0) 72%),
+    linear-gradient(to bottom,
+      var(--night-0) 0%,
+      var(--night-1) 34%,
+      var(--night-2) 68%,
+      var(--night-3) 100%);
+}
+.home-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-5) var(--sp-5) var(--sp-4);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.home-series { font-size: var(--fs-xs); letter-spacing: var(--sp-1); color: var(--paper-faint); }
+.home-title { display: flex; gap: var(--sp-2); }
+.home-title span {
+  font-size: 30px;
+  color: var(--moon);
+  width: 60px; height: 60px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--gold-faint);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  text-shadow: 0 0 var(--sp-5) rgba(232, 184, 75, 0.20);
+}
+.home-sub { font-size: var(--fs-md); letter-spacing: var(--sp-1); color: var(--halo); }
+
+/* 首页意象：月下小灯（固定结构，零随机） */
+.home-vig {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  height: 176px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line-strong);
+  overflow: hidden;
+  box-shadow: 0 var(--sp-4) var(--sp-6) rgba(0, 0, 0, 0.5);
+  flex-shrink: 0;
+  background:
+    radial-gradient(90% 60% at 50% 56px,
+      rgba(232, 184, 75, 0.16) 0%,
+      rgba(232, 184, 75, 0.05) 40%,
+      rgba(232, 184, 75, 0) 72%),
+    linear-gradient(to bottom,
+      var(--night-1) 0%,
+      var(--night-2) 60%,
+      var(--night-3) 100%);
+}
+.vig-star { position: absolute; background: var(--moon); opacity: 0.6; }
+.vig-star.s1 { left: 12%; top: 18%; width: 2px; height: 2px; }
+.vig-star.s2 { left: 26%; top: 10%; width: 1px; height: 1px; }
+.vig-star.s3 { left: 78%; top: 14%; width: 2px; height: 2px; }
+.vig-star.s4 { left: 88%; top: 28%; width: 1px; height: 1px; }
+.vig-halo {
+  position: absolute; left: 50%; top: 56px;
+  width: 96px; height: 96px; margin: -48px 0 0 -48px;
+  background: var(--halo); opacity: 0.26;
+  clip-path: polygon(34% 0, 66% 0, 86% 14%, 100% 34%, 100% 66%,
+                     86% 86%, 66% 100%, 34% 100%, 14% 86%, 0 66%, 0 34%, 14% 14%);
+}
+.vig-moon {
+  position: absolute; left: 50%; top: 56px;
+  width: 76px; height: 76px; margin: -38px 0 0 -38px;
+  border-radius: 50%;
+  background: url(img/moon.webp) center / 100% 100% no-repeat;
+}
+.vig-lamp {
+  position: absolute; left: 50%; bottom: 28px;
+  transform: translateX(-50%);
+  width: 46px; height: 64px;
+}
+.vl-glow {
+  position: absolute; left: -8px; top: 2px;
+  width: 62px; height: 58px; border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(245, 199, 126, 0.38) 0%,
+    rgba(245, 199, 126, 0) 70%);
+}
+.vl-cap {
+  position: absolute; left: 9px; top: 0;
+  width: 28px; height: 6px;
+  background: var(--wood); border: 2px solid var(--wood-dk);
+}
+.vl-body {
+  position: absolute; left: 3px; top: 8px;
+  width: 40px; height: 42px;
+  background: var(--lamp-warm);
+  clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+}
+.vl-base {
+  position: absolute; left: 11px; top: 50px;
+  width: 24px; height: 6px;
+  background: var(--wood); border: 2px solid var(--wood-dk);
+}
+.vl-tassel {
+  position: absolute; left: 21px; top: 56px;
+  width: 4px; height: 8px;
+  background: var(--c-zhusha);
+}
+.home-vig-label {
+  position: absolute; left: 0; right: 0; bottom: var(--sp-2);
+  text-align: center;
+  font-size: var(--fs-2xs); letter-spacing: var(--sp-1);
+  color: var(--paper-faint);
+}
+
+.card {
+  width: 100%;
+  max-width: var(--content-w);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: var(--sp-1) solid var(--gold-soft);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+  backdrop-filter: blur(var(--sp-3));
+  -webkit-backdrop-filter: blur(var(--sp-3));
+}
+.card-title {
+  font-size: var(--fs-sm);
+  letter-spacing: var(--sp-1);
+  color: var(--halo);
+  margin-bottom: var(--sp-2);
+}
+.card p {
+  font-size: var(--fs-sm);
+  line-height: 1.85;
+  color: var(--paper-dim);
+  margin-top: var(--sp-2);
+}
+.card p:first-of-type { margin-top: 0; }
+.card p b { color: var(--paper); font-weight: normal; }
+
+/* 我的彩灯 */
+.works { width: 100%; max-width: var(--content-w); }
+.works-label { font-size: var(--fs-sm); letter-spacing: var(--sp-1); color: var(--halo); margin-bottom: var(--sp-2); }
+.works-row { display: flex; gap: var(--sp-2); overflow-x: auto; padding-bottom: var(--sp-2); }
+.works-row::-webkit-scrollbar { display: none; }
+.work-thumb {
+  position: relative;
+  flex-shrink: 0;
+  width: 76px; height: 92px;
+  min-width: 44px; min-height: 44px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: var(--panel-solid);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+.work-thumb:hover { transform: translateY(-2px); border-color: var(--gold-soft); }
+.work-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.work-thumb .wn {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: var(--sp-1) 0;
+  text-align: center;
+  font-size: var(--fs-2xs);
+  color: var(--paper);
+  background: linear-gradient(to top, rgba(6, 11, 18, 0.86), rgba(6, 11, 18, 0));
+}
+.works-empty { font-size: var(--fs-sm); color: var(--paper-faint); }
+
+.home-foot {
+  text-align: center;
+  font-size: var(--fs-2xs);
+  letter-spacing: var(--sp-1);
+  color: var(--paper-faint);
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+}
+
+/* ============================================================
+   view-create · 创作台（夜空 + 月 + 灯 + 操作台）
+   ============================================================ */
+#view-create {
+  padding-bottom: 0;   /* 底部安全区由 .dock 自己处理（与原型同源） */
+  /* 整幅夜空底色：顶栏与操作台的渐变都淡出到它，
+     于是界面不再是一块实心板，夜空可以透过来 */
+  background: linear-gradient(to bottom,
+    var(--night-0) 0%,
+    var(--night-1) 30%,
+    var(--night-2) 62%,
+    var(--night-3) 100%);
+}
+
+/* --- 顶栏：匾额 + 返回 / 月相 / 放灯 --- */
+.top {
+  flex: none; height: 52px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-3);
+  background: linear-gradient(to bottom, rgba(6,11,18,0.6), rgba(6,11,18,0));
+}
+.brand { display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
+.seal {
+  flex: none;
+  font-size: 10px; letter-spacing: 0.10em; line-height: 1;
+  color: var(--paper); background: var(--c-zhusha);
+  padding: 4px 6px; border-radius: var(--sp-1);
+  box-shadow: 0 2px var(--sp-3) var(--cinnabar-soft);
+}
+.brand-title {
+  font-size: 20px; letter-spacing: 2px;
+  color: var(--moon); white-space: nowrap;
+  text-shadow: 0 0 var(--sp-5) rgba(232,184,75,0.20);
+}
+.top-actions { display: flex; align-items: center; gap: var(--sp-2); min-width: 0; }
+
+/* 月相：一枚按钮循环五档（月宴 MOON_COVER 同源） */
+#phase-btn {
+  flex: none; min-height: 44px; min-width: 44px;
+  display: flex; align-items: center; gap: var(--sp-2);
+  font-family: var(--font);
+  font-size: 14px; letter-spacing: 2px;
+  color: var(--paper-dim);
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  padding: var(--sp-2) var(--sp-3);
+  cursor: pointer;
+  transition: color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease),
+              transform var(--dur-1) var(--ease);
+}
+#phase-btn:hover { color: var(--moon); border-color: var(--gold-soft); }
+#phase-btn:active { transform: translateY(1px); }
+#phase-btn .pdot {
+  flex: none; width: 10px; height: 10px;
+  background: var(--moon); border-radius: 50%;
+  box-shadow: 0 0 var(--sp-2) rgba(242,228,196,0.48);
+}
+#phase-btn .pname { white-space: nowrap; }
+
+/* --- 舞台：夜空 + 月 + 灯 --- */
+.stage {
+  position: relative; flex: 1 1 auto; min-height: 0;
+  overflow: hidden;
+  /* 三层夜空：月位的暖光晕（径向）→ 月位的冷光晕（径向）→ 原线性渐变。
+     线性渐变留在最底，所以地平线一侧依旧更暗，月始终是焦点。 */
+  background:
+    radial-gradient(120% 62% at 50% 124px,
+      rgba(232,184,75,0.13) 0%,
+      rgba(232,184,75,0.045) 38%,
+      rgba(232,184,75,0) 70%),
+    radial-gradient(140% 70% at 50% 124px,
+      var(--night-3) 0%,
+      var(--night-2) 44%,
+      rgba(17,27,54,0) 78%),
+    linear-gradient(to bottom,
+      var(--night-0) 0%,
+      var(--night-1) 34%,
+      var(--night-2) 68%,
+      var(--night-3) 100%);
+}
+
+/* --- 星（固定表，零随机；闪烁为固定排程的 CSS 动效） --- */
+.stars { position: absolute; inset: 0; pointer-events: none; }
+.star {
+  position: absolute;
+  background: var(--moon);
+  opacity: 0.55;
+  animation: twinkle 4.8s steps(4, end) infinite;
+}
+@keyframes twinkle {
+  0%   { opacity: 0.30; }
+  25%  { opacity: 0.78; }
+  50%  { opacity: 0.42; }
+  75%  { opacity: 0.90; }
+  100% { opacity: 0.30; }
+}
+
+/* --- 月：柔和月轮 + 五档云量（结构仍复用月宴 em-* 五件套） ---
+   色值全部取自既有 token（--moon / --moon-dk / --moon-rim / --halo /
+   --cloud-lt / --cloud-md / --cloud-dk / --paper），无新增颜色。
+   五档月相契约不变：data-phase 与 --cover 由 scene.js 写入，
+   云带高度 = calc(var(--cover, 0) * 100%)。 */
+.moon {
+  position: absolute; left: 50%; top: 110px;
+  width: 228px; height: 228px; margin-left: -114px; margin-top: -114px;
+  transform: scale(0.88);
+  pointer-events: none;
+}
+.m-halo, .m-rim, .m-disc, .m-clouds {
+  position: absolute; left: 50%; top: 50%;
+  border-radius: 50%;
+}
+/* 辉光：径向渐变，峰值落在 limb 附近，向外平滑衰减到透明（大气辉光） */
+.m-halo {
+  width: 248px; height: 248px; margin: -124px 0 0 -124px;
+  background: radial-gradient(circle closest-side at 50% 50%,
+    rgba(232, 184, 75, 0.30) 0%,
+    rgba(232, 184, 75, 0.58) 66%,
+    rgba(232, 184, 75, 0.50) 80%,
+    rgba(232, 184, 75, 0.28) 89%,
+    rgba(232, 184, 75, 0.10) 95%,
+    rgba(232, 184, 75, 0)    100%);
+  opacity: 0.28;
+  transition: opacity var(--dur-3) var(--ease);
+}
+/* limb：柔化的月缘暗化（径向渐入 + blur），不是一条硬环 */
+.m-rim {
+  width: 212px; height: 212px; margin: -106px 0 0 -106px;
+  background: radial-gradient(circle closest-side at 50% 50%,
+    rgba(58, 46, 38, 0)    0%,
+    rgba(58, 46, 38, 0)    90%,
+    rgba(58, 46, 38, 0.20) 100%);
+  filter: blur(4px);
+}
+/* 月面：左上受光更亮（--paper 提亮），向 limb 柔过渡到 --moon-dk；
+   内阴影大范围低透明做柔和 limb 暗化 */
+.m-disc {
+  width: 198px; height: 198px; margin: -99px 0 0 -99px;
+  overflow: hidden;
+  background: url(img/moon.webp) center / 100% 100% no-repeat;
+  transition: opacity var(--dur-3) var(--ease);
+}
+.m-clouds {
+  width: 198px; height: 198px; margin: -99px 0 0 -99px;
+  overflow: hidden; background: transparent;
+}
+/* 云带：底实顶柔（顶缘化进月面）；--band-* 三个变量供 P5 只换色不改结构 */
+.m-band {
+  --band-c:    var(--cloud-md);
+  --band-rim:  var(--cloud-lt);
+  --band-fade: rgba(182, 171, 151, 0);
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: calc(var(--cover, 0) * 100%);
+  background: linear-gradient(to top,
+    var(--band-c)    0%,
+    var(--band-c)    56%,
+    var(--band-rim)  82%,
+    var(--band-fade) 100%);
+}
+.m-wisp {
+  position: absolute; opacity: 0;
+  border-radius: var(--r-pill);
+  background: linear-gradient(90deg,
+    rgba(140, 130, 114, 0)    0%,
+    var(--cloud-dk)           24%,
+    var(--cloud-dk)           64%,
+    rgba(140, 130, 114, 0.50) 88%,
+    rgba(140, 130, 114, 0)    100%);
+  filter: blur(2px);
+  transition: opacity var(--dur-3) var(--ease);
+}
+.m-w1 { left: 16%; top: 14%; width: 52%; height: 14%; }
+.m-w2 { right: 8%; top: 32%; width: 38%; height: 12%; }
+.m-w3 { left: 12%; top: 54%; width: 56%; height: 12%; }
+
+/* 五档月相逐档锁定（云带高度由 JS 依 MOON_COVER 写入 --cover） */
+.moon[data-phase="P1"] .m-halo { opacity: 0.58; }
+.moon[data-phase="P2"] .m-halo { opacity: 0.44; }
+.moon[data-phase="P2"] .m-w1   { opacity: 0.78; }
+.moon[data-phase="P3"] .m-halo { opacity: 0.34; }
+.moon[data-phase="P3"] .m-w1,
+.moon[data-phase="P3"] .m-w2   { opacity: 0.78; }
+.moon[data-phase="P4"] .m-halo { opacity: 0.24; }
+.moon[data-phase="P4"] .m-disc { opacity: 0.92; }
+.moon[data-phase="P4"] .m-w1,
+.moon[data-phase="P4"] .m-w2   { opacity: 0.72; }
+.moon[data-phase="P5"] .m-halo { opacity: 0.14; }
+.moon[data-phase="P5"] .m-disc { opacity: 0.78; }
+/* P5 云带转深色（薄云遮月）：只换 token，柔化结构不变 */
+.moon[data-phase="P5"] .m-band {
+  --band-c:    var(--cloud-dk);
+  --band-rim:  var(--cloud-md);
+  --band-fade: rgba(140, 130, 114, 0);
+}
+.moon[data-phase="P5"] .m-w1,
+.moon[data-phase="P5"] .m-w2,
+.moon[data-phase="P5"] .m-w3   { opacity: 0.62; }
+
+/* --- 远景灯会：一条像素屋檐 + 六盏小灯（固定表，零随机） --- */
+.skyline {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 64px;
+  background: var(--horizon);
+  clip-path: polygon(0 44%, 9% 44%, 9% 26%, 15% 14%, 21% 26%, 21% 40%,
+                     30% 40%, 30% 22%, 38% 22%, 38% 34%, 47% 34%, 47% 18%,
+                     55% 8%, 63% 18%, 63% 36%, 72% 36%, 72% 24%, 80% 24%,
+                     80% 38%, 88% 38%, 88% 28%, 100% 28%, 100% 100%, 0 100%);
+  pointer-events: none;
+}
+.far-lamps { position: absolute; left: 0; right: 0; bottom: 0; height: 64px; pointer-events: none; }
+.fl {
+  position: absolute; width: 8px; height: 10px;
+  background: #6A4A2A; border: 1px solid var(--ink);
+  clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+  transition: background var(--dur-3) var(--ease), box-shadow var(--dur-3) var(--ease);
+}
+.stage.is-lit .fl {
+  background: var(--lamp-warm);
+  box-shadow: 0 0 10px 3px rgba(245,199,126,0.34);
+}
+
+/* --- 灯会群灯：中景 / 近景容器（固定表由 JS 填充，零随机） --- */
+.fest-lamps { position: absolute; inset: 0; pointer-events: none; }
+.fest {
+  position: absolute; width: 12px; height: 15px;
+  background: #6A4A2A; border: 1px solid var(--ink);
+  clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+  transition: background var(--dur-3) var(--ease), filter var(--dur-3) var(--ease);
+}
+.fest.mid { width: 16px; height: 20px; }
+.fest.near { width: 24px; height: 30px; }
+.stage.is-lit .fest {
+  background: var(--lamp-warm);
+  filter: drop-shadow(0 0 6px rgba(245, 199, 126, 0.55));
+}
+.stage.is-lit .fest.near { filter: drop-shadow(0 0 10px rgba(245, 199, 126, 0.62)); }
+
+/* --- 灯的骨架：提梁 / 灯盖 / 灯底 / 流苏（像素块） --- */
+.rig { position: absolute; inset: 0; pointer-events: none; }
+.rig > * { position: absolute; left: var(--cx); transform: translateX(-50%); }
+
+.lamp-handle {
+  top: calc(var(--cy) - var(--hh) - 26px);
+  width: 62px; height: 20px;
+  border: 4px solid var(--wood-dk);
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+}
+.lamp-cap {
+  top: calc(var(--cy) - var(--hh) - 12px);
+  width: calc(var(--hw) * 0.62); height: 14px;
+  background: var(--wood);
+  border: 3px solid var(--wood-dk);
+  box-shadow: inset 0 3px 0 0 rgba(247,239,226,0.30), 3px 3px 0 0 rgba(5,7,15,0.55);
+}
+.lamp-base {
+  top: calc(var(--cy) + var(--hh) - 2px);
+  width: calc(var(--hw) * 0.54); height: 12px;
+  background: var(--wood);
+  border: 3px solid var(--wood-dk);
+  box-shadow: inset 0 -3px 0 0 rgba(5,7,15,0.30);
+}
+.lamp-tassel {
+  top: calc(var(--cy) + var(--hh) + 10px);
+  width: 10px; height: 54px;
+  transform-origin: 50% 0;
+  animation: sway 6.4s ease-in-out infinite;
+}
+.lamp-tassel .cord { position: absolute; left: 3px; top: 0; width: 4px; height: 14px; background: var(--wood-dk); }
+.lamp-tassel .knot { position: absolute; left: 0; top: 14px; width: 10px; height: 10px; background: var(--c-zhusha); border: 2px solid var(--ink); }
+.lamp-tassel .fringe { position: absolute; left: 0; top: 24px; width: 10px; height: 30px; background: var(--c-zhusha);
+  clip-path: polygon(0 0, 100% 0, 100% 72%, 84% 100%, 84% 72%, 66% 100%, 66% 72%,
+                     50% 100%, 50% 72%, 34% 100%, 34% 72%, 16% 100%, 16% 72%, 0 72%); }
+@keyframes sway {
+  0%   { transform: translateX(-50%) rotate(-3deg); }
+  50%  { transform: translateX(-50%) rotate(3deg); }
+  100% { transform: translateX(-50%) rotate(-3deg); }
+}
+
+/* --- 放灯语境（§3）：scene.js 建好高挂／手提／砌成字三套 DOM，显隐由舞台的
+       [data-placement] 决定；位置一律 calc(var(--cy) ± …)，--cy 已含该式
+       LIFT，故语境元素与灯体永远同源对齐，舞台尺寸变了也不用重算。 --- */
+.place-ctx { position: absolute; inset: 0; pointer-events: none; }
+
+.ctx-hang, .ctx-carry, .ctx-array {
+  position: absolute; inset: 0;
+  opacity: 0;
+  transition: opacity var(--dur-3) var(--ease);
+}
+[data-placement="hang"]  .ctx-hang  { opacity: 1; }
+[data-placement="carry"] .ctx-carry { opacity: 1; }
+[data-placement="array"] .ctx-array { opacity: 1; }
+
+/* 高挂 · 树中秋：竹竿 + 横杆 + 枝杈 + 吊绳 + 成串小灯 */
+.hang-pole {
+  position: absolute; left: var(--cx); margin-left: -3px;
+  top: calc(var(--cy) - var(--hh) - 96px);
+  width: 6px; height: 96px;
+  background: var(--wood-dk);
+  box-shadow: inset 2px 0 0 0 rgba(247, 239, 226, 0.14);
+}
+.hang-beam {
+  position: absolute; left: 0; right: 0;
+  top: calc(var(--cy) - var(--hh) - 48px);
+  height: 6px;
+  background: var(--wood-dk);
+  box-shadow: inset 0 2px 0 0 rgba(247, 239, 226, 0.18);
+}
+.hang-branch {
+  position: absolute;
+  top: calc(var(--cy) - var(--hh) - 50px);
+  width: 46px; height: 4px;
+  background: var(--wood);
+}
+.hang-cord { position: absolute; width: 2px; background: var(--wood-dk); }
+.hang-cord-main { left: var(--cx); margin-left: -1px; height: 48px; }
+.hang-lamp {
+  position: absolute;
+  background: #6A4A2A;
+  border: 1px solid var(--ink);
+  clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+  transition: background var(--dur-3) var(--ease), filter var(--dur-3) var(--ease);
+}
+.is-lit .hang-lamp {
+  background: var(--lamp-warm);
+  filter: drop-shadow(0 0 6px rgba(245, 199, 126, 0.50));
+}
+
+/* 手提 · 提灯之会：沿街同行的伴灯 */
+.carry-lamp {
+  position: absolute;
+  background: #6A4A2A;
+  border: 1px solid var(--ink);
+  clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+  transition: background var(--dur-3) var(--ease), filter var(--dur-3) var(--ease);
+}
+.is-lit .carry-lamp {
+  background: var(--lamp-warm);
+  filter: drop-shadow(0 0 7px rgba(245, 199, 126, 0.55));
+}
+
+/* 砌成字 · 灯阵：多盏灯砌成字形高揭于家屋之高处 */
+.array-lamp {
+  position: absolute;
+  width: 14px; height: 18px;
+  margin: -9px 0 0 -7px;
+  background: #6A4A2A;
+  border: 1px solid var(--ink);
+  clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+  transition: background var(--dur-3) var(--ease), filter var(--dur-3) var(--ease);
+}
+.is-lit .array-lamp {
+  background: var(--lamp-warm);
+  filter: drop-shadow(0 0 8px rgba(245, 199, 126, 0.60));
+}
+
+/* --- 流体画布：覆盖整个舞台，形状外全透明，让 CSS 月与星透出 --- */
+#lamp {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  display: block;
+  touch-action: none;
+  /* 放灯手法的整体位移：--lift 由 scene.js 依 LIFT 表写入（挂架 -36 / 水放 0 / 手提 +36）。
+     骨架走含 LIFT 的 --cy，画布走 --lift，两者同源故灯面与灯骨严丝合缝。 */
+  transform: translateY(var(--lift, 0px));
+}
+
+/* --- 操作台：渐变淡出到夜空 + 一枚悬浮磨砂卡片（漆扇 .studio / .panel-bar 同源） --- */
+.dock {
+  flex: none;
+  display: flex; flex-direction: column; align-items: center;
+  padding: var(--sp-3) var(--sp-3) calc(var(--sp-3) + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(6,11,18,0.72) 40%, rgba(6,11,18,0));
+}
+.panel-bar {
+  width: 100%;
+  max-width: 420px;
+  padding: var(--sp-3);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  backdrop-filter: blur(var(--sp-4));
+  -webkit-backdrop-filter: blur(var(--sp-4));
+  box-shadow: 0 var(--sp-2) var(--sp-6) rgba(0, 0, 0, 0.42);
+}
+
+/* 灯色：颜料滴（圆形 + 内高光，名字悬停/选中时浮出） */
+.pal-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: var(--sp-3);
+}
+
+.motif-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+.motif-btn {
+  min-width: 44px; min-height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font);
+  font-size: 13px; letter-spacing: 0.04em;
+  color: var(--paper-dim);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease),
+              background var(--dur-1) var(--ease);
+}
+.motif-btn[aria-pressed="true"] {
+  color: var(--night-0);
+  background: var(--lamp-warm);
+  border-color: var(--halo);
+}
+.swatch {
+  position: relative;
+  width: var(--swatch); height: var(--swatch);
+  background: var(--c, #888);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  font-family: var(--font);
+  box-shadow: inset 0 2px var(--sp-2) rgba(255, 255, 255, 0.22),
+              inset 0 -3px var(--sp-2) rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: transform var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease);
+}
+.swatch:hover { transform: scale(1.08); }
+.swatch:active { transform: scale(1.04); }
+.swatch[aria-pressed="true"] {
+  transform: scale(1.12);
+  box-shadow: 0 0 0 2px var(--night-0), 0 0 0 var(--sp-1) var(--halo),
+              inset 0 2px var(--sp-2) rgba(255, 255, 255, 0.30),
+              0 var(--sp-2) var(--sp-4) rgba(232, 184, 75, 0.35);
+}
+.swatch .nm {
+  position: absolute; left: 50%; bottom: -18px;
+  transform: translateX(-50%);
+  font-size: 10px; letter-spacing: 0.08em;
+  white-space: nowrap;
+  color: var(--paper-faint);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-1) var(--ease);
+}
+.swatch:hover .nm, .swatch[aria-pressed="true"] .nm { opacity: 1; }
+
+/* 灯形：药丸选项（漆扇 .opt 同源） */
+.shape-row {
+  display: flex; align-items: center; gap: var(--sp-2);
+  margin-top: 20px;   /* 给颜料滴的名字留出浮出的位置 */
+}
+.shape-btn {
+  flex: 1; min-height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  gap: 5px;
+  font-family: var(--font);
+  font-size: 12px; letter-spacing: 0.04em;
+  color: var(--paper-dim);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease),
+              background var(--dur-1) var(--ease), transform var(--dur-1) var(--ease);
+}
+.shape-btn svg { display: block; width: 20px; height: 20px; opacity: 0.78; }
+.shape-btn:hover { color: var(--moon); border-color: var(--gold-soft); }
+.shape-btn:active { transform: translateY(1px); }
+.shape-btn[aria-pressed="true"] {
+  color: var(--moon);
+  background: var(--gold-faint);
+  border-color: var(--gold-soft);
+}
+.shape-btn[aria-pressed="true"] svg { opacity: 1; }
+
+/* 动作：主按钮渐变带辉光，次按钮幽灵描边 */
+.act-row { display: flex; gap: var(--sp-2); margin-top: var(--sp-3); }
+.act {
+  min-height: 44px;
+  font-family: var(--font);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: transform var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease),
+              background var(--dur-2) var(--ease), color var(--dur-1) var(--ease),
+              border-color var(--dur-1) var(--ease);
+}
+.act:active { transform: translateY(2px); box-shadow: none; }
+#light-btn {
+  flex: 1 1 auto;
+  font-size: 16px; letter-spacing: var(--sp-1);
+  color: var(--night-0);
+  background: linear-gradient(180deg, var(--halo) 0%, #C08A22 100%);
+  border: 1px solid var(--gold-soft);
+  box-shadow: 0 var(--sp-1) var(--sp-4) rgba(232, 184, 75, 0.32);
+}
+#light-btn.is-on {
+  color: var(--paper);
+  background: linear-gradient(180deg, var(--c-zhusha) 0%, #9E2F26 100%);
+  border-color: var(--cinnabar-soft);
+  box-shadow: 0 var(--sp-1) var(--sp-4) var(--cinnabar-soft);
+}
+#reset-btn {
+  flex: none; width: 64px;
+  font-size: 14px; letter-spacing: var(--sp-1);
+  color: var(--paper-dim);
+  background: transparent;
+  border: 1px solid var(--line-strong);
+}
+#reset-btn:hover { color: var(--moon); border-color: var(--gold-soft); }
+
+#spin-btn {
+  flex: none; width: 44px;
+  font-size: 13px; letter-spacing: 0;
+  color: var(--paper-dim);
+  background: rgba(17, 27, 54, 0.66);
+  border-color: rgba(242, 228, 196, 0.16);
+}
+#spin-btn[aria-pressed="true"] {
+  color: var(--night-0);
+  background: var(--lamp-warm);
+  border-color: var(--halo);
+}
+
+.place-group { display: flex; gap: 4px; flex: none; }
+.place-btn {
+  min-width: 44px; min-height: 44px;
+  padding: 0 6px;
+  font-family: var(--font);
+  font-size: 13px; letter-spacing: 1px;
+  color: var(--paper-dim);
+  background: rgba(17, 27, 54, 0.66);
+  border: 1px solid rgba(242, 228, 196, 0.16);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease),
+              background var(--dur-2) var(--ease);
+}
+.place-btn[aria-pressed="true"] {
+  color: var(--night-0);
+  background: var(--lamp-warm);
+  border-color: var(--halo);
+}
+.place-btn:active { transform: translateY(1px); }
+
+/* 单行上下文标签（漆扇 .current-label 同源；全场唯一一行提示） */
+.current-label {
+  margin-top: var(--sp-3);
+  text-align: center;
+  font-size: 12.5px; letter-spacing: 0.08em;
+  color: var(--paper-dim);
+  min-height: 18px;
+}
+.current-label b { color: var(--halo); font-weight: normal; }
+
+/* ============================================================
+   view-result · 成品彩灯 + 起名 + 分享
+   ============================================================ */
+#view-result {
+  background:
+    radial-gradient(110% 58% at 50% 22%,
+      rgba(232, 184, 75, 0.10) 0%,
+      rgba(232, 184, 75, 0.03) 44%,
+      rgba(232, 184, 75, 0) 72%),
+    linear-gradient(to bottom,
+      var(--night-0) 0%,
+      var(--night-1) 34%,
+      var(--night-2) 68%,
+      var(--night-3) 100%);
+}
+.result-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5) var(--sp-5);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.result-head {
+  width: 100%;
+  max-width: var(--content-w);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
+}
+.result-kicker { font-size: var(--fs-xs); letter-spacing: var(--sp-1); color: var(--paper-faint); }
+.result-title { font-size: var(--fs-2xl); letter-spacing: var(--sp-1); color: var(--moon); }
+
+/* 成品灯台：与创作台同源的小夜空（JS 在 #result-stage 上写入 --cx/--cy/--hw/--hh） */
+.lamp-stage {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 3 / 4;
+  flex-shrink: 0;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line-strong);
+  overflow: hidden;
+  box-shadow: 0 var(--sp-4) var(--sp-6) rgba(0, 0, 0, 0.5);
+  background:
+    radial-gradient(120% 50% at 50% 96px,
+      rgba(232, 184, 75, 0.13) 0%,
+      rgba(232, 184, 75, 0.045) 38%,
+      rgba(232, 184, 75, 0) 70%),
+    radial-gradient(140% 60% at 50% 96px,
+      var(--night-3) 0%,
+      var(--night-2) 44%,
+      rgba(17, 27, 54, 0) 78%),
+    linear-gradient(to bottom,
+      var(--night-0) 0%,
+      var(--night-1) 34%,
+      var(--night-2) 68%,
+      var(--night-3) 100%);
+}
+.lamp-stage .moon { top: 96px; transform: scale(0.36); }
+#lamp-result {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  display: block;
+  transform: translateY(var(--lift, 0px));
+}
+
+.name-row {
+  width: 100%;
+  max-width: var(--content-w);
+  display: flex; gap: var(--sp-2); align-items: center;
+}
+#lamp-name {
+  font-family: var(--font);
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: var(--sp-3) var(--sp-4);
+  font-size: var(--fs-lg);
+  letter-spacing: var(--sp-1);
+  color: var(--paper);
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  outline: none;
+  -webkit-user-select: text;
+  user-select: text;
+}
+#lamp-name:focus { border-color: var(--gold-soft); }
+#lamp-name::placeholder { color: var(--paper-faint); }
+.name-row .ghost-btn { flex-shrink: 0; }
+
+.result-meta {
+  width: 100%;
+  max-width: var(--content-w);
+  text-align: center;
+  font-size: var(--fs-sm);
+  letter-spacing: var(--sp-1);
+  color: var(--halo);
+}
+.result-extra {
+  width: 100%;
+  max-width: var(--content-w);
+  text-align: center;
+  font-size: var(--fs-xs);
+  color: var(--paper-faint);
+}
+.result-share { display: flex; gap: var(--sp-2); flex-wrap: wrap; justify-content: center; }
+.result-actions { display: flex; gap: var(--sp-2); flex-wrap: wrap; justify-content: center; }
+
+/* ============================================================
+   toast / webgl error
+   ============================================================ */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 272px;
+  transform: translateX(-50%) translateY(var(--sp-2));
+  max-width: 82%;
+  padding: var(--sp-2) var(--sp-4);
+  text-align: center;
+  font-size: var(--fs-sm);
+  letter-spacing: var(--sp-1);
+  color: var(--paper);
+  background: rgba(5, 7, 15, 0.94);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-2) var(--ease), transform var(--dur-2) var(--ease);
+  z-index: 9;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.webgl-err {
+  position: fixed; inset: 0;
+  display: none;
+  align-items: center; justify-content: center;
+  padding: var(--sp-6);
+  text-align: center;
+  font-size: var(--fs-md);
+  line-height: 1.7;
+  color: var(--paper);
+  background: var(--night-0);
+  z-index: 20;
+}
+.webgl-err.show { display: flex; }
+
+/* ---------- compact screens ---------- */
+@media (max-width: 540px) {
+  :root { --content-w: 320px; }
+  .home-title span { width: 54px; height: 54px; font-size: var(--fs-2xl); }
+}
+@media (max-height: 700px) {
+  .home-vig { height: 140px; }
+  .home-inner { gap: var(--sp-3); padding: var(--sp-4) var(--sp-4) var(--sp-3); }
+  .dock { padding: var(--sp-2) var(--sp-3) calc(var(--sp-2) + env(safe-area-inset-bottom)); }
+  .panel-bar { padding: var(--sp-2); }
+  .shape-row { margin-top: var(--sp-4); }
+  .current-label { margin-top: var(--sp-2); }
+  .result-inner { gap: var(--sp-3); padding: var(--sp-3) var(--sp-4) var(--sp-4); }
+  .lamp-stage { max-width: 260px; }
+  .primary-btn { padding: var(--sp-2) var(--sp-4); font-size: var(--fs-md); }
+}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .star, .lamp-tassel { animation: none; }
+  *, *::before, *::after { transition-duration: 0.01ms !important; }
+}
