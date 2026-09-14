@@ -29,7 +29,7 @@
     PRESSURE: 0.8,
     PRESSURE_ITERATIONS: 20,
     CURL: 26,
-    SPLAT_RADIUS: 0.13,
+    SPLAT_RADIUS: 0.014,          // 笔芯约 18px：灯宽 164px，够画得出形
     SPLAT_FORCE: 3600,
     COLOR_INTENSITY: 1.30,
     CONVECT_FORCE: 300,           // 点亮后的烛火对流（确定性）
@@ -416,6 +416,8 @@
     'uniform float uMoon;     /* 月相明度 0..1 */',
     'uniform float uRot;      /* 灯体绕竖轴的转角（弧度）；0 = 正面朝观者 */',
     '',
+    'const float PI      = 3.141592653589793;',
+    'const float INV_TAU = 0.15915494309189535;   /* 1/2π：方位角 → 纹理横轴 */',
     'const vec3 LAMP   = vec3(1.00, 0.84, 0.55);   /* 烛火暖光 */',
     'const vec3 PAPER  = vec3(0.97, 0.91, 0.79);   /* 灯纸 */',
     'const vec3 MOONLT = vec3(0.42, 0.50, 0.72);   /* 月光冷调 */',
@@ -492,14 +494,17 @@
     '  float facing = sqrt(max(0.0, 1.0 - nx * nx));',
     '  float ty = clamp(abs(pc.y), 0.0, 1.0);',
     '',
-    '  /* ---- 灯体转角：颜料是贴在筒面上的纹样，随灯转绕过圆周 ----',
-    '     theta = 该点在筒面上的方位角；转过 uRot 之后，正对观者的那一块换成',
-    '     了 theta+uRot 处的纹样，于是纹样横向绕过筒面（筒面在轮廓两侧被',
-    '     强烈压缩——asin/sin 的投影，这正是「贴着曲面」的读数）。',
-    '     uRot = 0 时 sin(asin(nx)) == nx → 采样坐标恒等于 vUv.x，笔触仍落在',
-    '     指针处；自转默认关，故未开启开关时渲染与转角无关。 */',
+    '  /* ---- 灯体转角：颜料贴在筒面上，随灯绕过圆周 ----',
+    '     theta = 该点在筒面上的方位角（正对观者 = 0）。筒面按方位角整周展开，',
+    '     故纹样横坐标 = (theta + uRot) 线性映射到纹理横轴 [0,1]：整周 2π 对应',
+    '     整张纹理，正对观者的半周占纹理中段一半；超过 ±π 时绕回（筒面是闭合的）。',
+    '     关键：这里必须是角度的线性映射，不能用 sin(theta + uRot)。sin 在',
+    '     |theta + uRot| > π/2 时非单调，会把筒面折叠成镜像 —— 同一块纹样在屏幕上',
+    '     出现两次，表现为「旋转后笔触被横向撕裂、落点偏出半盏灯」，且转得越多越坏；',
+    '     uRot = 0 时恰好不折叠，所以这个错只在旋转时才暴露。 */',
     '  float theta = asin(nx);',
-    '  vec2 dyeUv = vec2(uLampC.x + sin(theta + uRot) * uLampH.x * halfW, vUv.y);',
+    '  float psi = mod(theta + uRot + PI, 2.0 * PI) - PI;',
+    '  vec2 dyeUv = vec2(0.5 + psi * INV_TAU, vUv.y);',
     '',
     '  /* ---- 颜料：来自流体染料场（按转角绕筒面取） ---- */',
     '  vec3 dye = texture2D(uDye, dyeUv).rgb;',
@@ -841,14 +846,41 @@
     blitFn(dye.write); dye.swap();
   }
 
+  /* 灯形半宽（JS 侧镜像）。与 display 着色器的 shapeHalfW 逐行同式：
+     着色器用它算轮廓与筒面横坐标，这里用它算落笔的逆映射。两边一旦不同步，
+     笔触就会在灯形边缘错位 —— 改动时必须两处同时改。 */
+  function shapeHalfW(px, py) {
+    var t = Math.min(Math.abs(py), 1.0);
+    var belly = Math.sqrt(Math.max(0, 1 - t * t));
+    var w0 = 0.30 + 0.54 * belly;
+    var u1 = t * t;
+    var w1 = 0.31 + 0.59 * (1 - u1 * u1 * u1);
+    var w2 = 0.27 + 0.51 * Math.min(Math.max((1 - t) / 0.40, 0), 1);
+    var a3 = Math.atan2(Math.abs(py), Math.abs(px));
+    var w3 = (0.31 + 0.49 * belly) * (1 + 0.11 * belly * Math.cos(a3 * 8.0 + 0.3926994));
+    return w0 * shapeW[0] + w1 * shapeW[1] + w2 * shapeW[2] + w3 * shapeW[3];
+  }
+
+  /* 落笔坐标 → 染料纹理 x 的逆映射（含灯体转角）。
+     与 display 着色器同式：筒面按方位角整周展开，故纹理横轴 = (rot + asin(nx))/2π，
+     超过 ±π 绕回。必须与着色器一起改，否则笔触会随转角漂移。 */
+  function dyeX(px, py) {
+    var hw = Math.max(shapeHalfW(px, py), 0.0001);
+    var nx = Math.max(-1, Math.min(1, px / hw));
+    var psi = rotAngle + Math.asin(nx);
+    psi = ((psi + Math.PI) % TAU + TAU) % TAU - Math.PI;
+    return 0.5 + psi / TAU;
+  }
+
   /* 一笔：速度 splat（有位移时）+ 颜料 splat。
      同时挂起自转：筒面在落笔时若还在转，一笔会被抹开成一条横扫。 */
   function paint(x, y, dx, dy) {
     paintHold = PAINT_HOLD;
+    var tx = dyeX((x - LAMP_C.u) / LAMP_HW, (y - LAMP_C.v) / LAMP_HH);
     if (Math.abs(dx) > 0.00005 || Math.abs(dy) > 0.00005) {
-      splatVelocity(x, y, dx * config.SPLAT_FORCE, dy * config.SPLAT_FORCE);
+      splatVelocity(tx, y, dx * config.SPLAT_FORCE, dy * config.SPLAT_FORCE);
     }
-    splatDye(x, y, currentColor);
+    splatDye(tx, y, currentColor);
   }
 
   /* 纹样点集：以灯心为原点、LAMP_HW/LAMP_HH 为单位的归一化坐标，y 正方向为屏幕上方。
@@ -925,7 +957,7 @@
     paintHold = PAINT_HOLD;
     var c = color || currentColor;
     for (var i = 0; i < pts.length; i++) {
-      splatDye(LAMP_C.u + pts[i][0] * LAMP_HW,
+      splatDye(dyeX(pts[i][0], pts[i][1]),
                LAMP_C.v + pts[i][1] * LAMP_HH, c);
     }
     return pts.length;
