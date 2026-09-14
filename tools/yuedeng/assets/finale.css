@@ -155,12 +155,9 @@
   filter: drop-shadow(0 0 9px rgba(245, 199, 126, 0.72));
   opacity: 0;
 }
-.fin-sky-lantern::after {
-  content: ''; position: absolute; left: 50%; bottom: -14px;
-  width: 2px; height: 14px; margin-left: -1px;
-  background: linear-gradient(to bottom,
-    rgba(245, 199, 126, 0.42), rgba(245, 199, 126, 0));
-}
+/* 无拖尾：初版给每盏灯加了 14px 下垂渐变尾，升到顶缘时被读作「一排吊灯」，
+   与「满城灯火」语义相反（灯在天上），故删。 */
+.fin-sky-lantern::after { content: none; }
 
 /* --- 挂点：檐角斜出的翘竿 + 绳。
    第2拍「高树于檐」此前既无檐也无竿，灯笼只是「升空缩小」，动作与文案反向。
@@ -244,7 +241,10 @@
 
 /* --- 调色覆盖层：暗角 + 胶片颗粒 + 冷暖分级。
    这一层是把「DOM 拼贴」推向「一条渲染链」的最便宜手段 —— CG 感有相当一部分
-   来自后期，而不是几何。全部确定性：feTurbulence 固定种子，径向渐变无随机。 --- */
+   来自后期，而不是几何。全部确定性：feTurbulence 固定种子，径向渐变无随机。
+   颗粒强度必须克制：实测 0.30 时全片高频能量由 2.7 升到 7.0（2.6 倍），满屏噪点
+   成了四拍共有的主导纹理，反而把各拍的构图差异盖住 —— 用户原话「1-4 看着没
+   什么区别」。现取 0.06，高频约 3.4，是「有胶片感」而「不吵」的量级。 --- */
 .fin-grade {
   position: absolute; inset: 0;
   pointer-events: none;
@@ -253,7 +253,7 @@
       rgba(0, 0, 0, 0) 52%,
       rgba(3, 6, 14, 0.30) 82%,
       rgba(3, 6, 14, 0.58) 100%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.30'/%3E%3C/svg%3E");
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
   background-size: 100% 100%, 160px 160px;
   mix-blend-mode: normal;
   opacity: 1;

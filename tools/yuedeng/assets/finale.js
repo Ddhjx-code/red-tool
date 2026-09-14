@@ -30,12 +30,13 @@
   /* 屋舍（零随机固定表）：x%、宽 px、高 px、窗列、窗行、点亮延迟 s。
      灯火必须落在城的「体内」—— 窗格灯是窗纸由内透光，檐下灯挂在檐口，
      两者都附着于建筑；此前把灯撒在屋脊线以上的天空里，读作「飘在天上」，
-     与「满城灯火」的文案直接矛盾。 */
+     与「满城灯火」的文案直接矛盾。
+     密度按评审调高（原 3–4 列 2–3 行太稀，下 1/3 铺不满，撑不起「满城」）。 */
   var HOUSES = [
-    [2, 56, 84, 3, 2, 0.4], [13, 64, 96, 3, 2, 0.7], [24, 50, 74, 3, 2, 1.0],
-    [33, 60, 90, 4, 3, 1.3], [44, 54, 80, 3, 2, 1.6], [53, 68, 102, 4, 3, 1.9],
-    [65, 52, 84, 3, 2, 2.2], [74, 60, 92, 4, 2, 2.5], [85, 50, 78, 3, 2, 2.8],
-    [93, 48, 72, 3, 2, 3.1]
+    [2, 56, 84, 4, 3, 0.4], [13, 64, 96, 5, 3, 0.7], [24, 50, 74, 4, 3, 1.0],
+    [33, 60, 90, 5, 4, 1.3], [44, 54, 80, 4, 3, 1.6], [53, 68, 102, 5, 4, 1.9],
+    [65, 52, 84, 4, 3, 2.2], [74, 60, 92, 5, 3, 2.5], [85, 50, 78, 4, 3, 2.8],
+    [93, 48, 72, 4, 3, 3.1]
   ];
 
   /* 升空孔明灯（少数，约占全部灯的 15%）：x%、起始 y%（自底算）、延迟 s、上升秒数。
@@ -73,6 +74,8 @@
   var lamps = [];
   var skyLanterns = [];
   var haloEl = null;
+  var moonEl = null;
+  var gradeEl = null;
   var hungEl = null;
   var stageEl = null;
   var hangEl = null;
@@ -121,7 +124,7 @@
           win.className = 'fin-window';
           win.style.left = (((c + 0.5) / cols) * 100) + '%';
           win.style.top = (30 + r * 26) + '%';
-          win.dataset.delay = (delay + ((seed >> 3) % 10) * 0.18).toFixed(2);
+          win.dataset.delay = (delay + ((seed >> 3) % 10) * 0.09).toFixed(2);
           house.appendChild(win);
           lamps.push(win);
         }
@@ -220,6 +223,91 @@
     { t: 12.5, zoom: 0.90, y: -168 }
   ];
 
+  /* 月亮自身的机位曲线。月是四拍里唯一完全不变的元素，四拍共用「月顶居中」的
+     骨架，连播时被读成「同一机位的四次推拉」（用户原话「1-4 看着没什么区别」）。
+     让月变，机位就变：第0拍压到画面左上、裁掉半只逼出框；第1拍退左；第2拍缩到
+     右上角；第3拍放大迫近、与灯同轴 —— 观者由此读出四个不同机位。 */
+  var MOON_KEYS = [
+    { t: 0.0,  s: 1.90, dx: -74, dy: -132 },
+    { t: 3.5,  s: 1.10, dx: -34, dy: -18 },
+    { t: 7.0,  s: 0.62, dx: 96,  dy: 42 },
+    { t: 10.5, s: 1.28, dx: 0,   dy: 26 },
+    { t: 12.5, s: 1.34, dx: 0,   dy: 28 }
+  ];
+
+  function moonAt(elapsed) {
+    var i;
+    if (elapsed <= MOON_KEYS[0].t) { return MOON_KEYS[0]; }
+    for (i = 1; i < MOON_KEYS.length; i++) {
+      if (elapsed <= MOON_KEYS[i].t) {
+        var a = MOON_KEYS[i - 1], b = MOON_KEYS[i];
+        var u = easeInOutCubic((elapsed - a.t) / (b.t - a.t));
+        return { s: a.s + (b.s - a.s) * u,
+                 dx: a.dx + (b.dx - a.dx) * u,
+                 dy: a.dy + (b.dy - a.dy) * u };
+      }
+    }
+    return MOON_KEYS[MOON_KEYS.length - 1];
+  }
+
+  /* 横向机位曲线：灯不再永远锁在正中，否则四拍仍是「同机位换月亮+换曝光」。
+     振幅必须够大：初版取 40/14/-14/0，灯心横坐标只有 185/172/180（@360），
+     摆幅 ≤4% 画宽，评审判「算四个景别，不算四个机位」。现取 40/39/-47/0，
+     摆幅约 22% 画宽，且第2拍把灯送到 0.38、第1拍送到 0.60，跨过三分线。 */
+  var LATERAL_KEYS = [
+    { t: 0.0,  dx: 40, dy: 0 },
+    { t: 3.5,  dx: 39, dy: -6 },
+    { t: 7.0,  dx: -47, dy: -46 },
+    { t: 10.5, dx: 0,  dy: -10 },
+    { t: 12.5, dx: 0,  dy: -8 }
+  ];
+
+  function lateralAt(elapsed) {
+    var i;
+    if (elapsed <= LATERAL_KEYS[0].t) { return LATERAL_KEYS[0]; }
+    for (i = 1; i < LATERAL_KEYS.length; i++) {
+      if (elapsed <= LATERAL_KEYS[i].t) {
+        var a = LATERAL_KEYS[i - 1], b = LATERAL_KEYS[i];
+        var u = easeInOutCubic((elapsed - a.t) / (b.t - a.t));
+        return { dx: a.dx + (b.dx - a.dx) * u, dy: a.dy + (b.dy - a.dy) * u };
+      }
+    }
+    return LATERAL_KEYS[LATERAL_KEYS.length - 1];
+  }
+
+  /* 中景城的额外抬升：末拍近景屋脊升到约 65% 画高，把中景灯海挡得只剩檐缝里
+     几点，「灯海」降级成「余灯」（评审判定）。把城在末拍再抬一段，灯海就在月与
+     灯之间透出一条横带 —— 一个动作同时修掉「灯海被挡」与「拍4与拍1机位雷同」。
+     抬升后城的下缘会露空，但被近景屋檐遮住，不会穿帮。 */
+  var CITY_KEYS = [
+    { t: 0.0,  dy: 0 },
+    { t: 5.5,  dy: 0 },
+    { t: 10.5, dy: -80 },
+    { t: 12.5, dy: -100 }
+  ];
+
+  function cityAt(elapsed) {
+    var i;
+    if (elapsed <= CITY_KEYS[0].t) { return CITY_KEYS[0].dy; }
+    for (i = 1; i < CITY_KEYS.length; i++) {
+      if (elapsed <= CITY_KEYS[i].t) {
+        var a = CITY_KEYS[i - 1], b = CITY_KEYS[i];
+        var u = easeInOutCubic((elapsed - a.t) / (b.t - a.t));
+        return a.dy + (b.dy - a.dy) * u;
+      }
+    }
+    return CITY_KEYS[CITY_KEYS.length - 1].dy;
+  }
+
+  /* 光比台阶：四拍在亮度上分四级 —— 点烛压暗只留烛暖、满城提亮、争辉转冷。
+     连播时自然断句，也是「四拍不像同一张」的一半功劳。 */
+  function gradeAt(elapsed) {
+    if (elapsed < 2.5) { return 1.34; }     /* 点烛：暗场 */
+    if (elapsed < 5.5) { return 1.06; }
+    if (elapsed < 9.5) { return 0.72; }     /* 满城：最亮 */
+    return 0.96;                            /* 争辉：略收回，冷调上场 */
+  }
+
   function cameraAt(elapsed) {
     var i;
     if (elapsed <= CAM_KEYS[0].t) { return CAM_KEYS[0]; }
@@ -266,9 +354,11 @@
     /* 第一拍灯在檐口上方一点（不压屋面），第二拍起才被升到 58% —— 「点烛」在低处、
        「高树于檐」才升起来。抬升量曾取 140px，结果灯底压进屋面剪影、读作穿模。 */
     var lift = hung ? 0 : 40;
+    var lat = lateralAt(elapsed);
     if (hangEl) {
-      hangEl.style.transform = 'translateY(' + (cam.y * PARA.lantern + lift) +
-        'px) scale(' + cam.zoom + ')';
+      hangEl.style.transform = 'translate(' + lat.dx.toFixed(1) + 'px,' +
+        (cam.y * PARA.lantern + lift + lat.dy).toFixed(1) + 'px) scale(' +
+        cam.zoom + ')';
       if (hung !== hangOn) {
         hangOn = hung;
         if (stageEl) { stageEl.classList.toggle('is-hung', hung); }
@@ -307,9 +397,19 @@
     }
 
     if (skyEl) skyEl.style.transform = 'translateY(' + (cam.y * PARA.sky) + 'px)';
+    /* 月亮自带机位曲线：四拍四个月的尺寸与位置，打破「月顶居中」的固定骨架 */
+    if (moonEl) {
+      var mo = moonAt(elapsed);
+      moonEl.style.transform = 'translate(' + mo.dx.toFixed(1) + 'px,' +
+        mo.dy.toFixed(1) + 'px) scale(' + mo.s.toFixed(3) + ')';
+    }
+    /* 光比台阶：连播时靠亮度断句 */
+    if (gradeEl) { gradeEl.style.opacity = gradeAt(elapsed).toFixed(2); }
     var farEl = document.getElementById('fin-far');
     if (farEl) farEl.style.transform = 'translateY(' + (cam.y * PARA.far) + 'px)';
-    if (cityEl) cityEl.style.transform = 'translateY(' + (cam.y * PARA.city) + 'px)';
+    if (cityEl) {
+      cityEl.style.transform = 'translateY(' + (cam.y * PARA.city + cityAt(elapsed)) + 'px)';
+    }
     /* 近景层与挂具同享位移 + 缩放（都锚画框底缘）：竿脚才始终踩在檐口上 */
     if (nearEl) {
       nearEl.style.transform = 'translateY(' + (cam.y * PARA.near) +
@@ -338,8 +438,11 @@
   }
 
   function updateLamps(elapsed) {
-    if (elapsed < 5.5) return;
-    var localElapsed = elapsed - 5.5;
+    /* 从 4.5s 起逐盏点亮，且窗格的先后差压到 0.9s 内 —— 初始版本从 5.5s 起、
+       窗格错开到 1.8s，最晚一盏到 10.4s 才亮，而第4拍从 9.5s 就开始，于是
+       「满城灯火」在第4拍几乎全灭，成了一闪而过的贴片（评审原话）。 */
+    if (elapsed < 4.5) return;
+    var localElapsed = elapsed - 4.5;
     for (var i = 0; i < lamps.length; i++) {
       var delay = parseFloat(lamps[i].dataset.delay || 0);
       if (localElapsed >= delay && !lamps[i].classList.contains('is-on')) {
@@ -370,6 +473,8 @@
     lanternEl = document.getElementById('fin-lantern');
     hungEl = document.getElementById('fin-lantern-hung');
     haloEl = document.getElementById('fin-lantern-halo');
+    moonEl = document.getElementById('fin-moon');
+    gradeEl = document.getElementById('fin-grade');
     hangEl = document.getElementById('fin-hang');
     stageEl = document.getElementById('fin-stage');
     canvasEl = document.getElementById('fin-particles');
