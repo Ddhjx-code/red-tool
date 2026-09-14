@@ -41,6 +41,7 @@
     view: 'home',
     colorIdx: 0,
     shapeIdx: 0,
+    brush: 'line',
     lit: false,
     spin: true,
     placement: D.PLACEMENTS[0].id,
@@ -125,7 +126,11 @@
   function hintFor() {
     if (state.lit) { return '灯光透过纹样，色彩在光里流变'; }
     var ids = colorIds();
-    if (state.splats === 0) { return '拖动灯面绘纹，彩漆自会扩散'; }
+    if (state.splats === 0) {
+      return state.brush === 'wash'
+        ? '拖动灯面染彩，色随水走、自会流开'
+        : '细笔勾纹：拖动灯面，笔迹落在哪里就停在哪里';
+    }
     if (ids.length < D.COLOR_RULES.minColors) { return D.COLOR_RULES.text; }
     var chk = D.checkPalette(ids);
     if (chk.passes) {
@@ -239,6 +244,38 @@
     updateLabel();
   }
 
+  /* 笔法：勾线先定形、晕染后积韵（§3 彩绘）。两段式，选中态用 aria-pressed，
+     与纹样、灯形两行同一套控件语言。 */
+  function buildBrushes() {
+    var host = $('brushes');
+    if (!host || host.childNodes.length) { return; }
+    D.BRUSHES.forEach(function (b) {
+      var el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'brush-btn';
+      el.dataset.brush = b.id;
+      el.setAttribute('aria-pressed', b.id === state.brush ? 'true' : 'false');
+      el.setAttribute('aria-label', '笔法 ' + b.name + ' ' + b.desc);
+      el.textContent = b.name;
+      el.addEventListener('click', function () { setBrush(b.id); });
+      host.appendChild(el);
+    });
+  }
+
+  function setBrush(id) {
+    var n = E.setBrush(id);
+    state.brush = n;
+    var host = $('brushes');
+    if (host) {
+      for (var i = 0; i < host.children.length; i++) {
+        host.children[i].setAttribute('aria-pressed',
+          host.children[i].dataset.brush === n ? 'true' : 'false');
+      }
+    }
+    updateLabel();
+    return n;
+  }
+
   function buildPlacements() {
     var host = $('placements');
     if (!host || host.childNodes.length) { return; }
@@ -276,6 +313,15 @@
     var b = $('spin-btn');
     if (b) { b.setAttribute('aria-pressed', state.spin ? 'true' : 'false'); }
     return state.spin;
+  }
+
+  /* 固色：把当前活层烙进固定层（§3 彩绘 · 分层积染）。
+     固定层不参与流体求解，所以此后无论点亮与否都不会再动 ——
+     这一层一定保得住，用户可以继续在上面画下一层。 */
+  function doFix() {
+    if (!E.fixDye()) { return false; }
+    toast('已固色 · 这一层定住了');
+    return true;
   }
 
   /* ============================================================
@@ -613,6 +659,7 @@
     buildPalette();
     buildShapes();
     buildMotifs();
+    buildBrushes();
     buildPlacements();
     var spinBtn = $('spin-btn');
     if (spinBtn) {
@@ -653,6 +700,7 @@
     $('phase-btn').addEventListener('click', cyclePhase);
     $('btn-release').addEventListener('click', function () { release(); });
     $('light-btn').addEventListener('click', function () { setLit(!state.lit); });
+    $('fix-btn').addEventListener('click', function () { doFix(); });
     $('reset-btn').addEventListener('click', function () {
       E.reset();
       state.colorUse = {};
@@ -720,6 +768,8 @@
       setLit: setLit,
       setPlacement: setPlacement,
       setSpin: setSpin,
+      setBrush: setBrush,
+      fixDye: doFix,
       cyclePhase: cyclePhase,
       splat: function (x, y) {
         if (state.view !== 'create') { enterCreate(false); }

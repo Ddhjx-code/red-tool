@@ -71,6 +71,15 @@
     { id: 'huaniao', name: '花鸟', desc: '花鸟纹 · 灯面常见题材' }
   ];
 
+  /* ---------- 笔法（§3 彩绘） ----------
+     勾线先定形，晕染后积韵 —— 与真实灯彩彩绘同序：细笔勾出纹样，
+     湿笔罩染让色在纸里化开。两支笔写进同一层染料，区别只在笔锋粗细
+     与带入的流速（见 engine.js 的 BRUSH 表）。 */
+  var BRUSHES = [
+    { id: 'line', name: '勾线', desc: '细笔定形 · 笔迹停得住，用来勾纹样' },
+    { id: 'wash', name: '晕染', desc: '湿笔积韵 · 色随水走，用来做流动的色韵' }
+  ];
+
   /* ---------- 五档月相（§4.3 / §9.3） ----------
      cover   = 云带高度 MOON_COVER，与月宴同源（月宴 scene.js / share.js 的
                MOON_COVER = {E1 0.00, E2 0.18, E3 0.35, E4 0.55, E5 0.75}），
@@ -284,6 +293,7 @@
     SHAPES: SHAPES,
     PLACEMENTS: PLACEMENTS,
     MOTIFS: MOTIFS,
+    BRUSHES: BRUSHES,
     PHASES: PHASES,
     MOON_COVER: MOON_COVER,
 

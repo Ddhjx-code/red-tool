@@ -29,12 +29,22 @@
     PRESSURE: 0.8,
     PRESSURE_ITERATIONS: 20,
     CURL: 26,
-    SPLAT_RADIUS: 0.014,          // 笔芯约 18px：灯宽 164px，够画得出形
+    SPLAT_RADIUS: 0.014,          // 兼容旧路径（纹样/对流）；笔法走自己的半径
     SPLAT_FORCE: 3600,
     COLOR_INTENSITY: 1.30,
     CONVECT_FORCE: 300,           // 点亮后的烛火对流（确定性）
     BLOOM_PASSES: 2
   };
+
+  /* 笔法：勾线（细、几乎不搅动 → 纹样定得住）/ 晕染（粗、强搅动 → 色韵流开）。
+     force 是 SPLAT_FORCE 的倍率，radius 与 SPLAT_RADIUS 同单位（百分之一 uv）。
+     勾线的 force 不取 0：留一点极弱的搅动，笔迹才不至于像贴纸；但它小到
+     一笔画下去几乎不位移，故细线、转折、纹样都立得住。 */
+  var BRUSH = {
+    line: { force: 0.06, radius: 0.008 },
+    wash: { force: 1.00, radius: 0.020 }
+  };
+  var brush = 'line';
 
   /* ---------- 灯几何（画布 uv 空间；GL y 向上） ----------
      尺寸与位置按 390×844 视口下的实测舞台（390×554px）算定，不是拍脑袋：
@@ -62,6 +72,7 @@
   var canvas = null, gl = null, ext = null;
   var dye = null, velocity = null, divergenceFBO = null, curlFBO = null, pressureFBO = null;
   var bloomA = null, bloomB = null;
+  var dyeFixed = null;
   var programs = {};
   var blitFn = null;
   var ready = false;
@@ -230,6 +241,14 @@
     '}'
   ].join('\n');
 
+  /* ---------- 固色：固定层 + 活层逐像素相加（= 已定的层压在活层之下） ---------- */
+  var addFrag = [
+    'precision highp float; precision highp sampler2D;',
+    'varying vec2 vUv;',
+    'uniform sampler2D uBase; uniform sampler2D uAdd;',
+    'void main () { gl_FragColor = texture2D(uBase, vUv) + texture2D(uAdd, vUv); }'
+  ].join('\n');
+
   var clearFrag = [
     'precision mediump float; precision mediump sampler2D;',
     'varying highp vec2 vUv;',
@@ -368,9 +387,9 @@
   var brightFrag = [
     'precision highp float; precision highp sampler2D;',
     'varying vec2 vUv;',
-    'uniform sampler2D uDye;',
+    'uniform sampler2D uDye; uniform sampler2D uDyeFixed;',
     'void main () {',
-    '  vec3 dye = texture2D(uDye, vUv).rgb;',
+    '  vec3 dye = texture2D(uDye, vUv).rgb + texture2D(uDyeFixed, vUv).rgb;',
     '  float density = max(dye.r, max(dye.g, dye.b));',
     '  float mn = min(dye.r, min(dye.g, dye.b));',
     '  float chroma = density - mn;',
@@ -405,6 +424,7 @@
     'varying vec2 vUv;',
     '',
     'uniform sampler2D uDye;',
+    'uniform sampler2D uDyeFixed;',
     'uniform sampler2D uBloom;',
     'uniform float uTime;',
     'uniform float uLit;      /* 0..1 点亮进度 */',
@@ -507,7 +527,7 @@
     '  vec2 dyeUv = vec2(0.5 + psi * INV_TAU, vUv.y);',
     '',
     '  /* ---- 颜料：来自流体染料场（按转角绕筒面取） ---- */',
-    '  vec3 dye = texture2D(uDye, dyeUv).rgb;',
+    '  vec3 dye = texture2D(uDye, dyeUv).rgb + texture2D(uDyeFixed, dyeUv).rgb;',
     '  float density = max(dye.r, max(dye.g, dye.b));',
     '  float mn = min(dye.r, min(dye.g, dye.b));',
     '  float chroma = density - mn;',
@@ -688,6 +708,7 @@
     var filtering = ext.supportLinearFiltering ? gl.LINEAR : gl.NEAREST;
 
     dye = createDoubleFBO(dyeRes.width, dyeRes.height, RGBA.internalFormat, RGBA.format, texType, filtering);
+    dyeFixed = createDoubleFBO(dyeRes.width, dyeRes.height, RGBA.internalFormat, RGBA.format, texType, filtering);
     velocity = createDoubleFBO(simRes.width, simRes.height, RG.internalFormat, RG.format, texType, filtering);
     divergenceFBO = createFBO(simRes.width, simRes.height, R.internalFormat, R.format, texType, gl.NEAREST);
     curlFBO = createFBO(simRes.width, simRes.height, R.internalFormat, R.format, texType, gl.NEAREST);
@@ -784,6 +805,7 @@
 
     programs.bright.bind();
     gl.uniform1i(programs.bright.uniforms.uDye, dye.read.attach(0));
+    gl.uniform1i(programs.bright.uniforms.uDyeFixed, dyeFixed.read.attach(1));
     blitFn(bloomA);
 
     programs.blur.bind();
@@ -807,6 +829,7 @@
     if (!ready) return;
     programs.display.bind();
     gl.uniform1i(programs.display.uniforms.uDye, dye.read.attach(0));
+    gl.uniform1i(programs.display.uniforms.uDyeFixed, dyeFixed.read.attach(2));
     gl.uniform1i(programs.display.uniforms.uBloom, bloomA.attach(1));
     gl.uniform1f(programs.display.uniforms.uTime, time);
     gl.uniform1f(programs.display.uniforms.uLit, litLevel);
@@ -827,22 +850,24 @@
     var aspect = canvas.width / canvas.height;
     return aspect > 1 ? radius * aspect : radius;
   }
-  function splatVelocity(x, y, dx, dy) {
+  function splatVelocity(x, y, dx, dy, radius) {
     programs.splat.bind();
     gl.uniform1i(programs.splat.uniforms.uTarget, velocity.read.attach(0));
     gl.uniform1f(programs.splat.uniforms.aspectRatio, canvas.width / canvas.height);
     gl.uniform2f(programs.splat.uniforms.point, x, y);
     gl.uniform3f(programs.splat.uniforms.color, dx, dy, 0.0);
-    gl.uniform1f(programs.splat.uniforms.radius, correctRadius(config.SPLAT_RADIUS / 100.0));
+    gl.uniform1f(programs.splat.uniforms.radius,
+                 correctRadius(radius === undefined ? config.SPLAT_RADIUS / 100.0 : radius));
     blitFn(velocity.write); velocity.swap();
   }
-  function splatDye(x, y, color) {
+  function splatDye(x, y, color, radius) {
     programs.splat.bind();
     gl.uniform1i(programs.splat.uniforms.uTarget, dye.read.attach(0));
     gl.uniform1f(programs.splat.uniforms.aspectRatio, canvas.width / canvas.height);
     gl.uniform2f(programs.splat.uniforms.point, x, y);
     gl.uniform3f(programs.splat.uniforms.color, color.r, color.g, color.b);
-    gl.uniform1f(programs.splat.uniforms.radius, correctRadius(config.SPLAT_RADIUS / 100.0));
+    gl.uniform1f(programs.splat.uniforms.radius,
+                 correctRadius(radius === undefined ? config.SPLAT_RADIUS / 100.0 : radius));
     blitFn(dye.write); dye.swap();
   }
 
@@ -876,11 +901,14 @@
      同时挂起自转：筒面在落笔时若还在转，一笔会被抹开成一条横扫。 */
   function paint(x, y, dx, dy) {
     paintHold = PAINT_HOLD;
+    var b = BRUSH[brush] || BRUSH.line;
+    var r = b.radius / 100.0;
+    var f = config.SPLAT_FORCE * b.force;
     var tx = dyeX((x - LAMP_C.u) / LAMP_HW, (y - LAMP_C.v) / LAMP_HH);
-    if (Math.abs(dx) > 0.00005 || Math.abs(dy) > 0.00005) {
-      splatVelocity(tx, y, dx * config.SPLAT_FORCE, dy * config.SPLAT_FORCE);
+    if (f > 0 && (Math.abs(dx) > 0.00005 || Math.abs(dy) > 0.00005)) {
+      splatVelocity(tx, y, dx * f, dy * f, r);
     }
-    splatDye(tx, y, currentColor);
+    splatDye(tx, y, currentColor, r);
   }
 
   /* 纹样点集：以灯心为原点、LAMP_HW/LAMP_HH 为单位的归一化坐标，y 正方向为屏幕上方。
@@ -958,9 +986,27 @@
     var c = color || currentColor;
     for (var i = 0; i < pts.length; i++) {
       splatDye(dyeX(pts[i][0], pts[i][1]),
-               LAMP_C.v + pts[i][1] * LAMP_HH, c);
+               LAMP_C.v + pts[i][1] * LAMP_HH, c, BRUSH.line.radius / 100.0);
     }
     return pts.length;
+  }
+
+  /* 固色：把当前活层烙进固定层，再清空活层。
+     固定层不参与流体求解，所以它在点亮后被烛火对流搅动时也绝不再动 ——
+     用户按下「固色」，那一层就一定能保住（工艺上等于「这层干透了」）。
+     之后继续落笔就是新的一层，于是可以分层积染。 */
+  function fixDye() {
+    if (!ready || !dyeFixed) { return false; }
+    programs.add.bind();
+    gl.uniform1i(programs.add.uniforms.uBase, dyeFixed.read.attach(0));
+    gl.uniform1i(programs.add.uniforms.uAdd, dye.read.attach(1));
+    blitFn(dyeFixed.write); dyeFixed.swap();
+
+    programs.clear.bind();
+    gl.uniform1i(programs.clear.uniforms.uTexture, dye.read.attach(0));
+    gl.uniform1f(programs.clear.uniforms.value, 0.0);
+    blitFn(dye.write); dye.swap();
+    return true;
   }
 
   /* ============================================================
@@ -1034,6 +1080,7 @@
       var baseVertex = compileShader(gl.VERTEX_SHADER, baseVertexSrc);
       var postVertex = compileShader(gl.VERTEX_SHADER, postVertexSrc);
       programs.clear = new Program(baseVertex, clearFrag);
+      programs.add = new Program(baseVertex, addFrag);
       programs.splat = new Program(baseVertex, splatFrag);
       programs.advection = new Program(baseVertex, advectionFrag, ext.supportLinearFiltering ? null : ['MANUAL_FILTERING']);
       programs.divergence = new Program(baseVertex, divergenceFrag);
@@ -1115,6 +1162,7 @@
     },
 
     splatMotif: splatMotif,
+    fixDye: fixDye,
     motifIds: function () { return ['moon', 'gui', 'tu', 'yun', 'huaniao']; },
 
     /* 一笔绘纹：沿折线补两笔，笔触不断线（原型 pointermove 的三段 splat） */
@@ -1134,6 +1182,13 @@
       shapeTo = [0, 0, 0, 0];
       shapeTo[index] = 1;
       shapeT = 0;
+    },
+
+    /* 笔法：'line' 勾线（细、几乎不搅动）/ 'wash' 晕染（粗、强搅动）。
+       未知值退回勾线——宁可让纹样定住，也不要误用强搅动把形冲掉。 */
+    setBrush: function (mode) {
+      brush = BRUSH[mode] ? mode : 'line';
+      return brush;
     },
 
     /* 点亮 / 熄灭：启动固定排程的点亮过渡（1.15s 点亮 / 0.70s 熄灭 + 火苗一闪）。
@@ -1229,7 +1284,7 @@
     state: function () {
       return {
         lit: litTarget, litLevel: litLevel, shape: shapeIndex,
-        shapeW: shapeW.slice(), moon: moonBright, time: time,
+        shapeW: shapeW.slice(), moon: moonBright, time: time, brush: brush,
         rotation: rotAngle, autoRotate: autoRotate, painting: painting,
         glLost: gl ? gl.isContextLost() : true
       };

@@ -739,7 +739,13 @@ body {
   gap: var(--sp-2);
   margin-top: var(--sp-2);
 }
-.motif-btn {
+.motif-group { display: flex; align-items: center; gap: var(--sp-2); }
+.brush-group {
+  display: flex; align-items: center; gap: 4px;
+  margin-left: 6px; padding-left: 6px;
+  border-left: 1px solid var(--line);
+}
+.motif-btn, .brush-btn {
   min-width: 44px; min-height: 44px;
   display: flex; align-items: center; justify-content: center;
   font-family: var(--font);
@@ -752,7 +758,7 @@ body {
   transition: color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease),
               background var(--dur-1) var(--ease);
 }
-.motif-btn[aria-pressed="true"] {
+.motif-btn[aria-pressed="true"], .brush-btn[aria-pressed="true"] {
   color: var(--night-0);
   background: var(--lamp-warm);
   border-color: var(--halo);
@@ -819,7 +825,7 @@ body {
 .shape-btn[aria-pressed="true"] svg { opacity: 1; }
 
 /* 动作：主按钮渐变带辉光，次按钮幽灵描边 */
-.act-row { display: flex; gap: var(--sp-2); margin-top: var(--sp-3); }
+.act-row { display: flex; gap: var(--sp-2); margin-top: var(--sp-2); }
 .act {
   min-height: 44px;
   font-family: var(--font);
@@ -896,6 +902,15 @@ body {
   min-height: 18px;
 }
 .current-label b { color: var(--halo); font-weight: normal; }
+
+/* 提示行：左边是提示文字，右边是「固色」。行距与 act-row 一并收到 sp-2，
+   因为 dock 只有 290px 高，新增这一行必须从行距里让出空间。 */
+.foot-row {
+  display: flex; align-items: center; gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+.foot-row .current-label { flex: 1; margin-top: 0; }
+.fix-btn { min-height: 40px; padding: 0 var(--sp-4); flex: none; }
 
 /* ============================================================
    view-result · 成品彩灯 + 起名 + 分享

@@ -111,7 +111,10 @@
       <div class="dock">
         <div class="panel-bar">
           <div class="pal-row" id="palette"></div>
-          <div class="motif-row" id="motifs"></div>
+          <div class="motif-row">
+            <div class="motif-group" id="motifs"></div>
+            <div class="brush-group" id="brushes"></div>
+          </div>
           <div class="shape-row" id="shapes"></div>
           <div class="act-row">
             <div class="place-group" id="placements"></div>
@@ -119,7 +122,10 @@
             <button id="light-btn" class="act" type="button">点 亮</button>
             <button id="reset-btn" class="act" type="button">重 画</button>
           </div>
-          <div class="current-label" id="current-label">灯色 <b>月白</b> · 拖动灯面绘纹，彩漆自会扩散</div>
+          <div class="foot-row">
+            <div class="current-label" id="current-label">灯色 <b>月白</b> · 拖动灯面绘纹，彩漆自会扩散</div>
+            <button id="fix-btn" class="act fix-btn" type="button" aria-label="固色：定住当前这一层">固 色</button>
+          </div>
         </div>
       </div>
     </section>
