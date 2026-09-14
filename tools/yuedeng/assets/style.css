@@ -180,75 +180,116 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--sp-4);
-  padding: var(--sp-5) var(--sp-5) var(--sp-4);
+  justify-content: center;
+  gap: var(--sp-3);
+  padding: var(--sp-4) 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
-.home-series { font-size: var(--fs-xs); letter-spacing: var(--sp-1); color: var(--paper-faint); }
-.home-title { display: flex; gap: var(--sp-2); }
-.home-title span {
-  font-size: 30px;
-  color: var(--moon);
-  width: 60px; height: 60px;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--gold-faint);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r-sm);
-  text-shadow: 0 0 var(--sp-5) rgba(232, 184, 75, 0.20);
+.home-head { display: flex; flex-direction: column; align-items: center; gap: var(--sp-1); }
+.home-seal {
+  font-size: var(--fs-2xs); letter-spacing: 0.28em; text-indent: 0.28em;
+  color: var(--paper); padding: 3px 8px 3px 10px;
+  border: 1px solid var(--c-zhusha); border-radius: 2px;
+  background: rgba(201, 72, 60, 0.22);
 }
-.home-sub { font-size: var(--fs-md); letter-spacing: var(--sp-1); color: var(--halo); }
+/* 标题做「灯影字」：字面暖白、字后一层橙外光、再一层深蓝投影 —— 像灯下看字。
+   不用底色块：以色块代字设是本作首页此前最廉价的一处（四枚麻将牌）。 */
+.home-title { display: flex; gap: 2px; }
+.home-title span {
+  font-size: 42px; line-height: 1.06; font-weight: 600;
+  color: #F7DFAE;
+  text-shadow:
+    0 0 16px rgba(245, 184, 65, 0.72),
+    0 0 40px rgba(226, 100, 59, 0.46),
+    0 2px 0 rgba(8, 14, 26, 0.9);
+}
+.home-title span:nth-child(2) { transform: translateY(3px); }
+.home-title span:nth-child(3) { transform: translateY(-2px); }
+.home-title span:nth-child(4) { transform: translateY(4px); }
+.home-sub { font-size: var(--fs-sm); letter-spacing: 0.22em; text-indent: 0.22em; color: var(--halo); }
 
-/* 首页意象：月下小灯（固定结构，零随机） */
+/* 主视觉破框铺满整宽：首页主视觉应当是舞台，不是卡片里的插图位。
+   全页唯一强光源在这里 —— 灯笼的暖光；月亮退为冷色次光源。 */
 .home-vig {
   position: relative;
   width: 100%;
-  max-width: 300px;
-  height: 176px;
-  border-radius: var(--r-lg);
-  border: 1px solid var(--line-strong);
+  height: 292px;
   overflow: hidden;
-  box-shadow: 0 var(--sp-4) var(--sp-6) rgba(0, 0, 0, 0.5);
   flex-shrink: 0;
   background:
-    radial-gradient(90% 60% at 50% 56px,
-      rgba(232, 184, 75, 0.16) 0%,
-      rgba(232, 184, 75, 0.05) 40%,
-      rgba(232, 184, 75, 0) 72%),
+    radial-gradient(62% 46% at 50% 66%,
+      rgba(245, 184, 65, 0.24) 0%,
+      rgba(226, 100, 59, 0.09) 44%,
+      rgba(226, 100, 59, 0) 76%),
     linear-gradient(to bottom,
-      var(--night-1) 0%,
-      var(--night-2) 60%,
-      var(--night-3) 100%);
+      rgba(5, 7, 15, 0) 0%,
+      rgba(10, 16, 36, 0.62) 44%,
+      rgba(10, 16, 36, 0) 100%);
 }
 .vig-star { position: absolute; background: var(--moon); opacity: 0.6; }
 .vig-star.s1 { left: 12%; top: 18%; width: 2px; height: 2px; }
 .vig-star.s2 { left: 26%; top: 10%; width: 1px; height: 1px; }
 .vig-star.s3 { left: 78%; top: 14%; width: 2px; height: 2px; }
 .vig-star.s4 { left: 88%; top: 28%; width: 1px; height: 1px; }
+.vig-star.s5 { left: 44%; top: 8%;  width: 1px; height: 1px; }
+.vig-star.s6 { left: 66%; top: 24%; width: 1px; height: 1px; }
+/* 月华：两层柔光（贴身内晕 + 大半径月华）。删掉原来的八角描边 ——
+   写实月面被八角褐框衬住，是「PPT 里插了张素材图」的直接来源。 */
 .vig-halo {
-  position: absolute; left: 50%; top: 56px;
-  width: 96px; height: 96px; margin: -48px 0 0 -48px;
-  background: var(--halo); opacity: 0.26;
-  clip-path: polygon(34% 0, 66% 0, 86% 14%, 100% 34%, 100% 66%,
-                     86% 86%, 66% 100%, 34% 100%, 14% 86%, 0 66%, 0 34%, 14% 14%);
+  position: absolute; left: 50%; top: 78px;
+  width: 250px; height: 250px; margin: -125px 0 0 -125px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(247, 226, 186, 0.24) 0%,
+    rgba(245, 200, 130, 0.13) 30%,
+    rgba(226, 140, 70, 0.06) 52%,
+    rgba(226, 140, 70, 0) 74%);
 }
+/* 照片月面与全页扁平语言冲突，且硬切圆边「像贴图」。降对比 + 轻模糊 + 暖内晕，
+   再借 .vig-halo 的大半径月华把它贴进夜色；明暗交接也压暖，与下方灯源同向。
+   sepia 是把照片的冷灰月海拉向暖月白的关键一步 —— 只降饱和仍偏冷灰蓝。 */
 .vig-moon {
-  position: absolute; left: 50%; top: 56px;
-  width: 76px; height: 76px; margin: -38px 0 0 -38px;
+  position: absolute; left: 50%; top: 78px;
+  width: 78px; height: 78px; margin: -39px 0 0 -39px;
   border-radius: 50%;
   background: url(img/moon.webp) center / 100% 100% no-repeat;
+  filter: blur(0.9px) saturate(0.68) brightness(1.02) sepia(0.25);
+  box-shadow: inset 0 0 18px rgba(226, 100, 59, 0.30),
+              0 0 26px 8px rgba(245, 214, 160, 0.24);
 }
+
+/* 全页此前是静帧，一眼读作海报。一处呼吸的灯晕 + 疏密微闪的星，
+   是「像游戏」与「像海报」之间最便宜的一条分界。 */
+@keyframes glowBreathe {
+  0%, 100% { opacity: 0.82; transform: scale(0.98); }
+  50%      { opacity: 1.00; transform: scale(1.06); }
+}
+.vl-glow { animation: glowBreathe 3.8s ease-in-out infinite; }
+@keyframes starTwinkle {
+  0%, 100% { opacity: 0.22; }
+  50%      { opacity: 0.85; }
+}
+.vig-star { animation: starTwinkle 4.6s ease-in-out infinite; }
+.vig-star.s2 { animation-delay: 0.8s; }
+.vig-star.s3 { animation-delay: 1.7s; }
+.vig-star.s4 { animation-delay: 2.6s; }
+.vig-star.s5 { animation-delay: 3.3s; }
+.vig-star.s6 { animation-delay: 1.2s; }
 .vig-lamp {
   position: absolute; left: 50%; bottom: 28px;
   transform: translateX(-50%);
   width: 46px; height: 64px;
 }
+/* 灯笼是全页唯一强光源：光晕比月华更暖更强，才读得出「灯里有火」——
+   首页此前最大的问题是全页没有一处真正的光，月不发光、灯也不发光。 */
 .vl-glow {
-  position: absolute; left: -8px; top: 2px;
-  width: 62px; height: 58px; border-radius: 50%;
+  position: absolute; left: -42px; top: -34px;
+  width: 130px; height: 130px; border-radius: 50%;
   background: radial-gradient(circle,
-    rgba(245, 199, 126, 0.38) 0%,
-    rgba(245, 199, 126, 0) 70%);
+    rgba(255, 214, 140, 0.55) 0%,
+    rgba(245, 184, 65, 0.26) 34%,
+    rgba(226, 100, 59, 0) 72%);
 }
 .vl-cap {
   position: absolute; left: 9px; top: 0;
@@ -258,8 +299,26 @@ body {
 .vl-body {
   position: absolute; left: 3px; top: 8px;
   width: 40px; height: 42px;
-  background: var(--lamp-warm);
+  /* 首页示范灯必须自己示范玩法：竖向竹骨 + 由内向外的透光（灯腹最亮）。
+     此前是一面纯色空白，与「彩绘灯纹」这个玩法承诺自相矛盾。 */
+  background:
+    repeating-linear-gradient(to right,
+      rgba(92, 62, 30, 0.30) 0 1px, rgba(0, 0, 0, 0) 1px 7px),
+    radial-gradient(62% 54% at 50% 54%,
+      rgba(255, 236, 196, 0.95) 0%,
+      var(--lamp-warm) 44%,
+      #E2863B 100%);
   clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+}
+/* 示范灯灯面补一笔桂枝：厚处透深、薄处透亮 —— 把正文承诺当场演示一遍。
+   此前灯面纯色空白，玩法叫「彩绘灯纹」而示范灯无纹，自相矛盾。 */
+.vl-body::after {
+  content: ''; position: absolute; inset: 16% 14%;
+  background:
+    radial-gradient(circle at 28% 34%, rgba(126, 54, 38, 0.62) 0 1.7px, rgba(0,0,0,0) 2.1px),
+    radial-gradient(circle at 60% 26%, rgba(126, 54, 38, 0.55) 0 1.5px, rgba(0,0,0,0) 1.9px),
+    radial-gradient(circle at 50% 62%, rgba(126, 54, 38, 0.55) 0 1.5px, rgba(0,0,0,0) 1.9px),
+    radial-gradient(circle at 74% 52%, rgba(126, 54, 38, 0.48) 0 1.3px, rgba(0,0,0,0) 1.7px);
 }
 .vl-base {
   position: absolute; left: 11px; top: 50px;
@@ -271,11 +330,29 @@ body {
   width: 4px; height: 8px;
   background: var(--c-zhusha);
 }
-.home-vig-label {
-  position: absolute; left: 0; right: 0; bottom: var(--sp-2);
-  text-align: center;
-  font-size: var(--fs-2xs); letter-spacing: var(--sp-1);
-  color: var(--paper-faint);
+/* 玩法三步：把首页从「读」变「玩」的入口说明，一句一格 */
+.home-steps {
+  display: flex; align-items: stretch; gap: var(--sp-2);
+  width: 100%; max-width: var(--content-w);
+  padding: 0 var(--sp-4);
+  list-style: none;
+}
+.home-steps li {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: var(--sp-2) 4px;
+  border: 1px solid rgba(226, 184, 75, 0.30);
+  border-radius: var(--r-md);
+  background: rgba(30, 24, 20, 0.52);
+}
+.home-steps b {
+  font-size: var(--fs-sm); font-weight: normal; letter-spacing: 0.16em;
+  color: var(--halo);
+}
+/* 说明字此前压得太暗（深蓝底上的灰蓝小字），读作 disabled/未加载完 —— 提亮。 */
+.home-steps i {
+  font-style: normal; font-size: var(--fs-2xs); line-height: 1.5;
+  color: var(--paper-dim); text-align: center;
 }
 
 .card {
@@ -304,6 +381,11 @@ body {
 .card p:first-of-type { margin-top: 0; }
 .card p b { color: var(--paper); font-weight: normal; }
 
+/* 首页文化卡：去掉左侧橙竖条（博客模板默认 accent 手法）与多余内边距。
+   文案本就紧凑，装饰越少越不像模板。 */
+.home-card { border-left: 1px solid rgba(226, 184, 75, 0.22); padding: var(--sp-3) var(--sp-4); }
+.home-card .card p { font-size: var(--fs-2xs); line-height: 1.7; color: var(--paper); }
+
 /* 我的彩灯 */
 .works { width: 100%; max-width: var(--content-w); }
 .works-label { font-size: var(--fs-sm); letter-spacing: var(--sp-1); color: var(--halo); margin-bottom: var(--sp-2); }
@@ -331,15 +413,33 @@ body {
   color: var(--paper);
   background: linear-gradient(to top, rgba(6, 11, 18, 0.86), rgba(6, 11, 18, 0));
 }
-.works-empty { font-size: var(--fs-sm); color: var(--paper-faint); }
-
-.home-foot {
-  text-align: center;
-  font-size: var(--fs-2xs);
-  letter-spacing: var(--sp-1);
-  color: var(--paper-faint);
-  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+/* 空的彩灯格：描金实线 + 槽内一枚极淡的灯笼线稿。
+   注意不能用虚线框 —— 虚线是开发占位语言，会让整块读作「组件没渲染完」。 */
+.work-slot {
+  position: relative; flex: none; width: 54px; height: 54px;
+  border: 1px solid rgba(226, 184, 75, 0.40);
+  border-radius: var(--r-md);
+  background: radial-gradient(56% 48% at 50% 54%,
+    rgba(245, 199, 126, 0.14) 0%, rgba(245, 199, 126, 0) 76%);
 }
+.work-slot::before {
+  content: ''; position: absolute; left: 50%; top: 13px;
+  width: 13px; height: 3px; transform: translateX(-50%);
+  border-radius: 1px;
+  background: rgba(245, 199, 126, 0.55);
+}
+.work-slot::after {
+  content: ''; position: absolute; left: 50%; top: 50%;
+  width: 18px; height: 25px; transform: translate(-50%, -44%);
+  border: 1px solid rgba(245, 199, 126, 0.66);
+  border-radius: 50% / 44%;
+  background:
+    linear-gradient(to bottom,
+      rgba(201, 72, 60, 0) 82%, rgba(201, 72, 60, 0.55) 82% 100%),
+    radial-gradient(circle,
+      rgba(245, 199, 126, 0.26) 0%, rgba(245, 199, 126, 0) 72%);
+}
+.works-empty { font-size: var(--fs-2xs); color: rgba(226, 184, 75, 0.66); align-self: center; }
 
 /* ============================================================
    view-create · 创作台（夜空 + 月 + 灯 + 操作台）
@@ -1079,6 +1179,6 @@ body {
 
 /* ---------- reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .star, .lamp-tassel { animation: none; }
+  .star, .lamp-tassel, .vl-glow, .vig-star { animation: none; }
   *, *::before, *::after { transition-duration: 0.01ms !important; }
 }

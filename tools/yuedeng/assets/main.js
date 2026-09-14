@@ -651,10 +651,25 @@
     var intro = $('home-intro');
     if (intro) { intro.innerHTML = ''; }
     D.INTRO.forEach(function (t) {
+      if (!intro) { return; }
       var p = document.createElement('p');
       p.textContent = t;
       intro.appendChild(p);
     });
+
+    var steps = $('home-steps');
+    if (steps) {
+      D.STEPS.forEach(function (s) {
+        var li = document.createElement('li');
+        var b = document.createElement('b');
+        b.textContent = s.name;
+        var d = document.createElement('i');
+        d.textContent = s.desc;
+        li.appendChild(b);
+        li.appendChild(d);
+        steps.appendChild(li);
+      });
+    }
 
     buildPalette();
     buildShapes();

@@ -72,9 +72,18 @@ def main():
         intro_len = page.locator("#home-intro p").count()
         intro_table = page.evaluate("window.YDData.INTRO.length")
         check("home: 中秋灯会 intro 与 INTRO 表同数", intro_len == intro_table == 3, str(intro_len))
-        craft_len = page.locator("#home-craft p").count()
-        check("home: 灯笼工艺 2 段且有正文",
-              craft_len == 2 and page.locator("#home-craft p").first.inner_text() != "", str(craft_len))
+        steps_len = page.locator("#home-steps li").count()
+        check("home: 玩法三步与 STEPS 表同数",
+              steps_len == page.evaluate("window.YDData.STEPS.length") == 3, str(steps_len))
+        start_box = page.locator("#btn-start").bounding_box()
+        check("home: 主 CTA 在首屏内（底部不超出视口）",
+              start_box is not None and start_box["y"] + start_box["height"] <= 844,
+              str(start_box))
+        # 原第二张工艺卡与 INTRO[1] 几乎逐字重复（「竹篾为骨、纸绢为面」在首页出现
+        # 两次），暴露填充感，已删卡并统一由 INTRO 承载 —— 故此处改验去重后的状态。
+        check("home: 重复工艺卡已删，工艺描述由 INTRO 唯一承载",
+              page.locator("#home-craft").count() == 0
+              and "竹篾" in page.locator("#home-intro").inner_text())
         shot(page, "smoke-01-home")
 
         # ---------- create ----------

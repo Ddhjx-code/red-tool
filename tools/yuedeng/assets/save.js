@@ -186,6 +186,13 @@
     row.innerHTML = '';
     var list = load();
     if (!list.length) {
+      /* 空态给三个空灯槽：暗示「这里会挂你的灯」，比一行灰字有收集欲。 */
+      for (var k = 0; k < 3; k++) {
+        var slot = document.createElement('span');
+        slot.className = 'work-slot';
+        slot.setAttribute('aria-hidden', 'true');
+        row.appendChild(slot);
+      }
       var empty = document.createElement('p');
       empty.className = 'works-empty';
       empty.textContent = EMPTY_TEXT;

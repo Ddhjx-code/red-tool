@@ -10,20 +10,24 @@
 </head>
 <body>
   <div id="app">
-    <!-- ===== 首页 · 中秋灯会文化 ===== -->
+    <!-- ===== 首页 · 提笔做灯 ===== -->
     <section id="view-home" class="view is-active">
       <div class="home-inner">
-        <p id="home-series" class="home-series">非遗手作坊 · 第十八作</p>
-        <h1 class="home-title"><span>月</span><span>下</span><span>灯</span><span>会</span></h1>
-        <p id="home-sub" class="home-sub">彩漆绘纹 · 灯下透光 · 放入月下灯会</p>
+        <div class="home-head">
+          <p id="home-series" class="home-seal">非遗手作坊 · 第十八作</p>
+          <h1 class="home-title"><span>月</span><span>下</span><span>灯</span><span>会</span></h1>
+          <p id="home-sub" class="home-sub">彩绘灯纹 · 灯下透光</p>
+        </div>
 
         <figure class="home-vig" aria-hidden="true">
           <span class="vig-star s1"></span>
           <span class="vig-star s2"></span>
           <span class="vig-star s3"></span>
           <span class="vig-star s4"></span>
+          <span class="vig-star s5"></span>
+          <span class="vig-star s6"></span>
           <span class="vig-halo"></span>
-          <div class="vig-moon"></div>
+          <span class="vig-moon"></span>
           <div class="vig-lamp">
             <span class="vl-glow"></span>
             <span class="vl-cap"></span>
@@ -31,33 +35,22 @@
             <span class="vl-base"></span>
             <span class="vl-tassel"></span>
           </div>
-          <figcaption class="home-vig-label">月下点灯 · 纹样透光 · 群灯齐明</figcaption>
         </figure>
 
-        <div class="card">
-          <p class="card-title">中秋灯会 · 赏月观灯放灯</p>
-          <div id="home-intro">
-            <p>中秋赏月、观灯、放灯，是流传千年的节令盛事。灯会起源可上溯汉代，中秋灯会盛于唐宋，月下群灯齐明，正是人间团圆夜。</p>
-            <p>月是中秋的核心意象，月满象征团圆。灯借月色，月映灯辉，二者共成中秋盛景。</p>
-          </div>
+        <ol class="home-steps" id="home-steps"></ol>
+
+        <div class="card home-card">
+          <div id="home-intro"></div>
         </div>
 
-        <div class="card">
-          <p class="card-title">灯笼 · 竹骨纸面彩绘</p>
-          <div id="home-craft">
-            <p>传统灯笼以竹篾为骨、纸绢为面，彩绘纹样，内置蜡烛。光透纹样，明暗相生。</p>
-            <p>中秋灯笼常见纹样为月、桂、兔、云、花鸟；灯色取月白、桂金、朱砂、青金、黛蓝。</p>
-          </div>
-        </div>
+        <button id="btn-start" class="primary-btn wide" type="button">提笔 · 绘我的第一盏灯</button>
 
         <div class="works">
           <p class="works-label">我的彩灯</p>
           <div id="works-row" class="works-row"></div>
         </div>
-
-        <button id="btn-start" class="primary-btn" type="button">开 始 制 灯</button>
       </div>
-      <p class="home-foot">竹篾为骨 · 纸绢为面 · 彩绘灯纹 · 月下透光</p>
+    </section>
     </section>
 
     <!-- ===== 创作台 · 夜空 + 灯面绘纹 + 点亮 ===== -->
