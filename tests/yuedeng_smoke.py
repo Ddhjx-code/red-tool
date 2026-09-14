@@ -125,6 +125,12 @@ def main():
         check("点亮: 舞台报亮 (sceneLit/lit)", snap["sceneLit"] is True and snap["lit"] is True, str(snap))
         check("点亮: #light-btn 加 is-on", page.locator("#light-btn.is-on").count() == 1)
         check("点亮: #stage.is-lit 群灯齐明", page.locator("#stage.is-lit").count() == 1)
+        # litLevel 是 1.15s 的缓动量（LIT_DUR_ON）。不等它到位就截图，拍到的是
+        # uLit≈0 的未点亮灯 —— 而 engineLit 报的是 litTarget，断言照样通过，
+        # 于是「点亮＝无光」这个假象能一路骗过测试。故此处必须等真实渲染量。
+        page.wait_for_function("window.YDEngine.state().litLevel > 0.98", timeout=5000)
+        check("点亮: 渲染亮到位 (litLevel>0.98)",
+              page.evaluate("window.YDEngine.state().litLevel") > 0.98)
         shot(page, "smoke-03-lit")
 
         # ---------- 月相：一枚按钮循环五档 ----------

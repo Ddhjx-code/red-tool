@@ -504,7 +504,7 @@
 
     if (!isTest && !finaleSkipped && window.YDFinale) {
       setView('view-finale');
-      window.YDFinale.start(Share.thumb(lamp, 500), function () { enterResult(lamp); });
+      window.YDFinale.start(Share.lampCut(lamp, 500), function () { enterResult(lamp); });
       return true;
     }
 

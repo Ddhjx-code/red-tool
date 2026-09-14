@@ -402,6 +402,25 @@
     try { return c.toDataURL('image/png'); } catch (e) { return ''; }
   }
 
+  /* 结局主角：只取灯体与它的外溢辉光，保留源画布的 alpha。
+     与 thumb 的唯一区别是不填底色 —— thumb 的 #0A1024 是为存档缩略图准备的，
+     直接拿去当结局主角会在夜空上露出一块比方框更深的补丁。
+     margin 取 2.2：外溢辉光是 exp(-sdc*3)，到 1.2 个灯半宽处只剩 2.7%，
+     所以裁切边落在光晕已衰尽处，不会切出硬边。 */
+  function lampCut(lamp, width, margin) {
+    var src = lampSource(lamp);
+    if (!src) { return ''; }
+    var w = width || 500;
+    var crop = lampCrop(src, margin || 2.2);
+    var h = Math.max(1, Math.round(w / crop.aspect));
+    var c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    var g = c.getContext('2d');
+    if (!g) { return ''; }
+    g.drawImage(src, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, w, h);
+    try { return c.toDataURL('image/png'); } catch (e) { return ''; }
+  }
+
   /* 成品台 #lamp-result：把快照整幅铺满画布。
      铺满 = 灯落在 uv(0.5,0.46)，与 #result-stage 的 --cx/--cy/--hw/--hh
      精确对齐，于是骨架（提梁/灯盖/灯底/流苏）与灯面严丝合缝。 */
@@ -470,6 +489,7 @@
 
     paintCard: paintCard,
     thumb: thumb,
+    lampCut: lampCut,
     show: show,
     decode: decode,
     drawLamp: drawLamp,
