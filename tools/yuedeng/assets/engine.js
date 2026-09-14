@@ -42,7 +42,8 @@
      一笔画下去几乎不位移，故细线、转折、纹样都立得住。 */
   var BRUSH = {
     line: { force: 0.06, radius: 0.008 },
-    wash: { force: 1.00, radius: 0.020 }
+    wash: { force: 1.00, radius: 0.020 },
+    motif: { force: 0,   radius: 0.003 }
   };
   var brush = 'line';
 
@@ -936,69 +937,102 @@
      生成式参数曲线采样而非静态点表——比手列数百点紧凑，且纹样更平滑。
      半径一律控制在 ±0.60 内：四种灯形轮廓都在此范围，故纹样不会落到灯外。 */
   function motifPoints(id) {
-    var pts = [], i, t, a, r, k;
+    var pts = [], i, t, a, r, k, dir;
     if (id === 'moon') {
-      for (i = 0; i < 56; i++) {
-        a = i / 56 * TAU;
-        pts.push([Math.cos(a) * 0.60, Math.sin(a) * 0.60]);
+      /* 月轮：闭合圆环。加密到 96 点（点距约 3px）才配得上细笔锋画成连续细线 */
+      for (i = 0; i < 96; i++) {
+        a = i / 96 * TAU;
+        pts.push([Math.cos(a) * 0.58, Math.sin(a) * 0.58]);
       }
     } else if (id === 'gui') {
+      /* 桂花：五瓣放射花 + 花心小环（五瓣是五种里最像样的一张，只加密不改形） */
       for (k = 0; k < 5; k++) {
         a = k / 5 * TAU;
-        for (t = 0; t <= 1.0001; t += 0.1) {
-          r = 0.16 + 0.44 * Math.sin(t * Math.PI);
+        for (t = 0; t <= 1.0001; t += 0.06) {
+          r = 0.18 + 0.40 * Math.sin(t * Math.PI);
           pts.push([Math.cos(a + (t - 0.5) * 0.62) * r,
                     Math.sin(a + (t - 0.5) * 0.62) * r]);
         }
       }
-    } else if (id === 'tu') {
-      for (k = 0; k < 2; k++) {
-        for (t = 0; t <= 1.0001; t += 0.08) {
-          pts.push([(k ? 0.20 : -0.20) + Math.sin(t * Math.PI) * 0.05 * (k ? 1 : -1),
-                    0.18 + t * 0.42]);
-        }
+      for (i = 0; i < 24; i++) {
+        a = i / 24 * TAU;
+        pts.push([Math.cos(a) * 0.10, Math.sin(a) * 0.10]);
       }
-      for (i = 0; i < 32; i++) {
-        a = i / 32 * TAU;
-        pts.push([Math.cos(a) * 0.20, -0.02 + Math.sin(a) * 0.18]);
+    } else if (id === 'tu') {
+      /* 玉兔：双耳 + 头 + 身 + 四足 + 尾。初版身体只画一个圆环、无足无尾，
+         细看像开瓶器；补足与尾后轮廓才成立。 */
+      for (k = 0; k < 2; k++) {
+        for (t = 0; t <= 1.0001; t += 0.05) {
+          pts.push([(k ? 0.15 : -0.15) + Math.sin(t * Math.PI) * 0.07 * (k ? 1 : -1),
+                    0.16 + t * 0.42]);
+        }
       }
       for (i = 0; i < 40; i++) {
         a = i / 40 * TAU;
-        pts.push([Math.cos(a) * 0.30, -0.34 + Math.sin(a) * 0.24]);
+        pts.push([Math.cos(a) * 0.19, -0.04 + Math.sin(a) * 0.17]);
       }
-    } else if (id === 'yun') {
-      for (k = 0; k < 2; k++) {
-        for (t = 0; t <= 1.0001; t += 0.04) {
-          a = t * Math.PI * 2.4 + k * Math.PI;
-          r = 0.08 + t * 0.26;
-          pts.push([(k ? 0.24 : -0.24) + Math.cos(a) * r,
-                    Math.sin(a) * r * 0.72]);
-        }
+      for (i = 0; i < 48; i++) {
+        a = i / 48 * TAU;
+        pts.push([Math.cos(a) * 0.27, -0.34 + Math.sin(a) * 0.21]);
       }
-    } else if (id === 'huaniao') {
-      for (k = 0; k < 6; k++) {
-        a = k / 6 * TAU;
-        for (t = 0; t <= 1.0001; t += 0.12) {
-          r = 0.08 + 0.22 * Math.sin(t * Math.PI);
-          pts.push([-0.26 + Math.cos(a + (t - 0.5) * 0.5) * r,
-                    -0.12 + Math.sin(a + (t - 0.5) * 0.5) * r]);
-        }
-      }
-      for (t = 0; t <= 1.0001; t += 0.05) {
-        pts.push([0.10 + t * 0.30, 0.14 - Math.sin(t * Math.PI) * 0.14]);
-      }
-      for (t = 0; t <= 1.0001; t += 0.08) {
-        pts.push([0.20 + t * 0.14, 0.08 - t * 0.26]);
+      for (t = 0; t <= 1.0001; t += 0.12) {
+        pts.push([-0.19 + t * 0.08, -0.54 - t * 0.05]);
+        pts.push([0.11 + t * 0.08, -0.54 - t * 0.05]);
       }
       for (t = 0; t <= 1.0001; t += 0.1) {
-        pts.push([0.40 + t * 0.14, 0.14 + t * 0.16]);
+        pts.push([0.27 + t * 0.10, -0.30 - t * 0.05]);
+      }
+    } else if (id === 'yun') {
+      /* 云头：单条闭合轮廓（三瓣拱顶 + 压扁的底缘），不画内部笔画。
+         初版画螺旋尾，圈距约 4px 小于笔宽 5px，必然自粘成一颗花生。
+         能认的三个（月/桂/兔）共性是「轮廓大、结构简、对称强」—— 云也照此办。
+         瓣幅由 0.11 加到 0.17：0.11 时三瓣起伏只有约 9px，与线宽同量级，
+         渲染后读作「扁环尖角」而非云朵层叠。 */
+      for (i = 0; i < 108; i++) {
+        a = i / 108 * TAU;
+        r = 0.28 + 0.17 * Math.cos(a * 3.0);
+        pts.push([Math.cos(a) * r * 1.38,
+                  Math.sin(a) * (Math.sin(a) > 0 ? 0.23 : 0.13)]);
+      }
+    } else if (id === 'huaniao') {
+      /* 花鸟：两支各自闭合的轮廓，左花右鸟，中间留空。
+         初版笔画交叠成一整团、只剩一个小孔，故改为「一个形一条闭合线」。 */
+      for (i = 0; i < 96; i++) {
+        a = i / 96 * TAU;
+        r = 0.15 + 0.09 * Math.cos(a * 5.0);
+        pts.push([-0.30 + Math.cos(a) * r, -0.06 + Math.sin(a) * r]);
+      }
+      /* 鸟的手工剪影：头—喙—胸—腹—尾—背 依序连成闭合轮廓，再按点距加密 */
+      var bird = [
+        [0.36, -0.22], [0.46, -0.20], [0.52, -0.13], [0.50, -0.07],
+        [0.44, -0.03], [0.38, 0.01], [0.30, 0.08], [0.18, 0.13],
+        [0.04, 0.13], [-0.10, 0.09], [-0.22, 0.03], [-0.12, -0.02],
+        [0.00, -0.04], [0.12, -0.07], [0.22, -0.13], [0.30, -0.20]
+      ];
+      for (k = 0; k < bird.length; k++) {
+        var p0 = bird[k], p1 = bird[(k + 1) % bird.length];
+        var seg = Math.max(2, Math.round(Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) / 0.025));
+        for (i = 0; i < seg; i++) {
+          var uu = i / seg;
+          pts.push([p0[0] + (p1[0] - p0[0]) * uu, p0[1] + (p1[1] - p0[1]) * uu]);
+        }
       }
     }
     return pts;
   }
 
   /* 纹样落灯面：沿点集逐点 splatDye，走与手绘完全相同的颜料通路，
-     所以纹样天然融入流体——随染料晕开、随筒面转动、点亮时一起透光。 */
+     所以纹样天然融入流体——随染料晕开、随筒面转动、点亮时一起透光。
+
+     笔锋必须比勾线更细、点必须更密，两者缺一不可：
+     · 只细不密 → 线断成虚线；
+     · 只密不细 → 粗笔把轮廓膨胀成实心团，自交处留怪孔，并把中等复杂度纹样
+       （云头的卷尾、鸟的头翅、兔的腿）的特征抹死。
+     视觉复核原话：「五种里只三种能认（月/桂可辨、兔勉强），云与花鸟退化成
+     带孔的 blob 与粗对勾」，主因正是「点/笔触太粗太密糊成一团」。
+     量纲注意：半径走 BRUSH.motif.radius / 100 的约定（与 config.SPLAT_RADIUS
+     同制）。曾写成 MOTIF_RADIUS = 0.003 直接传入，漏掉 /100，比勾线大 37 倍，
+     纹样全成了巨大柔和色斑，可辨认数反而由 3 掉到 0。 */
   function splatMotif(id, color) {
     if (!ready) { return 0; }
     var pts = motifPoints(id);
@@ -1007,7 +1041,7 @@
     var c = color || currentColor;
     for (var i = 0; i < pts.length; i++) {
       splatDye(dyeX(pts[i][0], pts[i][1]),
-               LAMP_C.v + pts[i][1] * LAMP_HH, c, BRUSH.line.radius / 100.0);
+               LAMP_C.v + pts[i][1] * LAMP_HH, c, BRUSH.motif.radius / 100.0);
     }
     return pts.length;
   }
