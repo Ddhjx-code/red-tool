@@ -666,6 +666,37 @@ body {
   box-shadow: 0 0 10px 3px rgba(245,199,126,0.34);
 }
 
+/* 点亮态叠一层预渲染的发光 sprite：三层光（外晕→中晕→近白亮核）+ 灯体 +
+   上下盖 + 竹骨。原来的扁平色块只有「形」没有「光」（评审：光晕 0 层、
+   等距如贴纸），小尺寸下 CSS 画不出结构，故走位图。
+   未点亮时不显示（此时该读作剪影），点亮后淡入。 */
+/* 群灯吊线：中/近景灯此前无吊线、凭空悬浮（评审指出）。线要够长才读得出
+   「挂在远处屋檐下」—— 首版 78% 太短太淡，上端没入空白夜空，第一眼仍像飘着。 */
+.fest::before {
+  content: ''; position: absolute; left: 50%; top: -150%;
+  width: 1px; height: 150%; margin-left: -0.5px;
+  background: linear-gradient(to top,
+    rgba(226, 196, 150, 0.52) 0%,
+    rgba(226, 196, 150, 0.24) 62%,
+    rgba(226, 196, 150, 0) 100%);
+  pointer-events: none;
+}
+
+.fl::after, .fest::after {
+  content: ''; position: absolute; left: 50%; top: 50%;
+  width: 420%; height: 380%;
+  margin-left: -210%; margin-top: -190%;
+  background-image: var(--sprite);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  opacity: 0;
+  transition: opacity var(--dur-3) var(--ease);
+  pointer-events: none;
+}
+.stage.is-lit .fl::after,
+.stage.is-lit .fest::after { opacity: 1; }
+
 /* --- 灯会群灯：中景 / 近景容器（固定表由 JS 填充，零随机） --- */
 .fest-lamps { position: absolute; inset: 0; pointer-events: none; }
 .fest {

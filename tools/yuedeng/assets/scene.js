@@ -238,6 +238,78 @@
            ', filter ' + d + ' ' + e + ', opacity ' + d + ' ' + e;
   }
 
+  /* 背景灯的发光 sprite。背景灯只有 8–24px，CSS 画不出结构 —— 视觉评审判
+     「背景灯只有形没有光：光晕 0 层、无上下盖、无竹骨，等距如贴纸」。故按其
+     形状预渲染为位图：三层光（外晕 → 中晕 → 近白亮核）+ 灯体 + 上下盖 + 竹骨。
+     bright 取 0.8/1.0/1.2 三档，用来打散等距感（零随机：档位由灯的 id 定）。 */
+  function makeLampSprite(bright) {
+    var S = 96;
+    var c = document.createElement('canvas');
+    c.width = S; c.height = S;
+    var g = c.getContext('2d');
+    if (!g) { return ''; }
+    var cx = S / 2, cy = S / 2, i, a, r;
+
+    /* 三层光：外晕 → 中晕 → 近白亮核。
+       外晕必须够强才「溢」得出来 —— 首版外晕 0.20、中晕 0.54，实测被判
+       「光只亮在灯体内部，远景一排基本无晕、呈灰褐色像未点亮」。 */
+    var halo = g.createRadialGradient(cx, cy, 0, cx, cy, S * 0.50);
+    halo.addColorStop(0.00, 'rgba(255, 226, 168, ' + (0.34 * bright).toFixed(3) + ')');
+    halo.addColorStop(0.42, 'rgba(245, 184, 65, ' + (0.17 * bright).toFixed(3) + ')');
+    halo.addColorStop(1.00, 'rgba(226, 140, 70, 0)');
+    g.fillStyle = halo;
+    g.fillRect(0, 0, S, S);
+    var mid = g.createRadialGradient(cx, cy, 0, cx, cy, S * 0.27);
+    mid.addColorStop(0.00, 'rgba(255, 242, 210, ' + (0.62 * bright).toFixed(3) + ')');
+    mid.addColorStop(0.55, 'rgba(245, 199, 126, ' + (0.32 * bright).toFixed(3) + ')');
+    mid.addColorStop(1.00, 'rgba(245, 199, 126, 0)');
+    g.fillStyle = mid;
+    g.fillRect(0, 0, S, S);
+
+    /* 灯体：八边形，竖向渐变（腰腹最亮、上下口收暗） */
+    var bw = S * 0.145, bh = S * 0.185;
+    var oct = [[0, -1], [0.62, -0.78], [1, -0.34], [1, 0.34],
+               [0.62, 0.78], [0, 1], [-0.62, 0.78], [-1, 0.34], [-1, -0.34], [-0.62, -0.78]];
+    g.save();
+    g.translate(cx, cy);
+    var body = g.createLinearGradient(0, -bh, 0, bh);
+    body.addColorStop(0.00, '#E8A64B');
+    body.addColorStop(0.46, '#FFE6B4');
+    body.addColorStop(0.62, '#F5C77E');
+    body.addColorStop(1.00, '#C97F33');
+    g.fillStyle = body;
+    g.beginPath();
+    for (i = 0; i < oct.length; i++) {
+      var px = oct[i][0] * bw, py = oct[i][1] * bh;
+      if (i === 0) { g.moveTo(px, py); } else { g.lineTo(px, py); }
+    }
+    g.closePath();
+    g.fill();
+    /* 竖向竹骨：透光纸上骨条读作暗筋 */
+    g.strokeStyle = 'rgba(146, 92, 38, 0.55)';
+    g.lineWidth = 1;
+    for (i = -2; i <= 2; i++) {
+      g.beginPath();
+      g.moveTo(i * bw * 0.34, -bh * 0.86);
+      g.lineTo(i * bw * 0.34, bh * 0.86);
+      g.stroke();
+    }
+    /* 上下盖 */
+    g.fillStyle = '#4A3A28';
+    g.fillRect(-bw * 0.72, -bh - S * 0.035, bw * 1.44, S * 0.035);
+    g.fillRect(-bw * 0.64, bh, bw * 1.28, S * 0.032);
+    g.restore();
+
+    /* 灯口一线近白高光，把「里面有火」点出来 */
+    var core = g.createRadialGradient(cx, cy + bh * 0.18, 0, cx, cy + bh * 0.18, bw * 0.9);
+    core.addColorStop(0.00, 'rgba(255, 250, 236, ' + (0.85 * bright).toFixed(3) + ')');
+    core.addColorStop(1.00, 'rgba(255, 240, 205, 0)');
+    g.fillStyle = core;
+    g.fillRect(0, 0, S, S);
+
+    try { return c.toDataURL('image/png'); } catch (e) { return ''; }
+  }
+
   function buildFestival() {
     var farHost = el('far-lamps'), festHost = el('fest-lamps');
     if (!farHost || !festHost) { return 0; }
@@ -247,6 +319,12 @@
     var reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
     var i, l, node, size, far;
     lamps = [];
+    /* 三档亮度的发光 sprite，按灯序轮换 —— 打散「等距同亮」的贴纸感。
+       暗档取 0.94 而非 0.80：0.80 时灯发灰，与「已点亮」的画面自相矛盾。
+       远排另用一组更暗的（0.85/0.92/1.00）：远排灯只有 8px，用同一档会把灯体
+       自身的明暗对比抹平，晕与灯糊成一枚灰白亮块（「有晕，但读作亮斑而非灯火」）。 */
+    var sprites = [makeLampSprite(0.94), makeLampSprite(1.04), makeLampSprite(1.14)];
+    var spritesFar = [makeLampSprite(0.85), makeLampSprite(0.92), makeLampSprite(1.00)];
 
     for (i = 0; i < D.FESTIVAL_LAMPS.length; i++) {
       l = D.FESTIVAL_LAMPS[i];
@@ -254,18 +332,40 @@
       node = document.createElement('span');
       node.className = far ? 'fl' : ('fest ' + (l.layer === 'near' ? 'near' : 'mid'));
       node.setAttribute('data-lamp', l.id);
+      var set = far ? spritesFar : sprites;
+      node.style.setProperty('--sprite', 'url(' + set[i % set.length] + ')');
+      /* 确定性抖动：尺寸 ±10%、竖直 ±3px、横向 ±6px。灯会该是「有秩序的参差」，
+         严格等距同尺寸会被读作贴纸（评审两轮都点到「横向间距仍近乎等距」）。
+         零随机 —— 抖动只由序号决定。 */
+      var jit = (i * 7) % 5 - 2;
+      var xjit = ((i * 11) % 7 - 3) * 2;
+      /* 每盏微差（明度 ±5%、冷暖微偏）＋ 远景大气透视（远排略降饱和与亮度、
+         偏冷）。评审收尾两条：「远排晕色齐灰白，缺每盏微差」「远排与主灯之间
+         缺一层大气透视」。零随机 —— 系数由序号定。 */
+      var lum = 1 + jit * 0.025;
+      if (far) {
+        lum *= 0.96;
+        node.style.filter = 'brightness(' + lum.toFixed(3) +
+          ') saturate(0.88) hue-rotate(' + (jit * 3) + 'deg)';
+      } else {
+        node.style.filter = 'brightness(' + lum.toFixed(3) +
+          ') hue-rotate(' + (jit * 2) + 'deg)';
+      }
       (far ? farHost : festHost).appendChild(node);
 
-      /* 尺寸：scale × LAMP_BASE_PX；居中用负 margin，把 transform 留给摇摆 */
+      /* 尺寸：scale × LAMP_BASE_PX；居中用负 margin，把 transform 留给摇摆。
+         抖动加在尺寸与竖直位置上（±10% / ±3px），破掉「严格等距同尺寸」。 */
       size = lampSize(l);
-      node.style.width = size.w + 'px';
-      node.style.height = size.h + 'px';
-      node.style.marginLeft = (-size.w / 2) + 'px';
+      var kk = 1 + jit * 0.05;
+      var ww = size.w * kk, hh = size.h * kk;
+      node.style.width = ww.toFixed(1) + 'px';
+      node.style.height = hh.toFixed(1) + 'px';
+      node.style.marginLeft = (-ww / 2 + xjit).toFixed(1) + 'px';
       node.style.left = l.x + '%';
       if (far) {
-        node.style.marginBottom = (-size.h / 2) + 'px';   // bottom 在 layoutFar() 里按舞台实测高写
+        node.style.marginBottom = (-hh / 2 + jit * 0.6).toFixed(1) + 'px';
       } else {
-        node.style.marginTop = (-size.h / 2) + 'px';
+        node.style.marginTop = (-hh / 2 + jit * 0.8).toFixed(1) + 'px';
         node.style.top = l.y + '%';
       }
 
