@@ -402,22 +402,76 @@
     try { return c.toDataURL('image/png'); } catch (e) { return ''; }
   }
 
-  /* 结局主角：只取灯体与它的外溢辉光，保留源画布的 alpha。
-     与 thumb 的唯一区别是不填底色 —— thumb 的 #0A1024 是为存档缩略图准备的，
-     直接拿去当结局主角会在夜空上露出一块比方框更深的补丁。
-     margin 取 2.2：外溢辉光是 exp(-sdc*3)，到 1.2 个灯半宽处只剩 2.7%，
-     所以裁切边落在光晕已衰尽处，不会切出硬边。 */
-  function lampCut(lamp, width, margin) {
+  /* 结局主角：把「竹竿 + 绳 + 灯」合成成一张渲染好的图，交给结局作为整体运动。
+     为什么不走 CSS：CSS 只能画出可辨认的示意矩形（5px 色块），没有竹节、没有
+     渐晕、没有朝月的受光边；而且竿/绳/灯三者各自 transform 会互相漂开 —— 实测
+     两拍各差 17px 与 39px，竿脚还会脱开屋檐悬空。合成成一张图后：
+       · 竿是塔形竹竿（跨向渐变 + 竹节环 + 朝月一侧亮边），有真明暗
+       · 绳自竿头垂到灯顶，用二次曲线略微下垂，不是直线
+       · 三者相对几何恒定，结局只移动这一张图，不再有对齐漂移
+     withHang=false 时只出灯（第 0 拍「点烛」灯还在檐口低处、尚未系竿）。
+     零随机：全部几何为常量。 */
+  function hangArt(lamp, width, withHang) {
     var src = lampSource(lamp);
     if (!src) { return ''; }
-    var w = width || 500;
-    var crop = lampCrop(src, margin || 2.2);
-    var h = Math.max(1, Math.round(w / crop.aspect));
+    var w = width || 420;
     var c = document.createElement('canvas');
-    c.width = w; c.height = h;
+    c.width = 400; c.height = 760;
     var g = c.getContext('2d');
     if (!g) { return ''; }
-    g.drawImage(src, crop.sx, crop.sy, crop.sw, crop.sh, 0, 0, w, h);
+
+    var LAMP_CX = 212, LAMP_CY = 486, LAMP_W = w;
+    /* 必须用 2.2 倍余量（与 lampCut 同源）：紧裁剪(1.18)会让灯体几乎占满整张图，
+       于是画在灯之前的竿被灯体不透明部分盖住（读作「断棍」）、绳也整段落在灯体
+       不透明区内（读作「绳不可见」）。2.2 倍余量把灯体压到图箱中间约 45%，
+       上下左右留出透明边，竿与绳才露得出来；外溢光晕也正好在裁边前衰尽。 */
+    var crop = lampCrop(src, 2.2);
+    var lh = Math.max(1, Math.round(LAMP_W / crop.aspect));
+
+    if (withHang) {
+      /* 竿：底 (48,792) → 顶 (206,300)，塔形（底宽 11px、顶宽 6px），
+         朝月一侧（左）亮、背月一侧（右）暗，五道竹节环。
+         竿顶落在 y300，离灯体可见顶缘(y389)约 90px，且远在月盘下缘之下。
+         竿脚下探到 y792：相机拉远时挂具随之缩放，竿脚会整体上浮，故须留余量。 */
+      var bx = 48, by = 792, tx = 206, ty = 300;
+      var ang = Math.atan2(ty - by, tx - bx);
+      g.save();
+      g.translate(bx, by);
+      g.rotate(ang + Math.PI / 2);
+      var len = Math.hypot(tx - bx, ty - by);
+      var grad = g.createLinearGradient(-5.5, 0, 5.5, 0);
+      grad.addColorStop(0.00, '#7A6244');   /* 朝月亮边 */
+      grad.addColorStop(0.22, '#5A4630');
+      grad.addColorStop(0.62, '#3A2C1E');
+      grad.addColorStop(1.00, '#20170F');
+      g.fillStyle = grad;
+      g.beginPath();
+      g.moveTo(-5.5, 0); g.lineTo(5.5, 0);
+      g.lineTo(3.0, -len); g.lineTo(-3.0, -len);
+      g.closePath(); g.fill();
+      g.strokeStyle = 'rgba(150, 122, 82, 0.55)';   /* 竹节环 */
+      g.lineWidth = 1.8;
+      for (var s = 1; s <= 5; s++) {
+        var sy = -len * s / 6;
+        g.beginPath(); g.moveTo(-4.4, sy); g.lineTo(4.4, sy); g.stroke();
+      }
+      g.restore();
+
+      /* 绳：竿头 (206,304) → 灯体可见顶缘 (212,389)，二次曲线微垂 */
+      var rTopX = 206, rTopY = 304;
+      var rBotX = LAMP_CX, rBotY = LAMP_CY - lh * 0.23 + 6;
+      g.strokeStyle = 'rgba(226, 200, 152, 0.62)';
+      g.lineWidth = 2;
+      g.beginPath();
+      g.moveTo(rTopX, rTopY);
+      g.quadraticCurveTo((rTopX + rBotX) / 2 + 5, (rTopY + rBotY) / 2, rBotX, rBotY);
+      g.stroke();
+    }
+
+    /* 灯：与手绘同一裁剪，落在绳端下方 */
+    g.drawImage(src, crop.sx, crop.sy, crop.sw, crop.sh,
+                LAMP_CX - LAMP_W / 2, LAMP_CY - lh / 2, LAMP_W, lh);
+
     try { return c.toDataURL('image/png'); } catch (e) { return ''; }
   }
 
@@ -489,7 +543,7 @@
 
     paintCard: paintCard,
     thumb: thumb,
-    lampCut: lampCut,
+    hangArt: hangArt,
     show: show,
     decode: decode,
     drawLamp: drawLamp,

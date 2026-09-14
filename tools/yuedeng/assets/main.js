@@ -550,7 +550,11 @@
 
     if (!isTest && !finaleSkipped && window.YDFinale) {
       setView('view-finale');
-      window.YDFinale.start(Share.lampCut(lamp, 500), function () { enterResult(lamp); });
+      /* 两张合成图：只灯（第0拍点烛，灯还在檐口）与竿绳灯（第1拍起系竿高树）。
+         竿绳走渲染合成而非 CSS，见 share.js hangArt 的说明。 */
+      window.YDFinale.start(Share.hangArt(lamp, 420, false),
+                            Share.hangArt(lamp, 420, true),
+                            function () { enterResult(lamp); });
       return true;
     }
 

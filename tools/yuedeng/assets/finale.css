@@ -1,7 +1,12 @@
 /* ============================================================
    CG 结局 · 树中秋（§10）：全画幅叙事序列，四拍共 12.5s。
    镜头运动靠 transform，视差层各层不同速，粒子在独立 canvas。
-   零随机：星空／屋舍／粒子初始态全部取自固定表或确定性哈希。
+   零随机：星空／屋舍／灯火／粒子初始态全部取自固定表或确定性哈希。
+
+   光照体系（本片从「拼贴」走向「渲染」的关键）：
+   · 主光 = 月，冷银，从左上打；屋顶/翘角有受光边
+   · 副光 = 灯火，暖金，落城不落天（窗格/檐下/街灯）
+   · 天空为双色温：地平线暖褐 → 中空深蓝 → 顶墨蓝
    ============================================================ */
 
 #view-finale.is-active {
@@ -17,9 +22,16 @@
 /* --- 远景层：夜空 + 星 + 月 --- */
 .fin-sky {
   position: absolute; left: -12%; right: -12%; top: -12%; bottom: -12%;
-  background: linear-gradient(to bottom,
-    var(--night-0) 0%, var(--night-1) 40%,
-    var(--night-2) 76%, var(--night-3) 100%);
+  /* 双色温大气：地平线带城的暖褐反光，向高空转冷 —— 光的双叙事。
+     纯单色渐变会让天与地各说各话，这也是此前「拼贴感」的来源之一。 */
+  background:
+    radial-gradient(120% 42% at 50% 96%,
+      rgba(226, 140, 70, 0.18) 0%,
+      rgba(226, 140, 70, 0.05) 44%,
+      rgba(226, 140, 70, 0) 72%),
+    linear-gradient(to bottom,
+      #070B18 0%, #0B1330 34%,
+      #101A38 62%, #17233F 84%, #1B2440 100%);
 }
 .fin-stars { position: absolute; inset: 0; }
 .fin-star {
@@ -34,15 +46,69 @@
   margin: -98px 0 0 -98px;
   border-radius: 50%;
   background: url(img/moon.webp) center / 100% 100% no-repeat;
-  box-shadow: 0 0 70px 24px rgba(232, 184, 75, 0.24);
+  /* 月华用径向渐变而非 box-shadow：box-shadow 无论加多大模糊，外缘都是一圈
+     硬截止的环，会被读成「贴纸边」；径向渐变才能真正化进夜空。 */
+  box-shadow: none;
+}
+/* terminator：左上受光、右下渐暗。写实月自带的光照方向必须与本片主光一致，
+   否则月亮会像「贴上去的照片」。 */
+.fin-moon::after {
+  content: ''; position: absolute; inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%,
+    rgba(255, 246, 224, 0.22) 0%,
+    rgba(255, 246, 224, 0.06) 40%,
+    rgba(10, 14, 28, 0.16) 74%,
+    rgba(10, 14, 28, 0.34) 100%);
+}
+/* 月华：三层径向渐变（贴身内晕 → 中程暖晕 → 大半径冷晕），全部柔边无截止环 */
+.fin-moon::before {
+  content: ''; position: absolute; inset: -52%;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(255, 236, 198, 0.20) 34%,
+    rgba(255, 236, 198, 0.09) 46%,
+    rgba(245, 214, 160, 0.05) 58%,
+    rgba(226, 140, 70, 0.025) 70%,
+    rgba(226, 140, 70, 0) 84%);
+  pointer-events: none;
+}
+
+/* --- 远景城：第二三层剪影，做景深。越远越冷越暗越平 --- */
+.fin-far {
+  position: absolute; left: -12%; right: -12%; bottom: 0; height: 34%;
+  background: #0A1020;
+  opacity: 0.85;
+  clip-path: polygon(0 62%, 6% 62%, 6% 50%, 12% 44%, 18% 50%, 18% 60%,
+                     26% 60%, 26% 40%, 33% 34%, 40% 40%, 40% 56%,
+                     48% 56%, 48% 46%, 55% 40%, 62% 46%, 62% 58%,
+                     70% 58%, 70% 38%, 77% 32%, 84% 38%, 84% 54%,
+                     92% 54%, 92% 44%, 100% 38%, 100% 100%, 0 100%);
 }
 
 /* --- 中景层：屋舍剪影 + 屋上灯（满城灯火） --- */
 .fin-city { position: absolute; left: -12%; right: -12%; bottom: 0; height: 44%; }
 .fin-house {
   position: absolute; bottom: 0;
-  background: var(--ink-soft);
-  box-shadow: inset 0 3px 0 0 rgba(247, 239, 226, 0.06);
+  /* 背光剪影：瓦面自上而下微亮的渐变 + 屋脊一道冷银受光边（月光从左上打）。
+     纯色块 + 无受光边，是「零细节几何块」读作占位而非建筑的原因。 */
+  background: linear-gradient(to bottom,
+    #141E36 0%, var(--ink-soft) 46%, #0A1020 100%);
+  box-shadow: inset 0 1px 0 0 rgba(198, 214, 236, 0.30);
+}
+/* 窗格灯：窗纸由内透出的暖光，落在城的「体内」而不是飘在天上 */
+.fin-window {
+  position: absolute;
+  width: 5px; height: 6px;
+  background: #6A4A2A;
+  opacity: 0;
+  transition: opacity 0.6s var(--ease), background 0.6s var(--ease),
+              box-shadow 0.6s var(--ease);
+}
+.fin-window.is-on {
+  background: var(--lamp-warm);
+  opacity: 1;
+  box-shadow: 0 0 7px 2px rgba(245, 199, 126, 0.42);
 }
 .fin-house-lamp {
   position: absolute;
@@ -53,30 +119,121 @@
   transition: opacity 0.7s var(--ease), background 0.7s var(--ease),
               filter 0.7s var(--ease);
 }
+/* 灯火三档：--t 取 0/1/2，决定亮度与光环半径。全部同大同亮会让「罗列」
+   变成一片噪点；有层次才有远近与秩序。 */
 .fin-house-lamp.is-on {
   background: var(--lamp-warm);
   opacity: 1;
-  filter: drop-shadow(0 0 7px rgba(245, 199, 126, 0.58));
+  filter: drop-shadow(0 0 calc(5px + var(--t, 1) * 3px)
+                      rgba(245, 199, 126, calc(0.40 + var(--t, 1) * 0.12)));
 }
 
-/* --- 近景层：屋檐剪影 --- */
+/* 近景层：屋檐剪影。与挂具共用同一条相机变换（都锚在画框底部），否则相机拉远
+   时挂具缩放、屋檐只平移，竿脚会逐拍脱开檐口 —— 这是「竿脚永远落不到檐上」
+   的真因。盒子刻意向下越出画框 40%，缩放时底边才不会露空，故 clip-path 的
+   y 百分比是按「70% 层高」重算过的（原值 × 0.428），可见上缘仍落在 641.6px。 */
 .fin-near {
-  position: absolute; left: -12%; right: -12%; bottom: 0; height: 20%;
+  position: absolute; left: -12%; right: -12%; bottom: -40%; height: 70%;
   background: var(--ink);
-  clip-path: polygon(0 62%, 8% 62%, 8% 40%, 17% 26%, 26% 40%, 26% 58%,
-                     36% 58%, 36% 34%, 46% 20%, 56% 34%, 56% 54%,
-                     66% 54%, 66% 30%, 76% 16%, 86% 30%, 86% 50%,
-                     94% 50%, 94% 36%, 100% 24%, 100% 100%, 0 100%);
+  box-shadow: inset 0 1px 0 0 rgba(198, 214, 236, 0.16);
+  transform-origin: 50% 100%;
+  clip-path: polygon(0 26.5%, 8% 26.5%, 8% 17.1%, 17% 11.1%, 26% 17.1%,
+                     26% 24.8%, 36% 24.8%, 36% 14.6%, 46% 8.6%, 56% 14.6%,
+                     56% 23.1%, 66% 23.1%, 66% 12.8%, 76% 6.8%, 86% 12.8%,
+                     86% 21.4%, 94% 21.4%, 94% 15.4%, 100% 10.3%,
+                     100% 100%, 0 100%);
 }
 
-/* --- 主角：用户实际画的那盏灯（WebGL 画布截图） --- */
-.fin-lantern {
-  position: absolute; left: 50%; top: 50%;
-  width: 250px;
-  transform: translate(-50%, -50%) scale(1);
-  transform-origin: 50% 50%;
+/* --- 升空孔明灯：只占少数（<20%），带 bloom 与拖尾 --- */
+.fin-sky-lanterns { position: absolute; inset: 0; pointer-events: none; }
+.fin-sky-lantern {
+  position: absolute;
+  width: 9px; height: 12px;
+  border-radius: 46% 46% 40% 40%;
+  background: radial-gradient(circle at 50% 62%,
+    #FFE6B4 0%, var(--lamp-warm) 52%, rgba(226, 100, 59, 0.9) 100%);
+  filter: drop-shadow(0 0 9px rgba(245, 199, 126, 0.72));
   opacity: 0;
 }
+.fin-sky-lantern::after {
+  content: ''; position: absolute; left: 50%; bottom: -14px;
+  width: 2px; height: 14px; margin-left: -1px;
+  background: linear-gradient(to bottom,
+    rgba(245, 199, 126, 0.42), rgba(245, 199, 126, 0));
+}
+
+/* --- 挂点：檐角斜出的翘竿 + 绳。
+   第2拍「高树于檐」此前既无檐也无竿，灯笼只是「升空缩小」，动作与文案反向。
+   竿与绳共用灯笼的相机变换，于是读到的是「镜头升起、掠过一盏已挂定的灯」，
+   而不是「灯自己在飞」。 --- */
+.fin-hang {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  /* 原点取画框底缘：与近景屋檐同源。两者都锚在底边，缩放时竿脚才始终踩在
+     檐口上（此前挂具锚舞台中心、屋檐不缩放，竿脚逐拍脱开）。 */
+  transform-origin: 50% 100%;
+}
+.fin-pole, .fin-rope { display: none; }   /* 竿绳已改为渲染合成图（见 share.js hangArt） */
+/* 竿脚铆在檐角 (16%,700)，竿头斜向天空止于 (50%,279) —— 月盘下缘在 y258，
+   竿头在 y279，落在月盘之外。竿长 441px、倾角 17.5°，底端为旋转原点。
+   竿脚比初版外移 18%：竿身经过灯体高度时才落在灯廓之外，不再「穿灯」。 */
+.fin-pole {
+  position: absolute; left: 16%; top: 700px;
+  width: 5px; height: 441px;
+  margin-left: -2.5px; margin-top: -441px;
+  border-radius: 3px;
+  background: linear-gradient(to top, #241A12 0%, #3E2F1F 46%, #5A4630 100%);
+  box-shadow: inset 1px 0 0 0 rgba(226, 196, 150, 0.22);
+  transform-origin: 50% 100%;
+  transform: rotate(17.5deg);
+}
+/* 绳自竿头 (50%,279) 垂直垂下，接到灯体的实际顶缘 y≈420。
+   注意灯体只占图箱中间约 45%（lampCut 留了 2.2 倍余量），故绳必须够长；
+   初版止于 343（图箱顶附近）离灯体还有约 70px 虚空，这就是「绳不可见」的真因。 */
+.fin-rope {
+  position: absolute; left: 50%; top: 279px;
+  width: 2px; height: 141px;
+  margin-left: -1px;
+  background: linear-gradient(to bottom,
+    rgba(240, 214, 168, 0.72) 0%,
+    rgba(240, 214, 168, 0.52) 72%,
+    rgba(240, 214, 168, 0.24) 100%);
+}
+
+/* 灯位下移到 58%：让翘起的檐角入画、竿与绳都变短 —— 原先灯居中在月正下方，
+   竿必须跨 300px 虚空去够檐角，几何被过约束，只能读成「悬空的绳＋插进月亮的竿」。 */
+.fin-lantern-halo {
+  position: absolute; left: 50%; top: 58%;
+  width: 520px; height: 520px; margin: -260px 0 0 -260px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(245, 199, 126, 0.20) 0%,
+    rgba(226, 140, 70, 0.08) 34%,
+    rgba(226, 140, 70, 0) 68%);
+  opacity: 0;
+  /* 原点取舞台中心（该框自 y230 起，舞台中心 422 落在框内 37% 处），
+     使其缩放与相机同源，光心不会漂离灯笼 */
+  transform-origin: 50% 37%;
+}
+/* 合成图（400×760，灯心在 (212,486)）定位到舞台：使灯心落在 (195,490)，
+   故盒子左上角在 (-28,-20)，显示宽 420。
+   两张图同尺寸同锚点：plain（只灯，第0拍）与 hung（竿绳灯，第1拍起）交叉淡入，
+   锚点一致所以切换不跳。 */
+.fin-lantern, .fin-lantern-hung {
+  position: absolute;
+  left: -28px; top: -20px;
+  width: 420px;
+  transform-origin: 50% 51%;
+  transition: opacity 0.8s var(--ease);
+}
+.fin-lantern { opacity: 1; }
+.fin-lantern-hung { opacity: 0; }
+.fin-stage.is-hung .fin-lantern { opacity: 0; }
+.fin-stage.is-hung .fin-lantern-hung { opacity: 1; }
+
+/* 入场淡入：挂具整体淡入（灯与灯晕一起），不再用内联 opacity */
+@keyframes finHangIn { from { opacity: 0; } to { opacity: 1; } }
+.fin-hang { animation: finHangIn 0.7s var(--ease) both; }
 
 /* --- 粒子层 --- */
 .fin-particles {
@@ -85,33 +242,64 @@
   pointer-events: none;
 }
 
-/* --- 字幕：逐拍浮出 --- */
+/* --- 调色覆盖层：暗角 + 胶片颗粒 + 冷暖分级。
+   这一层是把「DOM 拼贴」推向「一条渲染链」的最便宜手段 —— CG 感有相当一部分
+   来自后期，而不是几何。全部确定性：feTurbulence 固定种子，径向渐变无随机。 --- */
+.fin-grade {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(120% 78% at 50% 46%,
+      rgba(0, 0, 0, 0) 52%,
+      rgba(3, 6, 14, 0.30) 82%,
+      rgba(3, 6, 14, 0.58) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.30'/%3E%3C/svg%3E");
+  background-size: 100% 100%, 160px 160px;
+  mix-blend-mode: normal;
+  opacity: 1;
+}
+.fin-grade::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to bottom,
+    rgba(24, 42, 86, 0.16) 0%,
+    rgba(24, 42, 86, 0.04) 40%,
+    rgba(226, 140, 70, 0.10) 100%);
+  mix-blend-mode: soft-light;
+}
+
+/* --- 字幕：逐拍浮出。置于天空留白处（原 bottom 22% 会压在灯与灯的辉光上，
+   评审读作「字幕埋在灯晕里几乎不可读」），并加厚投影保证在辉光上仍可读。 --- */
 .fin-caption {
-  position: absolute; left: 0; right: 0; bottom: 13%;
+  position: absolute; left: 0; right: 0; bottom: 31%;
   text-align: center;
   font-family: var(--font);
-  font-size: 17px; letter-spacing: 0.20em;
+  font-size: 17px; letter-spacing: 0.20em; text-indent: 0.20em;
   color: var(--moon);
-  text-shadow: 0 2px 14px rgba(5, 7, 15, 0.85);
+  text-shadow: 0 0 20px rgba(245, 199, 126, 0.40),
+               0 1px 3px rgba(5, 7, 15, 0.95),
+               0 2px 16px rgba(5, 7, 15, 0.95);
   opacity: 0;
   transform: translateY(10px);
   transition: opacity 0.9s var(--ease), transform 0.9s var(--ease);
 }
 .fin-caption.is-on { opacity: 1; transform: translateY(0); }
 
+/* 跳过：线框半透明，不抢画面中心 */
 .fin-skip {
   position: absolute; right: 16px; bottom: 26px;
   min-width: 66px; min-height: 44px;
   font-family: var(--font);
   font-size: 13px; letter-spacing: 0.12em;
   color: var(--paper-dim);
-  background: rgba(17, 27, 54, 0.66);
-  border: 1px solid var(--line);
+  background: rgba(10, 16, 32, 0.28);
+  border: 1px solid rgba(247, 239, 226, 0.26);
   border-radius: var(--r-pill);
   cursor: pointer;
+  transition: opacity 1.2s var(--ease);
 }
+.fin-skip.is-dim { opacity: 0.35; }
 
 @media (prefers-reduced-motion: reduce) {
   .fin-caption { transition-duration: 0.01ms; }
-  .fin-house-lamp { transition-duration: 0.01ms; }
+  .fin-house-lamp, .fin-window { transition-duration: 0.01ms; }
 }
