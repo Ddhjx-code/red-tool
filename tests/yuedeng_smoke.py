@@ -108,6 +108,25 @@ def main():
               painted["chromaPixels"] > 0 and painted["chromaPixels"] > blank["chromaPixels"] * 4,
               str((blank["chromaPixels"], painted["chromaPixels"])))
         check("绘纹 counted (2 笔)", page.evaluate("window.__game.snapshot().splats") == 2)
+
+        # ---------- 视口变化不得清空灯面 ----------
+        # resize 会重建全部 FBO；若重建时不搬旧内容，用户画到一半只要视口尺寸一变
+        # （触摸设备地址栏显隐、横竖屏切换、软键盘弹出）整幅画就被清空 —— 用户
+        # 看到的是「画着画着回到开头」。冒烟用例从不改视口，所以此前一直没抓到。
+        chroma_before = page.evaluate("window.__game.lampPixels()")["chromaPixels"]
+        page.evaluate("document.getElementById('lamp').style.height = '440px'")
+        page.wait_for_timeout(300)
+        page.evaluate("window.YDEngine.resize()")
+        page.wait_for_timeout(600)
+        chroma_after = page.evaluate("window.__game.lampPixels()")["chromaPixels"]
+        check("视口变化: 灯面颜料未被清空",
+              chroma_after > chroma_before * 0.75,
+              "before=%d after=%d" % (chroma_before, chroma_after))
+        page.evaluate("document.getElementById('lamp').style.height = ''")
+        page.wait_for_timeout(300)
+        page.evaluate("window.YDEngine.resize()")
+        page.wait_for_timeout(600)
+
         shot(page, "smoke-02-create")
 
         # ---------- 换灯形 → 轮廓形变 ----------

@@ -698,7 +698,7 @@
       ? { width: max, height: min } : { width: min, height: max };
   }
 
-  function initFramebuffers() {
+  function initFramebuffers(preserve) {
     var simRes = getResolution(config.SIM_RESOLUTION);
     var dyeRes = getResolution(config.DYE_RESOLUTION);
     var bloomRes = { width: Math.max(2, Math.round(dyeRes.width / 4)),
@@ -706,6 +706,10 @@
     var texType = ext.halfFloatTexType;
     var RGBA = ext.formatRGBA, RG = ext.formatRG, R = ext.formatR;
     var filtering = ext.supportLinearFiltering ? gl.LINEAR : gl.NEAREST;
+
+    var oldDye = preserve ? dye : null;
+    var oldFixed = preserve ? dyeFixed : null;
+    var oldVel = preserve ? velocity : null;
 
     dye = createDoubleFBO(dyeRes.width, dyeRes.height, RGBA.internalFormat, RGBA.format, texType, filtering);
     dyeFixed = createDoubleFBO(dyeRes.width, dyeRes.height, RGBA.internalFormat, RGBA.format, texType, filtering);
@@ -715,6 +719,23 @@
     pressureFBO = createDoubleFBO(simRes.width, simRes.height, R.internalFormat, R.format, texType, gl.NEAREST);
     bloomA = createFBO(bloomRes.width, bloomRes.height, RGBA.internalFormat, RGBA.format, texType, filtering);
     bloomB = createFBO(bloomRes.width, bloomRes.height, RGBA.internalFormat, RGBA.format, texType, filtering);
+
+    copyTexture(oldDye, dye);
+    copyTexture(oldFixed, dyeFixed);
+    copyTexture(oldVel, velocity);
+  }
+
+  /* 把旧纹理整幅拷进新纹理。resize 会重建全部 FBO，若不搬内容，用户画到一半
+     只要视口尺寸一变（触摸设备地址栏显隐、横竖屏切换、软键盘弹出）整幅灯面就
+     被清空 —— 这正是「画着画着回到开头」的来源。reset 则故意不搬。
+     clearFrag 是 value * texture2D，取 value = 1 即纯拷贝，无需再加着色器。 */
+  function copyTexture(src, dst) {
+    if (!src || !dst || !programs.clear || !blitFn) { return; }
+    programs.clear.bind();
+    gl.uniform1i(programs.clear.uniforms.uTexture, src.read.attach(0));
+    gl.uniform1f(programs.clear.uniforms.value, 1.0);
+    blitFn(dst.write);
+    dst.swap();
   }
 
   /* canvas 尺寸同步 + 像素块 uv（骨架与着色器同源同值） */
@@ -1119,10 +1140,11 @@
       return true;
     },
 
-    /* 视口变化：canvas 尺寸 + 像素块 uv + FBO 重建（resize 事件里调用） */
+    /* 视口变化：canvas 尺寸 + 像素块 uv + FBO 重建（resize 事件里调用）。
+       重建时必须 preserve=true 把已画的灯面搬过去，否则画到一半视口一变就清空。 */
     resize: function () {
       if (!ready) return false;
-      if (resizeCanvas()) { initFramebuffers(); return true; }
+      if (resizeCanvas()) { initFramebuffers(true); return true; }
       return false;
     },
 
