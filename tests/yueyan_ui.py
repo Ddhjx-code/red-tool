@@ -32,8 +32,19 @@ MAIN = TOOL / "assets/main.js"
 CSS = TOOL / "assets/style.css"
 
 SEVEN_AUDIO = ["slot", "craft", "step", "grade", "banquet", "assign", "moon"]
-TOKENS = {"#F7EFE2", "#B8733A", "#C9483C", "#3A2E26",
-          "#F2E4C4", "#E8B84B", "#F5C77E"}
+# §8.2 splits the palette into two closed boards: §8.2.2 keeps the original seven
+# verbatim for CSS / SVG and the share card, §8.2.1 adds the 30-token shared pixel
+# board. §4.12 / §4.12.3 / §4.10.1 / §8.3.2 render customers, lanterns, affordance
+# rings and the kitchen world from CSS pixel blocks, so CSS legitimately draws on
+# both boards; neither may introduce an off-board colour.
+UI_TOKENS = {"#F7EFE2", "#B8733A", "#C9483C", "#3A2E26",
+             "#F2E4C4", "#E8B84B", "#F5C77E"}
+PIXEL_BOARD = {"#24140E", "#402718", "#C99A5E", "#A67440", "#7F532B", "#C6B294",
+               "#A08B70", "#7A6751", "#FFF6E4", "#E7D6B6", "#C3AF8D", "#F0B88A",
+               "#C78453", "#E05745", "#A82E24", "#A89480", "#776352", "#4E3E31",
+               "#E87A2A", "#F7C03E", "#E9B84B", "#F2E6CB", "#DDC99F", "#EEC46E",
+               "#D09C43", "#93571E", "#2C1C14", "#D9BD8E", "#E27A1C", "#FAF0DC"}
+BOARDS = {c.upper() for c in UI_TOKENS | PIXEL_BOARD}
 BANNED = ["玉兔", "嫦娥", "月宫", "慕斯", "西式蛋糕"]
 
 TOP_LEVEL = ["采买", "试新方", "制饼", "写信", "备宴", "布置"]
@@ -91,6 +102,14 @@ def text(page, sel):
     return page.evaluate("(s) => document.querySelector(s).textContent", sel)
 
 
+def res_chip(page, sel):
+    """§3.3 the resource readout is a two-line chip, so label and value are read apart."""
+    return page.evaluate("""(s) => {
+      const e = document.querySelector(s);
+      return [e.querySelector('.res-k').textContent, e.querySelector('.res-v').textContent];
+    }""", sel)
+
+
 def visible(page, sel):
     return page.evaluate("""(s) => {
       const el = document.querySelector(s);
@@ -119,13 +138,16 @@ def is_active(page, view):
 
 
 def start_run(page):
+    """§8.6: 开始筹备 opens the one-shot narrative panel, 着手备宴 closes it into D1."""
     page.click("#btn-start")
-    page.wait_for_timeout(120)
+    page.wait_for_selector("#view-prologue.is-active", timeout=10000)
+    page.click("#btn-prologue-close")
+    page.wait_for_selector("#view-schedule.is-active", timeout=10000)
 
 
 def open_sheet(page):
     page.click("#slot-grid .slot:not(.is-filled)")
-    page.wait_for_timeout(120)
+    page.wait_for_selector("#drawer.is-open", timeout=10000)
 
 
 # ----------------------------------------------------------- source hygiene
@@ -142,13 +164,28 @@ def test_source_hygiene():
     check("§10.1 no network / eval / Worker / WASM",
           not re.search(r"\bfetch\(|XMLHttpRequest|WebSocket|eval\("
                         r"|new Function|new Worker|WebAssembly", blob), blob[:120])
-    check("§8.4 no requestAnimationFrame-driven UI",
-          "requestAnimationFrame" not in blob)
+    # §8.4.1 / V-37a: the kitchen may hold exactly one rAF loop and scene.js is the
+    # sole clock holder (§4.3.9). The blanket ban on rAF-driven UI was retired by
+    # §8.4.1, which conflicts with it outright.
+    check("V-37a scene.js holds exactly one rAF loop",
+          scene.count("requestAnimationFrame") == 2
+          and scene.count("cancelAnimationFrame") == 1,
+          f"rAF={scene.count('requestAnimationFrame')} "
+          f"cancel={scene.count('cancelAnimationFrame')}")
+    check("V-37a main.js holds no rAF",
+          "requestAnimationFrame" not in main, str(main.count("requestAnimationFrame")))
     check("V-21 scene.js hardcodes no hex",
-          not re.search(r"#[0-9A-Fa-f]{6}", scene))
-    check("V-21 style.css adds no token beyond the seven",
-          set(re.findall(r"#[0-9A-Fa-f]{6}", css)) <= TOKENS,
-          str(sorted(set(re.findall(r"#[0-9A-Fa-f]{6}", css)) - TOKENS)))
+          not re.search(r"#[0-9A-Fa-f]{6}", scene),
+          str(re.findall(r"#[0-9A-Fa-f]{6}", scene)))
+    stray = sorted({h.upper() for h in re.findall(r"#[0-9A-Fa-f]{6}", css)} - BOARDS)
+    check("§8.2 style.css uses no colour outside either locked board", not stray, str(stray))
+    pairs = set(re.findall(r"(--[a-z-]+):\s*(#[0-9A-Fa-f]{6})", css))
+    locked = [("--paper", "#F7EFE2"), ("--amber", "#B8733A"), ("--cinnabar", "#C9483C"),
+              ("--ink", "#3A2E26"), ("--moon", "#F2E4C4"), ("--osmanthus", "#E8B84B"),
+              ("--lantern", "#F5C77E")]
+    missing = [f"{k} {v}" for k, v in locked if (k, v) not in pairs]
+    check("§8.2.2 the seven interface tokens are declared verbatim", not missing,
+          str(missing))
     check("V-19 scene.js/main.js carry no banned symbol",
           [w for w in BANNED if w in blob] == [],
           str([w for w in BANNED if w in blob]))
@@ -214,10 +251,10 @@ def test_start_and_header(page):
     body = page.evaluate("() => document.body.textContent")
     check("V-18 no numeric day in rendered text",
           not re.search(r"\bDay\s*\d", body), body[:80])
-    check("silver renders 银钱 44", "银钱 44" in text(page, "#silver-count"),
-          text(page, "#silver-count"))
-    check("stock renders 普通料 4", "普通料 4" in text(page, "#stock-putong"),
-          text(page, "#stock-putong"))
+    check("silver renders 银钱 44", res_chip(page, "#silver-count") == ["银钱", "44"],
+          str(res_chip(page, "#silver-count")))
+    check("stock renders 普通料 4", res_chip(page, "#stock-putong") == ["普通料", "4"],
+          str(res_chip(page, "#stock-putong")))
     check("§5.2 day-end button reads 今日收工",
           text(page, "#btn-finish-day") == "今日收工", text(page, "#btn-finish-day"))
 
@@ -374,7 +411,8 @@ def test_end_day(page):
           text(page, "#day-label"))
     # 44 - 普通料 2 - 代做 3 - 好料 3 = 36
     check("the settled silver matches the engine",
-          "银钱 36" in text(page, "#silver-count"), text(page, "#silver-count"))
+          res_chip(page, "#silver-count") == ["银钱", "36"],
+          str(res_chip(page, "#silver-count")))
     check("the new day starts with three empty slots",
           page.evaluate("() => Array.from(document.querySelectorAll('#slot-grid .slot'))"
                         ".every(s => !s.classList.contains('is-filled'))"))

@@ -57,11 +57,21 @@ def tool_bytes():
 
 
 size = tool_bytes()
-images = [p.name for p in TOOL.rglob("*") if p.suffix.lower()
-          in (".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg")]
+images = sorted(p.name for p in TOOL.rglob("*") if p.suffix.lower()
+                in (".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"))
 check("V-2 <=2MB target", size <= 2 * 1024 * 1024, "%d bytes" % size)
 check("V-2 <=10MB hard", size <= 10 * 1024 * 1024, "%d bytes" % size)
-check("V-2 zero image assets", images == [], str(images))
+# §5.7: V-2 is a package size budget, not a zero-image form ban. §5.4.1 replaces the
+# old 22 flat assets with exactly these 15 pixel sprites, and their bytes count
+# toward the budget above.
+SPRITES = {"px-floor.webp", "px-counter.webp", "px-chef.webp", "px-stove.webp",
+           "px-board.webp", "px-plate-station.webp", "px-rack.webp",
+           "px-firewood.webp", "px-cake-raw.webp", "px-cake-baking.webp",
+           "px-cake-golden.webp", "px-cake-burnt.webp", "px-bowl-gui.webp",
+           "px-bowl-lian.webp", "px-bowl-dan.webp"}
+check("§5.4.1 exactly the 15 pixel sprites ship, no more no less",
+      set(images) == SPRITES,
+      "missing %s extra %s" % (sorted(SPRITES - set(images)), sorted(set(images) - SPRITES)))
 
 # --- V-3: no randomness, no banned runtime APIs ------------------------------
 js = "".join(read(p) for p in TOOL.glob("assets/*.js"))
@@ -101,10 +111,23 @@ check("V-21 seven tokens in data.js", len(hexes) == 7 and set(hexes) == ALLOWED,
 
 css = read(TOOL / "assets" / "style.css")
 css_hexes = sorted(set(re.findall(r'#[0-9A-Fa-f]{6}', css)))
-check("V-21 no extra hex in style.css", set(css_hexes) <= ALLOWED, str(css_hexes))
+# §8.2.1 adds the 30-token shared pixel board; CSS may draw on it because §4.12,
+# §4.12.3, §4.10.1 and §8.3.2 render customers, lanterns, affordance rings and the
+# kitchen world from CSS pixel blocks. Neither board may carry an off-board colour.
+PIXEL_BOARD = {"#24140E", "#402718", "#C99A5E", "#A67440", "#7F532B", "#C6B294",
+               "#A08B70", "#7A6751", "#FFF6E4", "#E7D6B6", "#C3AF8D", "#F0B88A",
+               "#C78453", "#E05745", "#A82E24", "#A89480", "#776352", "#4E3E31",
+               "#E87A2A", "#F7C03E", "#E9B84B", "#F2E6CB", "#DDC99F", "#EEC46E",
+               "#D09C43", "#93571E", "#2C1C14", "#D9BD8E", "#E27A1C", "#FAF0DC"}
+off_board = sorted(set(css_hexes) - ALLOWED - PIXEL_BOARD)
+check("§8.2 style.css uses no colour outside either locked board", off_board == [],
+      str(off_board))
+check("§8.2.2 style.css still declares the seven interface tokens",
+      all(h in css_hexes for h in ALLOWED), str(css_hexes))
 scene = read(TOOL / "assets" / "scene.js")
 check("V-21 scene.js hardcodes no hex",
-      not re.search(r'#[0-9A-Fa-f]{6}', scene))
+      not re.search(r'#[0-9A-Fa-f]{6}', scene),
+      str(re.findall(r'#[0-9A-Fa-f]{6}', scene)))
 
 # --- DOM path: the six views and every locked id ----------------------------
 VIEWS = ["view-intro", "view-schedule", "view-craft",

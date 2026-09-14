@@ -52,7 +52,26 @@ body {
 .meter-label { font-size: 11px; opacity: 0.66; }
 .meter-val { font-size: 18px; font-weight: 700; }
 
-.res-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; font-size: 12px; }
+/* §3.3 资源读数：六格 3 × 2 网格。旧版是一条 17 px 高的单行文本，4 → 6 的变化肉眼
+   难以察觉；本版每格标签 12px + 数字 24px，采买后的数字变化一眼可见。 */
+.res-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.res {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 6px 8px;
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  background: var(--moon);
+}
+.res-k { font-size: 12px; opacity: .72; }
+.res-v { font-size: 24px; font-weight: 700; line-height: 1.15; font-variant-numeric: tabular-nums; }
+/* §3.3 采买确认：排入成功后被这一笔改动的读数格闪一下。只动 transform / opacity /
+   filter，且不在排程格内，故 §8.4「排程格无动效」不受影响。 */
+.res.is-confirm { animation: res-confirm .62s steps(3, end); }
+@keyframes res-confirm {
+  0% { transform: scale(1); opacity: 1; filter: none; }
+  40% { transform: scale(1.14); opacity: .5; filter: brightness(1.6); }
+  100% { transform: scale(1); opacity: 1; filter: none; }
+}
 
 .day-label { font-size: 22px; font-weight: 700; margin-top: 18px; letter-spacing: 0.08em; }
 
@@ -82,51 +101,31 @@ body {
   text-align: left;
   cursor: pointer;
 }
-.drawer-row[disabled] { opacity: 0.38; cursor: default; }
+/* §3.3 不可用的排程项读作「锁住」：虚线边 + 压暗的名字 + 琥珀理由，未点先看清原因。 */
+.drawer-row[disabled] { opacity: 1; border-style: dashed; cursor: default; }
+.drawer-row[disabled] .row-name { opacity: .5; }
 .row-name { font-weight: 500; }
-.row-reason { font-size: 11px; opacity: 0.7; }
+.row-reason { font-size: 12px; opacity: 1; color: var(--amber); font-weight: 700; }
 .buy-sub { display: flex; gap: 8px; flex-wrap: wrap; }
+/* §3.2 用途标注：每一味料标出它喂给谁。买完普通料却发现手作仍需指定馅料，正是因为
+   普通料只是馅料底料与试新方的用料，故把这条因果写在按钮上而不是留给玩家猜。 */
+.buy-sub .btn { flex: 1 1 150px; flex-wrap: wrap; justify-content: flex-start; align-content: center; gap: 2px 6px; }
+.buy-use { flex-basis: 100%; font-size: 11px; line-height: 1.35; opacity: .72; }
+/* 采买 / 代做馅料分支同此 locked 形态，与可点的实心项一眼可分。 */
+.buy-sub .btn[disabled], .craft-fillings .btn[disabled] {
+  opacity: 1; background: var(--paper); border: 1.5px dashed var(--ink);
+  color: var(--ink); cursor: default;
+}
+.buy-sub .btn[disabled] .buy-name, .craft-fillings .btn[disabled] .filling-name { opacity: .5; }
 
 .filling-list, .assign-cakes, .assign-family { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 .batch-row { display: flex; gap: 10px; margin-top: 14px; }
-.step-index { font-size: 13px; margin-top: 16px; }
 
-/* §4.3.3：单程 2.0 秒。alternate 逐程计时，故 duration 就是单程时长；从容模式下不改 */
-.lin-bar {
-  position: relative;
-  height: 34px;
-  margin-top: 14px;
-  border: 1.5px solid var(--ink);
-  border-radius: 4px;
-  background: var(--paper);
-  overflow: hidden;
-}
-.lin-bar .target { position: absolute; left: 40%; width: 20%; top: 0; bottom: 0; background: var(--moon); }
-.lin-bar .marker { position: absolute; top: 0; bottom: 0; width: 3px; left: 0; background: var(--ink); }
-.lin-bar.is-swinging .marker { animation: swing 2s linear infinite alternate; }
-@keyframes swing { from { left: 0; } to { left: calc(100% - 3px); } }
-
-.pad {
-  position: relative;
-  height: 200px;
-  margin-top: 14px;
-  border: 1.5px solid var(--ink);
-  border-radius: 4px;
-  background: var(--paper);
-  touch-action: none;
-}
-.pad .ring {
-  position: absolute; left: 50%; top: 50%;
-  width: 140px; height: 140px; margin: -70px 0 0 -70px;
-  border: 1.5px solid var(--ink); border-radius: 50%;
-}
-.pad .knob {
-  position: absolute; left: 50%; top: 50%;
-  width: 46px; height: 46px; margin: -23px 0 0 -23px;
-  border-radius: 50%; background: var(--amber); border: 1.5px solid var(--ink);
-}
-
-.craft-grade { font-size: 16px; font-weight: 700; margin-top: 16px; }
+/* §4.3.3 摆动条退役：四步串行闸门已不存在，故这些工位控件不再呈现。
+   index.html 仍保留它们的 id（§11.1 V-1 锁定的 DOM 清单），此处一律隐藏。
+   旧版的摆动条样式（单程 2.0 秒、命中窗口 [0.40, 0.60]）随机制一并删除。 */
+#step-index, #bar-s1, #pad-s2, #pad-s3, #bar-s4,
+#btn-step-confirm, #craft-grade { display: none; }
 
 .preview-cakes, .preview-seats, .preview-banquet, .preview-lanterns { margin-top: 14px; font-size: 13px; line-height: 1.8; }
 
@@ -155,13 +154,11 @@ body {
 }
 .lantern.is-on { background: var(--lantern); }
 
-.end-moon { display: block; max-width: 100%; height: auto; margin: 0 auto; opacity: 0; }
+/* §6.3.5 S1「月起」：§8.4 锁定的唯一一次性长动效（月亮渐显 ≤ 1.2 秒）。
+   终局的其余分段仪式动效（S2 至 S7）全部在文末 #view-ending 块里，一律纯 CSS
+   动画 + 固定 animation-delay，不进 rAF、不引入任何 JS timer（§8.4.6 / X-12）。 */
+.end-moon { opacity: 0; }
 .end-moon.is-revealing { opacity: 1; transition: opacity 1.2s ease; }
-.end-name { font-size: 30px; font-weight: 700; text-align: center; margin-top: 16px; letter-spacing: 0.1em; }
-.end-text { font-size: 15px; line-height: 1.9; text-align: center; margin-top: 12px; }
-
-.card-wrap { margin-top: 18px; text-align: center; }
-.card-wrap img { max-width: 100%; border: 1.5px solid var(--ink); }
 
 /* ---------- §3.3 drawer sheet · §5.2 shell · thumb-zone controls ---------- */
 .view { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
@@ -192,7 +189,7 @@ body {
 .craft-branch { display: flex; gap: 8px; }
 .craft-branch .drawer-row,
 .craft-fillings .btn { flex: 1 1 auto; min-height: 56px; }
-.filling-reason, .branch-reason { font-size: 11px; opacity: 0.7; margin-left: 6px; }
+.filling-reason, .branch-reason { font-size: 12px; opacity: 1; color: var(--amber); font-weight: 700; margin-left: 6px; }
 
 .slot {
   display: flex;
@@ -251,4 +248,882 @@ body {
 /* §4.1 三步选择的可见选中态，只用既有 token */
 .btn[aria-pressed="true"] { background: var(--osmanthus); }
 .batch-row .btn { flex: 1 1 0; }
-.filling-reason { font-size: 11px; opacity: 0.7; margin-left: 6px; }
+.filling-reason { font-size: 12px; opacity: 1; color: var(--amber); font-weight: 700; margin-left: 6px; }
+
+/* ==================================================================
+   §4.9 / §4.10 / §4.11 / §4.12 像素厨房（Micro 层）
+   端口自验证通过的原型 tools/yueyan-proto/proto-template.html。
+   厨房调色板取自像素素材的共享色板（§8.2.1），定义在 #view-kitchen 上，
+   经 CSS 自定义属性继承给厨房子元素；界面层（首屏 / 排程 / 开场面板）
+   仍只用 §8.2.2 的七个 token，互不污染。
+   两个整数倍率（§4.11）：世界倍率 S=2、道具倍率 PROP=2，绝不小数。
+   ================================================================== */
+#view-kitchen {
+  --ink: #24140E;
+  --ink-soft: #402718;
+  --cream-lt: #FFF6E4;
+  --cream-md: #E7D6B6;
+  --cream-dk: #C3AF8D;
+  --wood-lt: #C99A5E;
+  --wood-md: #A67440;
+  --wood-dk: #7F532B;
+  --tile-md: #A08B70;
+  --tile-dk: #7A6751;
+  --osmanthus: #E9B84B;
+  --bake-md: #D09C43;
+  --red-lt: #E05745;
+  --red-dk: #A82E24;
+  --ember: #E87A2A;
+  --flame: #F7C03E;
+  --lotus: #D9BD8E;
+  --yolk: #E27A1C;
+  --skin: #F0B88A;
+}
+
+/* 厨房整屏：竖屏 390×844，五段定高相加恰为 844，不滚动（§4.9.1 / 屏幕预算）。 */
+#view-kitchen.is-active {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  width: 390px;
+  height: 844px;
+  overflow: hidden;
+  background: var(--ink);
+  color: var(--cream-lt);
+  font-weight: 700;
+  touch-action: none;
+}
+#view-kitchen img {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: block;
+}
+#view-kitchen .pxframe {
+  border: 3px solid var(--ink);
+  box-shadow: 0 3px 0 0 var(--ink-soft);
+}
+
+/* 1. 顶栏 —— 柴存量与已用时（事实读数，无分数 / 连击 / 失误） */
+#k-status {
+  height: 44px; flex: none; display: flex; align-items: center; gap: 5px;
+  padding: 0 6px; background: var(--ink-soft); border-bottom: 3px solid var(--ink);
+}
+#k-status .scell {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 1px; background: var(--ink);
+  border: 2px solid var(--wood-dk); height: 32px; min-width: 0;
+}
+#k-status .scell .k { font-size: 9px; line-height: 1; color: var(--cream-dk); letter-spacing: .12em; }
+#k-status .scell .v { font-size: 15px; line-height: 1; color: var(--cream-lt); font-variant-numeric: tabular-nums; }
+#k-status .vrow { display: flex; align-items: baseline; gap: 1px; }
+#k-status .cu { font-size: 9px; line-height: 1; color: var(--tile-dk); font-weight: 400; }
+#k-status #k-clock { color: var(--tile-md); font-size: 12px; font-weight: 400; }
+
+/* 2. 订单面板 —— 循环核心：家人 / 馅料 / 色签 / 可见倒计时（§4.8.5） */
+#k-orders {
+  height: 100px; flex: none; display: flex; gap: 5px; padding: 5px 6px;
+  align-items: stretch; background: var(--wood-dk); border-bottom: 3px solid var(--ink);
+}
+#k-orders .ocard {
+  flex: 1; min-width: 0; height: 90px; position: relative; overflow: hidden;
+  background: var(--cream-md); border: 3px solid var(--ink);
+  box-shadow: inset 0 0 0 2px var(--wood-md), 0 3px 0 0 var(--ink-soft);
+  display: flex; flex-direction: column; padding: 4px 6px 3px;
+}
+#k-orders .ocard.urgent { border-color: var(--red-dk); animation: k-urg .5s steps(2, end) infinite; }
+@keyframes k-urg { 0% { background: var(--cream-md); } 50% { background: var(--flame); } 100% { background: var(--cream-md); } }
+#k-orders .ocard.done { animation: k-done .34s steps(3, end); }
+@keyframes k-done { 0% { transform: scale(1); } 40% { transform: scale(1.07); } 100% { transform: scale(1); } }
+#k-orders .ocard.ghost {
+  background: var(--ink); border-color: var(--wood-dk); box-shadow: none;
+  align-items: center; justify-content: center; color: var(--tile-md); font-size: 13px;
+}
+#k-orders .ohead { display: flex; align-items: center; gap: 5px; height: 20px; }
+#k-orders .chip { width: 16px; height: 16px; border: 2px solid var(--ink); flex: none; }
+#k-orders .oname { font-size: 14px; line-height: 1; color: var(--ink); letter-spacing: .02em; }
+#k-orders .owho { margin-left: auto; font-size: 11px; line-height: 1; color: var(--wood-dk); }
+#k-orders .oline { font-size: 12px; line-height: 1.2; color: var(--ink-soft); margin-top: 4px; }
+#k-orders .otime { display: flex; align-items: baseline; gap: 3px; margin-top: auto; height: 22px; }
+#k-orders .otime .tag { font-size: 11px; line-height: 1; color: var(--wood-dk); letter-spacing: .06em; }
+#k-orders .otime .num { font-size: 18px; line-height: 1; color: var(--ink); font-weight: 800; font-variant-numeric: tabular-nums; }
+#k-orders .otime .num.warn { color: var(--ember); }
+#k-orders .otime .num.crit { color: var(--red-dk); }
+#k-orders .otime .u { font-size: 11px; line-height: 1; color: var(--wood-dk); }
+#k-orders .obar { height: 6px; background: var(--cream-dk); margin-top: 2px; }
+#k-orders .obar i { display: block; height: 100%; background: var(--osmanthus); width: 100%; }
+#k-orders .obar i.warn { background: var(--ember); }
+#k-orders .obar i.crit { background: var(--red-lt); }
+
+/* 3. 世界 —— 一间连续的俯视厨房（§4.9.1，384×576 内容区） */
+#k-world {
+  position: relative; width: 390px; height: 576px; flex: none; overflow: hidden;
+  background: var(--tile-dk); border-left: 3px solid var(--ink); border-right: 3px solid var(--ink);
+}
+#k-floor, #k-counter { position: absolute; left: 0; top: 0; pointer-events: none; }
+#k-floor .ftile { position: absolute; width: 64px; height: 64px; }
+#k-walls, #k-decor { position: absolute; left: 0; top: 0; width: 384px; height: 576px; pointer-events: none; }
+#k-walls { z-index: 1; }
+#k-decor { z-index: 3; }
+#k-stations { position: absolute; left: 0; top: 0; z-index: 10; }
+
+/* 四面围合墙（纯视觉，不进碰撞表） */
+#k-walls .wall { position: absolute; background: var(--wood-dk); }
+#k-walls .wtop { left: 0; top: 0; width: 384px; height: 18px; border-bottom: 3px solid var(--ink); box-shadow: inset 0 4px 0 0 var(--wood-md); }
+#k-walls .wleft { left: 0; top: 0; width: 14px; height: 576px; border-right: 3px solid var(--ink); box-shadow: inset 4px 0 0 0 var(--wood-md); }
+#k-walls .wright { left: 370px; top: 0; width: 14px; height: 576px; border-left: 3px solid var(--ink); box-shadow: inset -4px 0 0 0 var(--wood-md); }
+#k-walls .wbot { left: 0; top: 562px; width: 384px; height: 14px; border-top: 3px solid var(--ink); box-shadow: inset 0 -4px 0 0 var(--wood-md); }
+
+/* 出餐通道 + 排队区 + 门 + 窗 + 灯笼 + 花串 + 货架（全部 pointer-events:none） */
+#k-decor .lane { position: absolute; left: 96px; top: 534px; width: 198px; height: 26px; background: var(--cream-md); border: 3px solid var(--ink); box-shadow: inset 0 3px 0 0 var(--cream-lt); }
+#k-decor .lane i { position: absolute; top: 7px; width: 14px; height: 12px; background: var(--osmanthus); clip-path: polygon(0 50%, 58% 0, 58% 32%, 100% 32%, 100% 68%, 58% 68%, 58% 100%); }
+#k-decor .qmat { position: absolute; left: 140px; top: 468px; width: 150px; height: 64px; background: var(--wood-md); border: 3px solid var(--ink); box-shadow: inset 0 0 0 4px var(--wood-lt); }
+#k-decor .qmat u { position: absolute; top: 30px; width: 18px; height: 18px; background: var(--osmanthus); border: 2px solid var(--ink); clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%); }
+#k-decor .door { position: absolute; left: 294px; top: 512px; width: 68px; height: 64px; background: var(--ink); border: 4px solid var(--wood-md); box-shadow: 0 0 0 3px var(--ink); }
+#k-decor .door .leaf { position: absolute; top: 8px; width: 22px; height: 44px; background: var(--wood-dk); border: 2px solid var(--ink-soft); }
+#k-decor .door .leaf.a { left: 8px; }
+#k-decor .door .leaf.b { left: 36px; }
+#k-decor .door .sill { position: absolute; left: -4px; bottom: -6px; width: 76px; height: 8px; background: var(--osmanthus); border: 2px solid var(--ink); }
+#k-decor .window { position: absolute; left: 302px; top: 14px; width: 68px; height: 58px; background: var(--ink-soft); border: 4px solid var(--wood-md); box-shadow: 0 0 0 3px var(--ink); }
+#k-decor .window .moon { position: absolute; left: 23px; top: 10px; width: 22px; height: 22px; background: var(--osmanthus); clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%); }
+#k-decor .window .muntin { position: absolute; left: 0; top: 26px; width: 100%; height: 3px; background: var(--wood-md); }
+/* 两处灯笼（§4.12.3，禁阵列）：命名 .klantern 以避开界面层 .lantern */
+#k-decor .klantern { position: absolute; width: 28px; height: 42px; }
+#k-decor .klantern .cord { position: absolute; left: 12px; top: 0; width: 4px; height: 10px; background: var(--ink-soft); }
+#k-decor .klantern .cap { position: absolute; left: 7px; top: 8px; width: 14px; height: 6px; background: var(--osmanthus); border: 2px solid var(--ink); }
+#k-decor .klantern .body { position: absolute; left: 0; top: 12px; width: 28px; height: 24px; background: var(--red-lt); border: 3px solid var(--ink); box-shadow: inset 0 5px 0 0 var(--red-dk); }
+#k-decor .klantern .tail { position: absolute; left: 10px; top: 36px; width: 8px; height: 6px; background: var(--osmanthus); border: 2px solid var(--ink); }
+#k-decor .klantern.l1 { left: 298px; top: 82px; animation: k-sway 2.4s steps(4, end) infinite; }
+#k-decor .klantern.l2 { left: 344px; top: 82px; animation: k-sway 3.1s steps(4, end) infinite; }
+@keyframes k-sway { 0% { transform: translateX(-2px); } 50% { transform: translateX(2px); } 100% { transform: translateX(-2px); } }
+#k-decor .garland { position: absolute; left: 294px; top: 152px; width: 84px; height: 14px; }
+#k-decor .garland .gcord { position: absolute; left: 0; top: 0; width: 100%; height: 3px; background: var(--ink-soft); }
+#k-decor .garland i { position: absolute; top: 3px; width: 8px; height: 8px; background: var(--osmanthus); border: 2px solid var(--ink); }
+#k-decor .garland u { position: absolute; top: 1px; width: 6px; height: 6px; background: var(--wood-md); border: 1px solid var(--ink); }
+#k-decor .shelf { position: absolute; left: 272px; top: 388px; width: 112px; height: 78px; }
+#k-decor .shelf .board { position: absolute; left: 0; top: 52px; width: 112px; height: 10px; background: var(--wood-md); border: 3px solid var(--ink); box-shadow: inset 0 3px 0 0 var(--wood-lt); }
+#k-decor .shelf .brk { position: absolute; top: 62px; width: 8px; height: 12px; background: var(--wood-dk); border: 2px solid var(--ink); }
+#k-decor .shelf .brk.a { left: 16px; }
+#k-decor .shelf .brk.b { left: 88px; }
+#k-decor .jar { position: absolute; width: 24px; height: 46px; }
+#k-decor .jar .silh { position: absolute; left: 0; top: 12px; width: 24px; height: 34px; background: var(--ink); clip-path: polygon(30% 0, 70% 0, 76% 10%, 100% 32%, 100% 100%, 0 100%, 0 32%, 24% 10%); }
+#k-decor .jar .body { position: absolute; left: 3px; top: 15px; width: 18px; height: 28px; background: var(--cream-md); clip-path: polygon(30% 0, 70% 0, 76% 10%, 100% 32%, 100% 100%, 0 100%, 0 32%, 24% 10%); box-shadow: inset -5px 0 0 0 var(--cream-dk), inset 0 4px 0 0 var(--cream-lt); }
+#k-decor .jar .ear { position: absolute; top: 24px; width: 5px; height: 9px; background: var(--wood-md); border: 2px solid var(--ink); }
+#k-decor .jar .ear.l { left: -5px; }
+#k-decor .jar .ear.r { right: -5px; }
+#k-decor .jar .band { position: absolute; left: 5px; top: 30px; width: 14px; height: 6px; background: var(--osmanthus); }
+#k-decor .jar .lid { position: absolute; left: -4px; top: 4px; width: 32px; height: 10px; background: var(--wood-md); border: 3px solid var(--ink); box-shadow: inset 0 3px 0 0 var(--wood-lt); }
+#k-decor .jar .rim { position: absolute; left: -1px; top: 6px; width: 10px; height: 3px; background: var(--cream-lt); }
+#k-decor .jar .knob { position: absolute; left: 8px; top: -3px; width: 8px; height: 7px; background: var(--wood-lt); border: 2px solid var(--ink); }
+#k-decor .jar.j1 { left: 6px; top: 6px; }
+#k-decor .jar.j2 { left: 44px; top: 6px; }
+#k-decor .jar.j3 { left: 82px; top: 6px; }
+#k-decor .dshadow { position: absolute; background: rgba(36, 20, 14, .32); pointer-events: none; }
+
+/* 客人（§4.12）：CSS 像素块，可见数 = 开着的订单数 */
+#k-decor .cust { position: absolute; width: 34px; height: 54px; opacity: 0; transition: opacity .12s steps(2, end); }
+#k-decor .cust.show { opacity: 1; animation: k-cbob 1.9s steps(2, end) infinite; }
+@keyframes k-cbob { 0% { transform: translateY(0); } 50% { transform: translateY(-2px); } 100% { transform: translateY(0); } }
+#k-decor .cust .shd { position: absolute; left: -2px; top: 50px; width: 38px; height: 6px; background: rgba(36, 20, 14, .32); }
+#k-decor .cust .body { position: absolute; left: 0; top: 24px; width: 34px; height: 28px; border: 3px solid var(--ink); box-shadow: inset -6px 0 0 0 rgba(36, 20, 14, .30), inset 0 4px 0 0 rgba(255, 246, 228, .24); }
+#k-decor .cust .arm { position: absolute; top: 30px; width: 6px; height: 15px; background: var(--skin); border: 2px solid var(--ink); }
+#k-decor .cust .arm.l { left: -8px; }
+#k-decor .cust .arm.r { right: -8px; }
+#k-decor .cust .head { position: absolute; left: 4px; top: 0; width: 26px; height: 26px; background: var(--ink); clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%); }
+#k-decor .cust .hair { position: absolute; left: 3px; top: 3px; width: 20px; height: 20px; clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%); }
+#k-decor .cust .bubble { position: absolute; left: 6px; top: -30px; width: 22px; height: 22px; background: var(--cream-lt); border: 3px solid var(--ink); }
+#k-decor .cust .bubble b { position: absolute; left: 3px; top: 3px; width: 12px; height: 12px; border: 1px solid var(--ink); }
+#k-decor .cust.c0 { left: 150px; top: 476px; }
+#k-decor .cust.c1 { left: 198px; top: 476px; }
+#k-decor .cust.c2 { left: 246px; top: 476px; }
+#k-decor .cust.c0 .body { background: var(--red-lt); }
+#k-decor .cust.c0 .hair { background: var(--wood-dk); }
+#k-decor .cust.c1 .body { background: var(--cream-lt); }
+#k-decor .cust.c1 .hair { background: var(--ink-soft); }
+#k-decor .cust.c2 .body { background: var(--osmanthus); }
+#k-decor .cust.c2 .hair { background: var(--wood-md); }
+
+/* 工位与四层可达性（§4.10） */
+#k-stations .st { position: absolute; }
+#k-stations .st-img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+#k-stations .ground { position: absolute; left: 10px; bottom: 0; height: 8px; background: rgba(36, 20, 14, .32); pointer-events: none; }
+#k-stations .ring {
+  position: absolute; left: 50%; top: 50%; width: 86px; height: 86px;
+  transform: translate(-50%, -50%) scale(.8); border: 3px solid var(--osmanthus);
+  opacity: 0; pointer-events: none;
+  transition: opacity .1s steps(2, end), transform .1s steps(2, end);
+}
+#k-stations .st.inrange .ring { opacity: .85; transform: translate(-50%, -50%) scale(1); }
+#k-stations .st.live .ring { animation: k-ringp .62s steps(2, end) infinite; }
+@keyframes k-ringp { 0% { opacity: .9; } 50% { opacity: .32; } 100% { opacity: .9; } }
+#k-stations .st.far .st-img { filter: brightness(.68) saturate(.8); }
+#k-stations .st.inrange .st-img { filter: none; }
+#k-stations .prompt {
+  position: absolute; left: 50%; width: 16px; height: 16px; margin-left: -8px;
+  background: var(--osmanthus); pointer-events: none; opacity: 0; z-index: 23;
+  clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+  box-shadow: 0 0 0 3px var(--ink);
+}
+#k-stations .st.live .prompt { opacity: 1; animation: k-tapme .5s steps(2, end) infinite; }
+@keyframes k-tapme { 0% { transform: translateY(0) scale(1); } 50% { transform: translateY(-6px) scale(1.15); } 100% { transform: translateY(0) scale(1); } }
+#k-stations .pips { position: absolute; left: 50%; margin-left: -27px; width: 54px; height: 12px; display: flex; gap: 4px; pointer-events: none; opacity: 0; z-index: 23; }
+#k-stations .st.inrange .pips { opacity: 1; }
+#k-stations .pips i { flex: 1; height: 12px; background: var(--ink); border: 2px solid var(--cream-dk); }
+#k-stations .pips i.done { background: var(--osmanthus); }
+#k-stations .pips i.now { background: var(--ember); }
+/* 第四档 guide：nextGuide 求出的下一站，不受近身闸门限制（§4.10.2） */
+#k-stations .st.guide .ring { opacity: 1; border-color: var(--flame); animation: k-gpulse .7s steps(2, end) infinite; }
+@keyframes k-gpulse { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 50% { opacity: .42; transform: translate(-50%, -50%) scale(1.12); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+#k-stations .gmark { position: absolute; left: 50%; width: 18px; height: 18px; margin-left: -9px; background: var(--flame); pointer-events: none; opacity: 0; z-index: 24; clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%); }
+#k-stations .st.guide .gmark { opacity: 1; animation: k-tapme .5s steps(2, end) infinite; }
+/* 工位名牌（识别读数，六座同构，常驻可见）。它不是 §4.10 的四层可达性状态——四层仍
+   是纯视觉的 far / inrange / live / guide；名牌只回答「这是哪座工位」，故不随状态显隐。
+   钉在盒内上沿：顶排三座之上是墙带没有余地，盒内下沿会撞灶的火候条（盒内 y 76–85）。
+   素材四周留了 ≥1/8 余量（§5.4.3-g），14px 高的名牌正好落进这条余量，不盖道具本体。 */
+#k-stations .st-name {
+  position: absolute; left: 50%; top: 0; transform: translateX(-50%);
+  padding: 0 5px; height: 14px; display: flex; align-items: center;
+  background: var(--ink); border: 2px solid var(--wood-md);
+  font-size: 11px; line-height: 1; color: var(--cream-lt); letter-spacing: .04em;
+  white-space: nowrap; pointer-events: none; z-index: 25;
+}
+/* 灶上火光与火候条 */
+#k-stations .glow { position: absolute; left: 50%; top: 50%; width: 72px; height: 72px; transform: translate(-50%, -50%); pointer-events: none; opacity: 0; background: radial-gradient(circle, var(--flame) 0%, rgba(232, 122, 42, .45) 42%, rgba(232, 122, 42, 0) 70%); }
+#k-stations .st.lit .glow { opacity: .55; animation: k-fire .7s steps(2, end) infinite; }
+@keyframes k-fire { 0% { opacity: .4; transform: translate(-50%, -50%) scale(.92); } 100% { opacity: .7; transform: translate(-50%, -50%) scale(1.06); } }
+#k-stations .scake { position: absolute; width: 48px; height: 48px; display: none; }
+#k-stations .scake.show { display: block; }
+#k-stations .heat { position: absolute; width: 76px; height: 9px; display: none; background: var(--ink); border: 2px solid var(--cream-dk); }
+#k-stations .heat.show { display: block; }
+#k-stations .heat i { display: block; height: 100%; width: 0; background: var(--ember); }
+#k-stations .heat i.gold { background: var(--osmanthus); }
+#k-stations .heat i.burn { background: var(--red-lt); }
+#k-stations .st.burning { animation: k-burnflash .46s steps(2, end) infinite; }
+@keyframes k-burnflash { 0% { filter: none; } 50% { filter: brightness(1.5); } 100% { filter: none; } }
+
+/* 厨师与可见携带（§4.9.2 / §4.9.4） */
+#k-chef { position: absolute; width: 64px; height: 64px; z-index: 20; }
+#k-chef-img { width: 64px; height: 64px; }
+#k-chef.walk #k-chef-img { animation: k-bob .34s steps(2, end) infinite; }
+@keyframes k-bob { 0% { transform: translateY(0); } 100% { transform: translateY(-3px); } }
+#k-carry { position: absolute; width: 48px; height: 48px; left: 8px; top: 26px; display: none; z-index: 21; }
+#k-carry.show { display: block; }
+#k-guide-arrow { position: absolute; left: 0; top: 0; width: 22px; height: 22px; background: var(--flame); pointer-events: none; z-index: 19; opacity: 0; }
+#k-guide-arrow.up { clip-path: polygon(50% 0, 100% 62%, 70% 62%, 70% 100%, 30% 100%, 30% 62%, 0 62%); }
+#k-guide-arrow.down { clip-path: polygon(50% 100%, 100% 38%, 70% 38%, 70% 0, 30% 0, 30% 38%, 0 38%); }
+#k-guide-arrow.left { clip-path: polygon(0 50%, 62% 0, 62% 30%, 100% 30%, 100% 70%, 62% 70%, 62% 100%); }
+#k-guide-arrow.right { clip-path: polygon(100% 50%, 38% 0, 38% 30%, 0 30%, 0 70%, 38% 70%, 38% 100%); }
+#k-guide-arrow.on { opacity: 1; animation: k-nudge .6s steps(2, end) infinite; }
+
+/* 站位标记（§4.10.1）：目标工位该站的那一点，画在厨师脚下（z 18 < 厨师 20）。
+   它把「看不见的 stand 点 + 61–76px 半径」变成看得见的目标，玩家不必再凭手感凑距离。 */
+#k-stand {
+  position: absolute; left: 0; top: 0; width: 36px; height: 36px; z-index: 18;
+  pointer-events: none; opacity: 0;
+  border: 3px dashed var(--flame); background: var(--osmanthus);
+  clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+}
+#k-stand.on { opacity: .55; animation: k-standpulse .8s steps(2, end) infinite; }
+@keyframes k-standpulse { 0% { opacity: .55; } 50% { opacity: .22; } 100% { opacity: .55; } }
+@keyframes k-nudge { 0% { opacity: 1; } 50% { opacity: .45; } 100% { opacity: 1; } }
+
+/* 出餐反馈飘字与提示条（只动 transform / opacity） */
+#k-world .pop { position: absolute; z-index: 32; pointer-events: none; font-size: 17px; line-height: 1; color: var(--osmanthus); text-shadow: 2px 2px 0 var(--ink); white-space: nowrap; animation: k-pop .7s steps(6, end) forwards; }
+#k-world .pop.bad { color: var(--red-lt); }
+@keyframes k-pop { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-46px); opacity: 0; } }
+#k-toast { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); z-index: 40; padding: 5px 10px; background: var(--ink); border: 3px solid var(--osmanthus); font-size: 12px; line-height: 1.2; color: var(--cream-lt); white-space: nowrap; opacity: 0; pointer-events: none; letter-spacing: .02em; }
+#k-toast.show { opacity: 1; }
+#k-toast.bad { border-color: var(--red-lt); }
+
+/* 4. 动作条 —— 近身上下文按钮（命中区 ≥44×44） */
+#k-actions { height: 50px; flex: none; display: flex; gap: 5px; padding: 0 6px; align-items: center; background: var(--ink-soft); border-top: 3px solid var(--ink); border-bottom: 3px solid var(--ink); }
+#k-actions .abtn {
+  flex: 1; min-width: 0; height: 46px; display: flex; align-items: center;
+  justify-content: center; gap: 4px; background: var(--wood-md); border: 3px solid var(--ink);
+  box-shadow: 0 3px 0 0 var(--wood-dk); font: inherit; font-size: 13px; line-height: 1;
+  color: var(--cream-lt); letter-spacing: .03em; cursor: pointer;
+}
+#k-actions .abtn:active { transform: translateY(2px); box-shadow: 0 1px 0 0 var(--wood-dk); }
+#k-actions .abtn.good { background: var(--osmanthus); color: var(--ink); }
+#k-actions .abtn.fire { background: var(--ember); }
+#k-actions .abtn[disabled] { background: var(--tile-dk); color: var(--ink-soft); box-shadow: none; opacity: .7; }
+/* 说明行（§4.10.1）：脚下这座工位此刻做不成事时，动作条给一行说明而不是一颗点了没
+   反应的键。它不是 .abtn，故 bindActions 的 closest('.abtn') 永远不会命中它。 */
+#k-actions .ahint {
+  flex: 1; min-width: 0; margin: 0; height: 46px; display: flex; align-items: center;
+  padding: 0 10px; background: var(--ink); border: 3px solid var(--wood-md);
+  font-size: 12px; line-height: 1.2; color: var(--cream-dk); letter-spacing: .02em;
+}
+
+/* 5. 摇杆 —— 浮在厨房世界的中下偏右，唯一走位输入（§4.9.3，命中区 ≥44×44）。它不贴
+   底栏：真机底部的系统手势条 / 浏览器工具条会盖住贴底那一条，拇指够不到。bottom 抬进
+   世界 150px（再叠加安全区），既离开屏幕底边，又压不到任何工位或动作条。
+   left 170px（屏幕 x 173–245，中心 209，屏宽 390 的中心是 195）= 略偏右的中线，左右手
+   拇指都够得到。这一格不与任何工位相交：底座世界矩形 x 170–242 × y 354–426，而顶排三座
+   止于 y 96、两台灶起于 x 288、出餐台是 x 0–96 × y 480–576；也不与货架（x 272 起）、
+   客人（y 476 起）、排队垫（y 468 起）、出餐通道（y 534 起）相交。旧值 left 10px 把底座
+   压在屏幕最左边，正好叠在出餐台正上方，玩家读成「摇杆在最左，够不着」。 */
+#k-controls { height: 74px; flex: none; position: relative; background: var(--ink); }
+#k-joy-base {
+  position: absolute; left: 170px; bottom: calc(150px + env(safe-area-inset-bottom));
+  width: 72px; height: 72px; border-radius: 50%; z-index: 35;
+  background: var(--ink-soft); border: 4px solid var(--wood-md);
+  box-shadow: 0 0 0 3px var(--ink), inset 0 4px 0 0 rgba(0, 0, 0, .45); touch-action: none;
+}
+/* 摇杆走位区（§4.9.3）：底座 72px 带 4px 边框，故绝对定位子元素的原点是 64px 的
+   padding box，中心落在 padding 坐标 (32, 32)。窝 56px 取 left/top 4px、旋钮 46px 取
+   9px，四个刻痕取 28px，三者与刻痕因此同心于底座的几何中心。旧版旋钮取 13px（= 边框
+   4 + 13 → 中心 40），比真中心偏右下 4px，玩家读作「遥感偏右」，且从这个视觉中心起拖
+   立刻得到反向位移。 */
+#k-joy-base .well { position: absolute; left: 4px; top: 4px; width: 56px; height: 56px; border-radius: 50%; background: var(--ink); box-shadow: inset 0 3px 0 0 rgba(0, 0, 0, .6); }
+#k-joy-base .notch { position: absolute; background: var(--wood-lt); opacity: .75; }
+#k-joy-base .n-n { left: 28px; top: 3px; width: 8px; height: 6px; }
+#k-joy-base .n-s { left: 28px; bottom: 3px; width: 8px; height: 6px; }
+#k-joy-base .n-w { left: 3px; top: 28px; width: 6px; height: 8px; }
+#k-joy-base .n-e { right: 3px; top: 28px; width: 6px; height: 8px; }
+#k-joy-knob {
+  position: absolute; left: 9px; top: 9px; width: 46px; height: 46px; border-radius: 50%;
+  background: var(--osmanthus); border: 4px solid var(--ink);
+  box-shadow: inset 0 -5px 0 0 var(--bake-md), inset 0 4px 0 0 var(--flame); transform: translate(0, 0);
+}
+#k-joy-knob .face { position: absolute; left: 11px; top: 11px; width: 16px; height: 16px; border-radius: 50%; background: var(--cream-lt); opacity: .85; animation: k-breathe 1.6s steps(2, end) infinite; }
+@keyframes k-breathe { 0% { transform: scale(1); opacity: .85; } 50% { transform: scale(.72); opacity: .5; } 100% { transform: scale(1); opacity: .85; } }
+#k-joy-label { position: absolute; left: 170px; bottom: calc(228px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 3px; color: var(--cream-dk); font-size: 11px; letter-spacing: .04em; pointer-events: none; }
+#k-joy-label b { color: var(--cream-lt); font-size: 13px; }
+#k-abort { position: absolute; right: 10px; top: 9px; min-height: 56px; min-width: 64px; padding: 0 16px; }
+
+/* 厨房内的「放弃」与「枚数」选择，沿用既有 .btn 形态但暖色化 */
+#view-craft .craft-n-row { display: flex; gap: 10px; margin-top: 14px; }
+#view-craft .craft-n-row .btn { flex: 1 1 0; }
+
+/* ==================================================================
+   §8.6 开场叙事面板（锁定，四卡逐字呈现）
+   只用界面侧三个 token：--paper / --ink / --amber（§8.6.5）。
+   ================================================================== */
+#view-prologue.is-active {
+  padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+  background: var(--paper);
+}
+#view-prologue .prologue-title {
+  font-size: 26px; font-weight: 800; letter-spacing: 0.14em; color: var(--ink);
+  padding-bottom: 8px; border-bottom: 1.5px solid var(--ink);
+}
+/* 五席条：每人一碗（取 D.family.pref）+ 一枚刻印（§8.3 五式纹样）+ 一条馅料色签，
+   五席因此互不相同。色签取自 §8.2.1 像素板的五个馅料色（§4.8.1「馅料身份由 CSS 色签
+   承担」）；面板底 / 卡面底 / 描边 / 正文 / 日期字仍只用 §8.6.5 的三个界面 token。 */
+#view-prologue {
+  --red-dk: #A82E24;
+  --wood-dk: #7F532B;
+  --lotus: #D9BD8E;
+  --yolk: #E27A1C;
+  --osmanthus: #E9B84B;
+}
+#view-prologue .prologue-strip { display: flex; gap: 6px; margin-top: 14px; }
+#view-prologue .pseat {
+  flex: 1; min-width: 0; display: flex; flex-direction: column;
+  align-items: center; gap: 5px; padding: 8px 3px 7px;
+  background: var(--paper); border: 1.5px solid var(--ink);
+}
+#view-prologue .pseat-bowl {
+  width: 30px; height: 30px; display: block;
+  image-rendering: pixelated; image-rendering: crisp-edges;
+}
+#view-prologue .pseat-mark { width: 20px; height: 20px; display: block; }
+#view-prologue .pseat-mark path { stroke: var(--ink); stroke-width: 4; }
+#view-prologue .pseat-name {
+  font-size: 12px; line-height: 1.15; letter-spacing: 0.02em;
+  color: var(--ink); font-weight: 800;
+}
+#view-prologue .pseat-chip { width: 100%; height: 4px; display: block; background: var(--ink); }
+#view-prologue .prologue-cards { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+#view-prologue .prologue-card {
+  border: 1.5px solid var(--ink); background: var(--paper); color: var(--ink);
+  padding: 12px 14px; font-size: 15px; line-height: 1.85; border-radius: 0;
+  box-shadow: inset 3px 0 0 0 var(--amber);
+}
+#view-prologue .prologue-card .pdate { color: var(--amber); font-weight: 700; }
+#view-prologue .btn { border-width: 3px; border-radius: 0; }
+#view-prologue.is-active { animation: k-prologue-in .3s ease; }
+@keyframes k-prologue-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* ==================================================================
+   §8.5 首屏像素场景与七日解锁阶梯
+   像素板 token（§8.2.1）作用域限定在 #view-intro，与 #view-kitchen 同源；
+   界面侧七 token（§8.2.2）仍在 :root 逐字声明，两块板互不污染。
+   两个整数倍率：世界地砖 ×1、厨师 ×2，绝不小数（§4.11）。
+   ================================================================== */
+#view-intro {
+  --ink: #24140E;
+  --ink-soft: #402718;
+  --cream-lt: #FFF6E4;
+  --cream-md: #E7D6B6;
+  --cream-dk: #C3AF8D;
+  --wood-lt: #C99A5E;
+  --wood-md: #A67440;
+  --wood-dk: #7F532B;
+  --tile-md: #A08B70;
+  --tile-dk: #7A6751;
+  --osmanthus: #E9B84B;
+  --bake-md: #D09C43;
+  --red-lt: #E05745;
+  --red-dk: #A82E24;
+  --ember: #E87A2A;
+  --flame: #F7C03E;
+  --lotus: #D9BD8E;
+  --yolk: #E27A1C;
+  --skin: #F0B88A;
+}
+#view-intro.is-active {
+  padding: 18px 20px calc(18px + env(safe-area-inset-bottom));
+  background: var(--ink);
+  color: var(--cream-lt);
+  font-weight: 700;
+  min-height: 100vh;                 /* dvh 的兜底：首屏铺满整屏，底部不露 --paper */
+  min-height: 100dvh;
+}
+
+#view-intro .intro-scene {
+  position: relative; width: 350px; height: 178px; overflow: hidden;
+  margin: 0 0 14px; background: var(--ink);
+  border: 3px solid var(--wood-dk);
+  box-shadow: inset 0 0 0 2px var(--wood-md), 0 4px 0 0 var(--ink-soft);
+}
+#view-intro .intro-scene img {
+  position: absolute; display: block;
+  image-rendering: pixelated; image-rendering: crisp-edges;
+}
+
+#view-intro .is-sky {
+  position: absolute; left: 0; top: 0; width: 350px; height: 40px;
+  background: var(--ink); border-bottom: 3px solid var(--wood-dk);
+}
+#view-intro .is-moon {
+  position: absolute; left: 292px; top: 2px; width: 32px; height: 32px;
+  background: var(--flame); opacity: .34;
+  clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+}
+#view-intro .is-moon-core {
+  position: absolute; left: 298px; top: 8px; width: 20px; height: 20px;
+  background: var(--osmanthus);
+  clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+}
+#view-intro .is-garland { position: absolute; left: 8px; top: 2px; width: 272px; height: 34px; }
+#view-intro .is-garland .gcord {
+  position: absolute; left: 0; top: 0; width: 100%; height: 3px;
+  background: var(--ink-soft); box-shadow: 0 1px 0 0 var(--wood-dk);
+}
+#view-intro .is-garland .lg {
+  position: absolute; top: 3px; width: 20px;
+  display: flex; flex-direction: column; align-items: center;
+}
+#view-intro .is-garland .lg-hang { width: 2px; background: var(--wood-md); }
+#view-intro .is-garland .lg-cap { width: 12px; height: 4px; background: var(--wood-dk); }
+#view-intro .is-garland .lg-body {
+  position: relative; width: 18px; height: 14px;
+  background: var(--osmanthus); border: 2px solid var(--ink);
+}
+#view-intro .is-garland .lg-glow {
+  position: absolute; left: 5px; top: 3px; width: 4px; height: 4px; background: var(--flame);
+}
+#view-intro .is-garland .lg-tail { width: 4px; height: 5px; background: var(--red-dk); }
+
+#view-intro .is-band { position: absolute; left: 0; top: 40px; width: 350px; height: 64px; }
+#view-intro .is-band .is-tile { width: 64px; height: 64px; }
+#view-intro .is-ground { position: absolute; left: 0; top: 104px; width: 350px; height: 68px; overflow: hidden; }
+#view-intro .is-ground .is-tile { width: 32px; height: 32px; }
+#view-intro .is-chef-shd {
+  position: absolute; left: 142px; top: 162px; width: 60px; height: 6px;
+  background: var(--tile-dk); pointer-events: none;
+}
+#view-intro .is-chef { left: 140px; top: 104px; width: 64px; height: 64px; }
+
+#view-intro .kicker { font-size: 11px; letter-spacing: 0.2em; color: var(--cream-dk); opacity: 1; }
+#view-intro .intro-title {
+  font-size: 42px; font-weight: 800; letter-spacing: 0.16em; margin-top: 12px;
+  color: var(--osmanthus); text-shadow: 3px 3px 0 var(--ink-soft);
+}
+#view-intro .intro-sub { font-size: 16px; margin-top: 10px; color: var(--cream-lt); }
+#view-intro .intro-howto { font-size: 14px; line-height: 1.8; margin-top: 12px; color: var(--cream-md); font-weight: 400; }
+
+/* 七日解锁阶梯：把 §3.5 的解锁窗口摊在首屏，手作那格高亮 */
+#view-intro .intro-path { margin-top: 12px; }
+#view-intro .ip-head { font-size: 12px; letter-spacing: 0.14em; color: var(--cream-dk); }
+#view-intro .ip-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 8px; }
+#view-intro .ip-cell {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; min-height: 44px; padding: 6px 4px;
+  background: var(--ink-soft); border: 2px solid var(--wood-dk);
+  box-shadow: inset 0 2px 0 0 var(--wood-md);
+}
+#view-intro .ip-date { font-size: 13px; line-height: 1; color: var(--osmanthus); }
+#view-intro .ip-name { font-size: 12px; line-height: 1; color: var(--cream-md); font-weight: 400; }
+#view-intro .ip-cell.is-key {
+  background: var(--osmanthus); border-color: var(--ink);
+  box-shadow: 0 3px 0 0 var(--ink-soft);
+}
+#view-intro .ip-cell.is-key .ip-date,
+#view-intro .ip-cell.is-key .ip-name { color: var(--ink); font-weight: 800; }
+#view-intro .ip-mark { font-size: 10px; line-height: 1; color: var(--red-dk); }
+#view-intro .ip-cell.is-last {
+  grid-column: 1 / -1; flex-direction: row; justify-content: flex-start;
+  align-items: center; gap: 8px; min-height: 34px; padding: 6px 10px;
+  border-left-width: 4px; border-left-color: var(--osmanthus);
+}
+#view-intro .ip-cell.is-last .ip-name { flex: 1; }
+#view-intro .ip-cell.is-last .ip-mark { color: var(--flame); font-weight: 800; }
+#view-intro .ip-note {
+  margin-top: 8px; padding: 8px 10px; font-size: 11px; line-height: 1.55;
+  color: var(--cream-lt); font-weight: 400;
+  background: var(--ink-soft); border-left: 4px solid var(--osmanthus);
+}
+
+#view-intro .toggle-row {
+  align-items: center; min-height: 44px; margin-top: 12px; padding: 8px 10px;
+  background: var(--ink-soft); border: 2px solid var(--wood-dk);
+}
+#view-intro #toggle-congrong {
+  -webkit-appearance: none; appearance: none;
+  width: 52px; height: 44px; flex: none; margin: 0; padding: 0;
+  background-color: transparent; border: 0; border-radius: 0; cursor: pointer;
+  background-repeat: no-repeat;
+  background-image:
+    linear-gradient(var(--cream-md), var(--cream-md)),
+    linear-gradient(var(--ink), var(--ink)),
+    linear-gradient(var(--ink-soft), var(--ink-soft)),
+    linear-gradient(var(--wood-dk), var(--wood-dk)),
+    linear-gradient(var(--ink), var(--ink));
+  background-size: 16px 16px, 20px 20px, 36px 2px, 44px 20px, 48px 24px;
+  background-position: 6px 14px, 4px 12px, 8px 21px, 4px 12px, 2px 10px;
+}
+#view-intro #toggle-congrong:checked {
+  background-image:
+    linear-gradient(var(--cream-md), var(--cream-md)),
+    linear-gradient(var(--ink), var(--ink)),
+    linear-gradient(var(--ink-soft), var(--ink-soft)),
+    linear-gradient(var(--osmanthus), var(--osmanthus)),
+    linear-gradient(var(--ink), var(--ink));
+  background-position: 30px 14px, 28px 12px, 8px 21px, 4px 12px, 2px 10px;
+}
+#view-intro #toggle-congrong:focus-visible { outline: 2px solid var(--flame); outline-offset: 2px; }
+#view-intro .toggle-text { font-size: 12px; line-height: 1.55; color: var(--cream-md); font-weight: 400; }
+#view-intro .save-hint { font-size: 11px; line-height: 1.6; margin-top: 10px; color: var(--cream-dk); opacity: 1; font-weight: 400; }
+
+#view-intro .actions { margin-top: 16px; }
+#view-intro .btn {
+  border: 3px solid var(--ink); border-radius: 0;
+  box-shadow: 0 4px 0 0 var(--ink-soft);
+}
+#view-intro .btn-primary {
+  background: var(--osmanthus); color: var(--ink);
+  font-size: 17px; font-weight: 800; letter-spacing: 0.12em;
+}
+#view-intro .btn-primary:active { transform: translateY(3px); box-shadow: 0 1px 0 0 var(--ink-soft); }
+#view-intro .btn:focus-visible { outline: 2px solid var(--flame); outline-offset: 2px; }
+
+/* ==================================================================
+   §6.3.5 终局的仪式感呈现（终局）
+   终局不是结果页，是一场仪式：月起 → 云定 → 名出 → 文出 → 席齐 → 饼落 → 收束，
+   七步各有固定时长与固定 animation-delay（下表逐项锁定），全部纯 CSS，
+   不进 rAF、不引入任何 JS timer（§8.4.6 / V-37a / X-12），零随机（V-3）。
+   色板取 §8.2.1 的 30 token 像素板 + §8.2.2 的七 token，无板外色（V-21a）。
+   ================================================================== */
+#view-ending {
+  --ink: #24140E;
+  --ink-soft: #402718;
+  --cream-lt: #FFF6E4;
+  --cream-md: #E7D6B6;
+  --cream-dk: #C3AF8D;
+  --wood-lt: #C99A5E;
+  --wood-md: #A67440;
+  --wood-dk: #7F532B;
+  --tile-md: #A08B70;
+  --tile-dk: #7A6751;
+  --osmanthus: #E9B84B;
+  --bake-md: #D09C43;
+  --red-lt: #E05745;
+  --red-dk: #A82E24;
+  --flame: #F7C03E;
+  --skin: #F0B88A;
+}
+#view-ending.is-active {
+  position: relative;
+  display: flex; flex-direction: column; gap: 14px;
+  width: 390px; max-width: 100%; height: 844px;
+  padding: 14px 14px 0; overflow: hidden;
+  background: var(--ink); color: var(--cream-lt); font-weight: 700;
+}
+
+/* ---------- 夜空：月是唯一的视觉主体 ---------- */
+#view-ending .end-sky {
+  position: relative; flex: none; height: 254px; overflow: hidden;
+  background: var(--ink);
+  border: 3px solid var(--wood-dk);
+  box-shadow: inset 0 0 0 2px var(--wood-md), 0 4px 0 0 var(--ink-soft);
+}
+#view-ending .end-sky::before {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 26px; height: 30px;
+  background: var(--ink-soft);
+}
+#view-ending .es-eave {
+  position: absolute; left: -4px; right: -4px; bottom: -4px; height: 46px;
+  background: var(--wood-dk);
+  box-shadow: inset 0 4px 0 0 var(--wood-lt), inset 0 0 0 3px var(--ink);
+  clip-path: polygon(0 34%, 12% 34%, 12% 16%, 26% 16%, 26% 0, 44% 0, 44% 22%,
+                     60% 22%, 60% 8%, 78% 8%, 78% 26%, 92% 26%, 92% 12%,
+                     100% 12%, 100% 100%, 0 100%);
+}
+#view-ending .es-sprig { position: absolute; top: 6px; width: 52px; height: 44px; }
+#view-ending .es-sprig.sp-l { left: 8px; }
+#view-ending .es-sprig.sp-r { right: 8px; }
+#view-ending .es-sprig::before {
+  content: ''; position: absolute; left: 24px; top: 0; width: 4px; height: 22px;
+  background: var(--wood-md);
+}
+#view-ending .es-sprig::after {
+  content: ''; position: absolute; left: 8px; top: 18px; width: 36px; height: 22px;
+  background: var(--osmanthus);
+  clip-path: polygon(14% 0, 30% 34%, 50% 0, 66% 34%, 86% 0, 100% 40%, 78% 56%,
+                     100% 100%, 62% 76%, 50% 100%, 38% 76%, 0 100%, 22% 56%, 0 40%);
+}
+
+/* ---------- §6.3.1 五档月相：同一枚月轮，五种云量 ---------- */
+#view-ending .end-moon {
+  position: absolute; left: 50%; top: 26px; width: 172px; height: 172px;
+  margin-left: -86px;
+}
+#view-ending .em-halo,
+#view-ending .em-rim,
+#view-ending .em-disc,
+#view-ending .em-clouds {
+  position: absolute; left: 50%; top: 50%;
+  clip-path: polygon(34% 0, 66% 0, 86% 14%, 100% 34%, 100% 66%, 86% 86%,
+                     66% 100%, 34% 100%, 14% 86%, 0 66%, 0 34%, 14% 14%);
+}
+#view-ending .em-halo {
+  width: 172px; height: 172px; margin: -86px 0 0 -86px;
+  background: var(--osmanthus); opacity: .30;
+}
+#view-ending .em-rim {
+  width: 158px; height: 158px; margin: -79px 0 0 -79px; background: var(--ink);
+}
+#view-ending .em-disc {
+  width: 148px; height: 148px; margin: -74px 0 0 -74px; background: var(--moon);
+}
+#view-ending .em-crater { position: absolute; background: var(--cream-dk); }
+#view-ending .em-crater.k1 { left: 44px; top: 40px; width: 22px; height: 18px; }
+#view-ending .em-crater.k2 { left: 96px; top: 72px; width: 16px; height: 14px; }
+#view-ending .em-crater.k3 { left: 58px; top: 98px; width: 12px; height: 12px; }
+#view-ending .em-clouds {
+  width: 148px; height: 148px; margin: -74px 0 0 -74px; overflow: hidden;
+  background: transparent;
+}
+#view-ending .em-band {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: calc(var(--cover, 0) * 100%);
+  background: var(--cream-md);
+  box-shadow: inset 0 4px 0 0 var(--cream-lt);
+  clip-path: polygon(0 30%, 16% 30%, 16% 12%, 32% 12%, 32% 0, 50% 0, 50% 18%,
+                     68% 18%, 68% 6%, 84% 6%, 84% 22%, 100% 22%, 100% 100%, 0 100%);
+}
+#view-ending .em-wisp {
+  position: absolute; background: var(--cream-dk); opacity: 0;
+  clip-path: polygon(0 42%, 24% 42%, 24% 0, 58% 0, 58% 56%, 80% 56%, 80% 18%,
+                     100% 18%, 100% 100%, 0 100%);
+}
+#view-ending .em-w1 { left: 6%;  top: 12%; width: 36%; height: 15%; }
+#view-ending .em-w2 { right: 4%; top: 30%; width: 32%; height: 13%; }
+#view-ending .em-w3 { left: 20%; top: 50%; width: 46%; height: 13%; }
+
+/* 五档月相逐档锁定：云带高度由 scene.js 依 §6.3.1 的 MOON_COVER 写入 --cover，
+   云缕数、月轮明度与月华强度逐档不同，故五个结局一眼可分。 */
+#view-ending .end-moon[data-ending="E1"] .em-halo { opacity: .58; }
+#view-ending .end-moon[data-ending="E2"] .em-halo { opacity: .44; }
+#view-ending .end-moon[data-ending="E2"] .em-w1   { opacity: .78; }
+#view-ending .end-moon[data-ending="E3"] .em-halo { opacity: .34; }
+#view-ending .end-moon[data-ending="E3"] .em-w1,
+#view-ending .end-moon[data-ending="E3"] .em-w2   { opacity: .78; }
+#view-ending .end-moon[data-ending="E4"] .em-halo { opacity: .24; }
+#view-ending .end-moon[data-ending="E4"] .em-disc { opacity: .92; }
+#view-ending .end-moon[data-ending="E4"] .em-w1,
+#view-ending .end-moon[data-ending="E4"] .em-w2   { opacity: .72; }
+#view-ending .end-moon[data-ending="E5"] .em-halo { opacity: .14; }
+#view-ending .end-moon[data-ending="E5"] .em-disc { opacity: .78; }
+#view-ending .end-moon[data-ending="E5"] .em-band { background: var(--cream-dk); }
+#view-ending .end-moon[data-ending="E5"] .em-w1,
+#view-ending .end-moon[data-ending="E5"] .em-w2,
+#view-ending .end-moon[data-ending="E5"] .em-w3   { opacity: .62; }
+
+/* ---------- 匾额：结局名与结局文案（§6.3.4 文案逐字不改） ---------- */
+#view-ending .end-plate {
+  flex: none; padding: 12px 14px 14px; text-align: center;
+  background: var(--ink-soft);
+  border: 3px solid var(--wood-dk);
+  box-shadow: inset 0 3px 0 0 var(--wood-md), 0 4px 0 0 var(--ink-soft);
+}
+#view-ending .ep-rule {
+  height: 8px; margin: 0 auto; width: 132px; background: var(--wood-md);
+  clip-path: polygon(0 40%, 18% 40%, 24% 0, 30% 40%, 46% 40%, 50% 0, 54% 40%,
+                     70% 40%, 76% 0, 82% 40%, 100% 40%, 100% 100%, 0 100%);
+}
+/* 结局名与结局文案都是 §6.3.4 逐字锁定的文案，故断行只能落在标点上，绝不能把
+   「一席团圆」这类四字名从中间劈开：名走 nowrap，文走 keep-all（CJK 不在字间断，
+   只在「，」「。」处断）。最长的一个子句是 E3 的六字句，约 113 px，远小于匾额
+   328 px 的可用宽度，故五条文案的子句一律完整。 */
+#view-ending .end-name {
+  font-size: 34px; font-weight: 800; letter-spacing: .18em; white-space: nowrap;
+  margin: 10px 0; color: var(--osmanthus); text-shadow: 3px 3px 0 var(--ink);
+}
+#view-ending .end-text {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 60px;
+  font-size: 15px; line-height: 1.95; letter-spacing: .08em; font-weight: 400;
+  word-break: keep-all; line-break: strict;
+  margin-top: 10px; color: var(--cream-lt);
+}
+
+/* ---------- 圆桌五席：一人一枚饼（§7.2），缺席只留空座（§7.1 / X-11） ---------- */
+#view-ending .end-table { position: relative; flex: none; height: 274px; }
+#view-ending .et-round {
+  position: absolute; left: 87px; top: 54px; width: 188px; height: 188px;
+  background: var(--wood-dk);
+  box-shadow: inset 0 0 0 6px var(--wood-md), inset 0 0 0 10px var(--wood-lt),
+              inset 0 0 0 13px var(--ink);
+  clip-path: polygon(34% 0, 66% 0, 86% 14%, 100% 34%, 100% 66%, 86% 86%,
+                     66% 100%, 34% 100%, 14% 86%, 0 66%, 0 34%, 14% 14%);
+}
+#view-ending .et-cake-layer, #view-ending .et-seat-layer { position: absolute; inset: 0; }
+#view-ending .et-cake {
+  position: absolute; width: 48px; height: 48px; display: block;
+  image-rendering: crisp-edges; image-rendering: pixelated;
+}
+#view-ending .et-cake[data-slot="1"] { left: 157px; top: 62px; }
+#view-ending .et-cake[data-slot="2"] { left: 216px; top: 105px; }
+#view-ending .et-cake[data-slot="3"] { left: 193px; top: 174px; }
+#view-ending .et-cake[data-slot="4"] { left: 121px; top: 174px; }
+#view-ending .et-cake[data-slot="5"] { left: 98px;  top: 105px; }
+#view-ending .et-seat { position: absolute; width: 40px; height: 52px; }
+#view-ending .et-seat[data-slot="1"] { left: 161px; top: 6px; }
+#view-ending .et-seat[data-slot="2"] { left: 271px; top: 86px; }
+#view-ending .et-seat[data-slot="3"] { left: 229px; top: 216px; }
+#view-ending .et-seat[data-slot="4"] { left: 93px;  top: 216px; }
+#view-ending .et-seat[data-slot="5"] { left: 51px;  top: 86px; }
+#view-ending .et-stool {
+  position: absolute; left: 3px; top: 34px; width: 34px; height: 12px;
+  background: var(--wood-dk); border: 2px solid var(--ink);
+}
+#view-ending .et-fig { position: absolute; left: 4px; top: 0; width: 32px; height: 38px; }
+#view-ending .et-fig .fg-shd {
+  position: absolute; left: -2px; top: 34px; width: 36px; height: 6px;
+  background: rgba(36, 20, 14, .32);
+}
+#view-ending .et-fig .fg-body {
+  position: absolute; left: 0; top: 18px; width: 32px; height: 20px;
+  border: 3px solid var(--ink);
+  box-shadow: inset -6px 0 0 0 rgba(36, 20, 14, .30), inset 0 4px 0 0 rgba(255, 246, 228, .24);
+}
+#view-ending .et-fig .fg-head {
+  position: absolute; left: 5px; top: 0; width: 22px; height: 22px;
+  background: var(--skin);
+  clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+}
+#view-ending .et-fig .fg-hair {
+  position: absolute; left: 5px; top: 0; width: 22px; height: 11px;
+  clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 100%, 0 100%, 0 30%);
+}
+/* 五席辨识度（§7.1）：头一律是 --skin 面色块，故五个头颅在墨色夜空上都立得住；
+   发色取一条家族棕阶（银灰 → 深棕 → 棕 → 浅棕 → 焙黄），衣色五个色相彼此拉开
+   （暖灰 / 朱红 / 桂黄 / 素白 / 石灰行装），故五位家人一眼可分。全部取 §8.2.1
+   像素板 token，无板外色（V-21a）。 */
+#view-ending .et-seat[data-member="grandma"]  .fg-body { background: var(--tile-md); }
+#view-ending .et-seat[data-member="grandma"]  .fg-hair { background: var(--cream-dk); }
+#view-ending .et-seat[data-member="father"]   .fg-body { background: var(--red-lt); }
+#view-ending .et-seat[data-member="father"]   .fg-hair { background: var(--wood-dk); }
+#view-ending .et-seat[data-member="mother"]   .fg-body { background: var(--osmanthus); }
+#view-ending .et-seat[data-member="mother"]   .fg-hair { background: var(--wood-md); }
+#view-ending .et-seat[data-member="younger"]  .fg-body { background: var(--cream-lt); }
+#view-ending .et-seat[data-member="younger"]  .fg-hair { background: var(--wood-lt); }
+#view-ending .et-seat[data-member="brother"]  .fg-body { background: var(--tile-dk); }
+#view-ending .et-seat[data-member="brother"]  .fg-hair { background: var(--bake-md); }
+#view-ending .et-seat.is-empty .et-stool {
+  background: transparent; border-style: dashed; border-color: var(--tile-md);
+}
+#view-ending .et-name {
+  position: absolute; left: -12px; top: 40px; width: 64px;
+  font-size: 11px; line-height: 1; letter-spacing: .06em; text-align: center;
+  color: var(--cream-md); font-weight: 400;
+}
+
+/* ---------- 收束：分享卡 ---------- */
+#view-ending .end-actions { flex: none; margin-top: auto; margin-bottom: 16px; }
+#view-ending .end-actions .btn {
+  flex: 1 1 0; border: 3px solid var(--ink); border-radius: 0;
+  background: var(--moon); color: var(--ink);
+  font-size: 16px; font-weight: 800; letter-spacing: .12em;
+  box-shadow: 0 4px 0 0 var(--ink-soft);
+}
+#view-ending .end-actions .btn:active {
+  transform: translateY(3px); box-shadow: 0 1px 0 0 var(--ink-soft);
+}
+#view-ending .end-actions .btn:focus-visible {
+  outline: 2px solid var(--flame); outline-offset: 2px;
+}
+#view-ending .card-wrap {
+  position: absolute; left: 14px; right: 14px; top: 14px; bottom: 92px;
+  display: none; overflow-y: auto; padding: 10px;
+  background: var(--ink-soft); border: 3px solid var(--wood-dk);
+  box-shadow: 0 4px 0 0 var(--ink);
+}
+#view-ending .card-wrap.is-open { display: block; }
+#view-ending .card-wrap img { display: block; width: 100%; border: 2px solid var(--ink); }
+
+/* ---------- §6.3.5 分段仪式：一次类翻转 + 固定 delay，全部 steps() 阶跃 ----------
+   fill-mode 一律取 backwards 而不是 both：steps(n, end) 的最后一个台阶是 (n−1)/n，
+   forwards 填充会把这个中间值永久留住（饼停在 2/3 透明度、月轮停在 4px 偏移上）。
+   取 backwards 时动画结束即回落到下面的静止终态，故每步的落点都是精确终态。 */
+@keyframes em-rise  { 0% { transform: translateY(26px); } 100% { transform: translateY(0); } }
+@keyframes em-halo  { 0% { transform: scale(.72); filter: brightness(.45); }
+                      100% { transform: scale(1); filter: brightness(1); } }
+@keyframes em-cloud { 0% { transform: translateY(100%); opacity: 0; }
+                      100% { transform: translateY(0); opacity: 1; } }
+@keyframes end-step { 0% { opacity: 0; transform: translateY(8px); }
+                      100% { opacity: 1; transform: translateY(0); } }
+@keyframes end-seat { 0% { opacity: 0; transform: translateY(12px); }
+                      100% { opacity: 1; transform: translateY(0); } }
+@keyframes end-cake { 0% { opacity: 0; transform: translateY(-16px) scale(.86); }
+                      100% { opacity: 1; transform: translateY(0) scale(1); } }
+
+#view-ending .em-halo, #view-ending .em-clouds { transform-origin: 50% 50%; }
+#view-ending .em-clouds { opacity: 1; }
+#view-ending .end-moon:not(.is-revealing) .em-clouds { opacity: 0; }
+#view-ending .end-moon.is-revealing .em-disc { animation: em-rise .85s steps(6, end) backwards; }
+#view-ending .end-moon.is-revealing .em-rim  { animation: em-rise .85s steps(6, end) backwards; }
+#view-ending .end-moon.is-revealing .em-halo { animation: em-halo 1.2s steps(6, end) .9s backwards; }
+#view-ending .end-moon.is-revealing .em-clouds { animation: em-cloud 1.2s ease .9s backwards; }
+
+#view-ending:not(.is-revealed) .ep-rule, #view-ending:not(.is-revealed) .end-name,
+#view-ending:not(.is-revealed) .end-text, #view-ending:not(.is-revealed) .et-seat,
+#view-ending:not(.is-revealed) .et-cake, #view-ending:not(.is-revealed) .end-actions {
+  opacity: 0;
+}
+#view-ending.is-revealed .ep-rule { animation: end-step .45s steps(4, end) 2.1s backwards; }
+#view-ending.is-revealed .end-name { animation: end-step .45s steps(4, end) 2.1s backwards; }
+#view-ending.is-revealed .end-text { animation: end-step .45s steps(4, end) 2.55s backwards; }
+#view-ending.is-revealed .et-seat { animation: end-seat .38s steps(4, end) 3s backwards; }
+#view-ending.is-revealed .et-seat[data-slot="2"] { animation-delay: 3.12s; }
+#view-ending.is-revealed .et-seat[data-slot="3"] { animation-delay: 3.24s; }
+#view-ending.is-revealed .et-seat[data-slot="4"] { animation-delay: 3.36s; }
+#view-ending.is-revealed .et-seat[data-slot="5"] { animation-delay: 3.48s; }
+#view-ending.is-revealed .et-cake { animation: end-cake .3s steps(3, end) 3.38s backwards; }
+#view-ending.is-revealed .et-cake[data-slot="2"] { animation-delay: 3.5s; }
+#view-ending.is-revealed .et-cake[data-slot="3"] { animation-delay: 3.62s; }
+#view-ending.is-revealed .et-cake[data-slot="4"] { animation-delay: 3.74s; }
+#view-ending.is-revealed .et-cake[data-slot="5"] { animation-delay: 3.86s; }
+#view-ending.is-revealed .end-actions { animation: end-step .4s steps(4, end) 4.25s backwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  #view-ending .end-moon, #view-ending .em-disc, #view-ending .em-rim,
+  #view-ending .em-halo, #view-ending .em-clouds, #view-ending .ep-rule,
+  #view-ending .end-name, #view-ending .end-text, #view-ending .et-seat,
+  #view-ending .et-cake, #view-ending .end-actions {
+    animation: none; transition: none; opacity: 1; transform: none; filter: none;
+  }
+}

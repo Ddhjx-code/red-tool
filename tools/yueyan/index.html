@@ -12,10 +12,12 @@
 <div id="ui">
 
   <section id="view-intro" class="view is-active">
+    <div id="intro-scene" class="intro-scene" aria-hidden="true"></div>
     <p class="kicker">非遗手作坊 · 中秋 · 家宴</p>
     <h1 id="intro-title" class="intro-title"></h1>
     <p id="intro-sub" class="intro-sub"></p>
     <p id="intro-howto" class="intro-howto"></p>
+    <div id="intro-path" class="intro-path"></div>
     <label class="toggle-row" for="toggle-congrong">
       <input id="toggle-congrong" type="checkbox" />
       <span id="toggle-congrong-text" class="toggle-text"></span>
@@ -107,13 +109,23 @@
   </section>
 
   <section id="view-ending" class="view">
-    <canvas id="end-moon" class="end-moon" width="390" height="390"></canvas>
-    <h2 id="end-name" class="end-name"></h2>
-    <p id="end-text" class="end-text"></p>
-    <div id="card-wrap" class="card-wrap"></div>
-    <div class="actions">
+    <div id="end-sky" class="end-sky" aria-hidden="true">
+      <div class="es-sprig sp-l"></div>
+      <div class="es-sprig sp-r"></div>
+      <div id="end-moon" class="end-moon" data-ending="E1"></div>
+      <div class="es-eave"></div>
+    </div>
+    <div class="end-plate">
+      <div class="ep-rule"></div>
+      <h2 id="end-name" class="end-name"></h2>
+      <div class="ep-rule"></div>
+      <p id="end-text" class="end-text"></p>
+    </div>
+    <div id="end-table" class="end-table" aria-hidden="true"></div>
+    <div class="actions end-actions">
       <button id="btn-share" class="btn btn-ghost" type="button">生成分享卡</button>
     </div>
+    <div id="card-wrap" class="card-wrap"></div>
   </section>
 
 </div>

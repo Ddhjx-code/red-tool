@@ -132,7 +132,7 @@ R2 = [
 R2_ASSIGN = {"grandma": 0, "father": 1, "mother": 2, "younger": 3, "brother": 4}
 
 # --- §6.5.4 R3 -> E3 ---
-# 咸蛋黄 ordered D1, arrives at the D3 settlement (§3.7 step 2), used D4.
+# 咸蛋黄 bought D1 and credited the same day (§3.2.2), used D4.
 R3 = [
     [buy("haoliao"), buy("putong"), buy("xiandanhuang")],
     [buy("haoliao"), buy("putong"), buy("putong")],
@@ -471,11 +471,16 @@ def test_v26(page):
     check("V-26 fourth shishi costs nothing",
           st["silver"] == silver and st["stock"]["putong"] == putong,
           f"silver {silver} -> {st['silver']}, putong {putong} -> {st['stock']['putong']}")
-    check("V-26 tol widens with patterns",
-          abs(call(page, "tolOf", 3, "s3") - 0.19) < 1e-9,
-          f"got {call(page, 'tolOf', 3, 's3')}")
-    check("V-26 tol base 0.10", abs(call(page, "tolOf", 0, "s3") - 0.10) < 1e-9,
-          f"got {call(page, 'tolOf', 0, 's3')}")
+    # §14.2 M-1 ②: tolOf is retired with the tap-based board, so the pattern
+    # channel now widens the baking golden window instead (§4.3.12).
+    check("§14.2 M-1 ② tolOf is retired",
+          page.evaluate("() => typeof window.YueYan.Engine.tolOf") == "undefined")
+    check("V-26 the golden window widens with patterns",
+          abs(call(page, "heatHalfWidth", 3) - 0.19) < 1e-9,
+          f"got {call(page, 'heatHalfWidth', 3)}")
+    check("V-26 the golden window half-width base is 0.10",
+          abs(call(page, "heatHalfWidth", 0) - 0.10) < 1e-9,
+          f"got {call(page, 'heatHalfWidth', 0)}")
 
 
 def test_windows(page):
@@ -553,29 +558,42 @@ def test_assignment_idempotent(page):
           f"once {call(page, 'ending', z_once)} twice {call(page, 'ending', z_twice)}")
 
 
-def test_arrival_day_craft(page):
-    """§3.7 step 2: a delivery lands at that day's settlement, never before it."""
+def test_buy_credits_same_day(page):
+    """§3.2.2: all four materials credit their stock on the purchase day."""
+    items = page.evaluate("() => window.YueYan.Data.items")
+    gates = page.evaluate("() => window.YueYan.Data.gates")
+    base = call(page, "initialState")
+    check("§3.2.2 the retired pendingEgg ledger is gone from the state",
+          "pendingEgg" not in base, str(sorted(base)))
+    for item in ("putong", "haoliao", "xiandanhuang", "guihua"):
+        day = gates[item]["from"] if item in gates else 1
+        st = base
+        for _ in range(day - 1):
+            st = call(page, "applyDay", st, [])
+        gain, price = items[item]["gain"], items[item]["silver"]
+        got = call(page, "applyDayPreview", st, [buy(item)])
+        check(f"§3.2.2 {item} credits {gain} on the purchase day",
+              got["stock"][item] == st["stock"][item] + gain,
+              f"got {got['stock'][item]}")
+        check(f"§3.2.2 {item} debits its own price {price}",
+              got["silver"] == st["silver"] - price, f"got {got['silver']}")
+
     act = shouzuo("xiandanhuang", "normal", 3.00)
-    st = call(page, "initialState")
-    st = call(page, "applyDay", st, R3[0])                    # D1 orders 咸蛋黄
-    st = call(page, "applyDay", st, R3[1])                    # now D3, pre-settlement
-    check("arrival day is D3", st["day"] == 3, f"got {st['day']}")
-    check("arrival day: stock still empty before the D3 settlement",
-          st["stock"]["xiandanhuang"] == 0, f"got {st['stock']['xiandanhuang']}")
-    check("arrival day: crafting the undelivered filling is rejected",
-          call(page, "actionOk", st, act) is False)
-    check("arrival day: the settlement itself refuses it",
-          raises(page, "applyDay", st, [act]))
-    st4 = call(page, "applyDay", st, R3[2])                   # D3 settles -> egg lands
-    check("D4: the delivered filling is in stock",
+    st = call(page, "applyDay", base, [buy("xiandanhuang"), buy("xiandanhuang")])
+    check("§3.2.2 two purchases on one day stock two",
+          st["stock"]["xiandanhuang"] == 2, f"got {st['stock']['xiandanhuang']}")
+    st = call(page, "applyDay", st, [])                         # D2 -> D3, 手作 unlocked
+    check("§3.2.2 D3 can craft the filling bought on D1",
+          call(page, "actionOk", st, act) is True)
+    st4 = call(page, "applyDay", st, [act])
+    check("§3.2.2 crafting it consumes exactly one",
           st4["stock"]["xiandanhuang"] == 1, f"got {st4['stock']['xiandanhuang']}")
-    check("D4: crafting it is allowed", call(page, "actionOk", st4, act) is True)
 
 
 TESTS = (test_v29, test_v4, test_v5, test_v6, test_v7_v8, test_v9, test_v10,
           test_v11, test_v12, test_v14_v22, test_v23, test_v24, test_v25,
           test_v26, test_v27, test_v28, test_windows, test_assignment_idempotent,
-          test_arrival_day_craft)
+          test_buy_credits_same_day)
 
 
 def main():

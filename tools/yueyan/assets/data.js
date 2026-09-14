@@ -11,11 +11,12 @@
     stockCap: 24,
     dates: ['初八', '初九', '初十', '十一', '十二', '十三', '十四'],   // spec-locked §5.2
 
-    // §3.2.1 四类物料
+    // §3.2.1 四类物料：silver 是价，gain 是到手数，四味一律当日入账。旧版咸蛋黄的
+    // 「下单 / D+2 到货」已退役（§3.2.2），稀缺性只由门控 G1 [1, 4] 承担（§3.4）。
     items: {
       putong:       { label: '普通料',  silver: 2, gain: 2 },
       haoliao:      { label: '好料',    silver: 3, gain: 2 },
-      xiandanhuang: { label: '咸蛋黄',  silver: 2, gain: 0, order: true, delayDays: 2 },
+      xiandanhuang: { label: '咸蛋黄',  silver: 2, gain: 1 },
       guihua:       { label: '桂花',    silver: 2, gain: 1 }
     },
 
@@ -58,16 +59,33 @@
       { id: 's4', budget: 10, kind: 'bar' }
     ],
     stepBudgetTotal: 40,                   // §4.4 / V-13
-    tolBase: 0.10,
-    tolPerPattern: 0.03,
-    tolCap: 0.19,                          // 0.10 + 0.03 * 3
     patternStepId: 's3',                   // §4.3.2 纹样只增益 S3
-    swingOneWay: 2.0,                      // §4.3.3
-    swingRate: 0.5,
-    swingWindow: [0.40, 0.60],
 
     // §4.4.1 品级双闸门
     grade: { gold: 3.60, silver: 2.40, floor: 1 },
+
+    // §4.3 Micro 层：并发厨房与三步轻点（像素形态修订，全部常量零随机）
+    micro: {
+      tapsPerStep: 3,                      // §4.3.2 每步 3 次轻点，一枚共 9 次
+      stepCum: { S1: 8, S2: 18, S3: 30 },  // §4.3.7 排程预算（自锚点累计 8 / 18 / 30）
+      burn: { A: 12.0, B: 10.0 },          // §4.3.5 T_burn 灶甲 / 灶乙（刻意不等，P-1）
+      heatCenter: 0.70,                    // §4.3.2 满分中心 c_h（固定，不随机）
+      heatHalfBase: 0.10,                  // §4.3.12 佳窗口半宽基数
+      heatHalfPerPattern: 0.03,            // §4.3.12 每纹样 +0.03
+      heatHalfCap: 0.19,                   // §4.3.12 半宽上限 = 0.10 + 0.03 × 3
+      goldenAt: 0.60,                      // §4.3.5 「佳」态起点
+      burntAt: 0.90,                       // §4.3.5 「焦」态起点（焦不删饼）
+      fuelSeconds: 15.0,                   // §4.3.6 一把柴 = 一座灶 15.0 秒的火
+      woodCap: 8,                          // §4.3.6 柴存量上限 8 把
+      sessionCap: { 1: 60, 2: 72 },        // §4.3.7 实测走位下界 20.7 / 37.0 秒 → 2.9 / 1.95 倍余量
+      deadlineBase: 60.0,                  // §4.8.2 deadline(day) = max(36.0, 60.0 − 6.0 × (day − 3))
+      deadlinePerDay: 6.0,
+      deadlineFloor: 36.0,
+      qtyLadder: [[2, 1], [4, 2], [7, 3]], // §4.7.1 A-4b qtyOf 阶梯 1/2/3/4 逐字保留（其余 → 4）
+      patternCap: 3,                       // §4.3.12 纹样上限
+      chefSpeed: 104,                      // §4.9.2 厨师速度 CSS px/s
+      congRongHeat: 0.70                   // §4.3.10 从容模式火候冻结值
+    },
 
     // §6.1 meter
     meters: { cakeDenominator: 15, banquetItemValue: 12, heartDenominator: 500 },

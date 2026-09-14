@@ -28,6 +28,12 @@ PATTERN_D = {
 }
 IMAGE_EXT = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".ico", ".bmp")
 
+# §5.4.1 replaces the old 22 flat assets with these 15 pixel sprites.
+SPRITES = {"px-floor", "px-counter", "px-chef", "px-stove", "px-board",
+           "px-plate-station", "px-rack", "px-firewood", "px-cake-raw",
+           "px-cake-baking", "px-cake-golden", "px-cake-burnt", "px-bowl-gui",
+           "px-bowl-lian", "px-bowl-dan"}
+
 ROUTE = [["buy:haoliao", "buy:haoliao", "buy:putong"],
          ["buy:haoliao", "buy:haoliao", "buy:putong"],
          ["buy:putong", "shouzuo:dousha:premium", "shouzuo:wuren:premium"],
@@ -96,14 +102,30 @@ def test_source_hygiene(page):
     check("§8.3 no gradient is used for cake or table surfaces",
           re.search(r"createLinearGradient|createRadialGradient", scene) is None)
 
-    check("§8.4 no per-frame loop drives UI motion",
-          re.search(r"requestAnimationFrame|setInterval", scene) is None)
+    # §8.4.1 / V-37a: the kitchen is allowed one rAF loop, and it must be the only
+    # one; scene.js is the sole clock holder (§4.3.9). The old blanket ban on
+    # per-frame driving was retired by §8.4.1.
+    check("V-37a scene.js holds exactly one rAF loop (self-recursive + one start)",
+          scene.count("requestAnimationFrame") == 2
+          and scene.count("cancelAnimationFrame") == 1,
+          f"rAF={scene.count('requestAnimationFrame')} "
+          f"cancel={scene.count('cancelAnimationFrame')}")
 
     check("scene.js generates no inline handler",
           re.search(r"on(click|pointerdown|pointerup|touchstart)\s*=", scene) is None)
 
+    # V-1 forbids external resources. §5.4.1 puts the sprites at the package-relative
+    # assets/img/ path, so a relative reference is a local asset, not a network call.
     check("scene.js makes no network request",
-          re.search(r"\bfetch\(|XMLHttpRequest|new Image\(\)|\.src\s*=", scene) is None)
+          re.search(r"\bfetch\(|XMLHttpRequest|WebSocket|new Worker|WebAssembly",
+                    scene) is None,
+          str(re.findall(r"\bfetch\(|XMLHttpRequest|WebSocket", scene)))
+    # The SVG namespace URI is a spec identifier handed to createElementNS, never
+    # fetched, so it is the one absolute URI V-1 permits.
+    absolute = re.findall(r"['\"(](?:https?:)?//[^'\"\s)]*", scene)
+    check("V-1 the only absolute URI in scene.js is the SVG namespace",
+          absolute == ["'http://www.w3.org/2000/svg"], str(absolute))
+    check("V-1 scene.js embeds no data: URI", "data:" not in scene, "")
 
     check("scene.js evaluates no dynamic code",
           re.search(r"\beval\(|new Function\(", scene) is None)
@@ -120,9 +142,25 @@ def test_source_hygiene(page):
         check(f"§8.3 {filling} has its own engraving",
               re.search(rf"{filling}:", scene) is not None)
 
-    check("§8.3 工笔描边 stroke-width is fixed at 1.5",
+    check("§8.3 刻印 stroke-width is fixed at 1.5",
           re.search(r"stroke-width", scene) is not None
-          and re.search(r"lineWidth\s*=\s*1\.5", scene) is not None)
+          and re.search(r"'stroke-width',\s*'1\.5'", scene) is not None)
+
+    # §6.3.5-b moved the ending moon off canvas onto CSS pixel blocks: the only
+    # surviving 2d context is buildPaperLayer's offscreen paper tile.
+    check("§6.3.5-b the ending moon is CSS pixel blocks, not a canvas paint",
+          scene.count("getContext") == 1
+          and all(sel in css for sel in (".em-rim", ".em-disc", ".em-clouds", ".em-band")),
+          f"getContext={scene.count('getContext')}")
+    check("§6.3.5-b the five moon phases are driven by the locked cover ladder",
+          re.search(r"setProperty\('--cover',\s*String\(MOON_COVER\[code\]", scene) is not None
+          and all(re.search(rf'\[data-ending="{c}"\]', css) is not None for c in COVER))
+    ending_body = scene.split("function renderEnding(")[1].split("\n  }")[0]
+    check("§6.3.5-a the staged reveal runs on CSS animation-delay, never on a JS timer",
+          not any(t in ending_body for t in ("setTimeout", "setInterval",
+                                             "requestAnimationFrame"))
+          and len(re.findall(r"animation-delay:\s*[0-9.]+s", css)) >= 8,
+          str(len(re.findall(r"animation-delay:\s*[0-9.]+s", css))))
 
     check("§8.4 drawMoon adds the one-shot .is-revealing class",
           re.search(r"classList\.add\('is-revealing'\)", scene) is not None)
@@ -145,80 +183,140 @@ def test_source_hygiene(page):
         check(f"V-19 {word} appears in no source or asset file", not offenders, str(offenders))
 
 
-def test_no_image_assets(page):
-    offenders = [str(p.relative_to(ROOT))
-                 for p in sorted(ASSETS.rglob("*"))
-                 if p.is_file() and p.suffix.lower() in IMAGE_EXT]
-    check("zero image files were added under assets/", not offenders, str(offenders))
+def test_sprite_manifest(page):
+    """§5.4.1: exactly the 15 pixel sprites, all lossless webp under assets/img/."""
+    img_dir = ASSETS / "img"
+    files = sorted(p for p in ASSETS.rglob("*") if p.is_file()
+                   and p.suffix.lower() in IMAGE_EXT)
+    stray = [str(p.relative_to(ROOT)) for p in files if p.parent != img_dir]
+    check("§5.4.1 every image asset lives under assets/img/", stray == [], str(stray))
+    check("§5.4.1 exactly 15 image files ship under assets/", len(files) == 15,
+          f"got {len(files)}")
+    names = {p.stem for p in files}
+    check("§5.4.1 the sprite set matches the manifest, no more no less",
+          names == SPRITES, f"missing {sorted(SPRITES - names)} extra {sorted(names - SPRITES)}")
+    check("§5.4.1 every sprite is a px-*.webp",
+          all(p.suffix.lower() == ".webp" and p.stem.startswith("px-") for p in files),
+          str([p.name for p in files
+               if p.suffix.lower() != ".webp" or not p.stem.startswith("px-")]))
 
     html = INDEX.read_text(encoding="utf-8")
     check("index.html loads no image asset", "<img" not in html and ".png" not in html)
-    check("scene.js references no image asset",
-          re.search(r"\.(png|jpg|jpeg|gif|webp|svg)\b", SCENE.read_text(encoding="utf-8")) is None)
+
+    scene = SCENE.read_text(encoding="utf-8")
+    check("§5.4.1 scene.js builds sprite paths from the package-relative assets/img/",
+          "assets/img/" in scene, "")
+    check("§5.4.1 scene.js references only the 15 manifest sprites",
+          set(re.findall(r"spr\('([a-z0-9-]+)'\)", scene)) |
+          set(re.findall(r"'(px-[a-z0-9-]+)'", scene)) <= SPRITES,
+          str(sorted((set(re.findall(r"spr\('([a-z0-9-]+)'\)", scene)) |
+                      set(re.findall(r"'(px-[a-z0-9-]+)'\)", scene))) - SPRITES)))
+    check("§5.4.1 scene.js references no format outside the manifest",
+          set(re.findall(r"\.([a-z]+)\b", scene)) & {"png", "jpg", "jpeg", "gif", "svg"} == set(),
+          str(set(re.findall(r"\.([a-z]+)\b", scene)) & {"png", "jpg", "jpeg", "gif", "svg"}))
 
 
 # ------------------------------------------------------------------ moon phases
 def test_moon_phases(page):
+    # §6.3.5-b: the five phases are one CSS pixel moon plus five cloud states.
+    # Geometry is read from offsetWidth/offsetHeight (layout box, immune to the
+    # reveal's transforms) so no settling wait is needed.
     out = page.evaluate("""(cover) => {
-      const S = window.YueYan.Scene, D = window.YueYan.Data;
-      """ + RGB + """
-      const moon = rgb(D.palette.moon), ink = rgb(D.palette.ink), paper = rgb(D.palette.paper);
-      const audit = (c) => {
-        const data = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
-        let moonPx = 0, inkPx = 0, paperPx = 0, minX = 1e9, maxX = -1e9;
-        for (let i = 0; i < data.length; i += 4) {
-          if (data[i + 3] === 0) { continue; }
-          const r = data[i], g = data[i + 1], b = data[i + 2];
-          const px = (i / 4) % c.width;
-          minX = Math.min(minX, px); maxX = Math.max(maxX, px);
-          if (r === moon[0] && g === moon[1] && b === moon[2]) { moonPx++; }
-          else if (r === ink[0] && g === ink[1] && b === ink[2]) { inkPx++; }
-          else if (r === paper[0] && g === paper[1] && b === paper[2]) { paperPx++; }
-        }
-        return { moonPx, inkPx, paperPx, diameter: maxX - minX + 1 };
+      const S = window.YueYan.Scene;
+      S.show('view-ending');
+      const host = document.getElementById('end-moon');
+      const probe = document.createElement('span');
+      probe.style.background = 'var(--moon)';
+      host.appendChild(probe);
+      const moonRgb = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      const cs = (sel, prop) => {
+        const n = host.querySelector(sel);
+        return n ? getComputedStyle(n)[prop] : null;
       };
-      const out = {};
+      const out = { moonRgb: moonRgb };
       for (const code of ['E1','E2','E3','E4','E5']) {
-        const c = document.createElement('canvas');
-        c.width = 200; c.height = 200;
-        S.drawMoon(c, code);
-        out[code] = audit(c);
-        out[code].revealing = c.classList.contains('is-revealing');
-        out[code].expectCover = cover[code];
+        S.drawMoon(host, code);
+        const band = host.querySelector('.em-band');
+        const disc = host.querySelector('.em-disc');
+        const rim = host.querySelector('.em-rim');
+        out[code] = {
+          tagged: host.getAttribute('data-ending'),
+          cover: host.style.getPropertyValue('--cover'),
+          expectCover: cover[code],
+          discBg: cs('.em-disc', 'backgroundColor'),
+          discW: disc.offsetWidth, discH: disc.offsetHeight,
+          rimW: rim.offsetWidth, rimH: rim.offsetHeight,
+          bandH: band.offsetHeight,
+          bandBg: cs('.em-band', 'backgroundColor'),
+          discOpacity: cs('.em-disc', 'opacity'),
+          haloOpacity: cs('.em-halo', 'opacity'),
+          wisps: ['.em-w1', '.em-w2', '.em-w3']
+            .map(s => parseFloat(cs(s, 'opacity'))).filter(v => v > 0).length,
+          revealing: host.classList.contains('is-revealing'),
+          parts: ['.em-halo', '.em-rim', '.em-disc', '.em-clouds', '.em-band']
+            .filter(s => host.querySelector(s)).length,
+        };
       }
       return out;
     }""", COVER)
 
-    for code in COVER:
-        row = out[code]
-        check(f"§8.3 {code} draws the moon disc in D.palette.moon", row["moonPx"] > 0, str(row))
-        check(f"§8.3 {code} strokes the disc in D.palette.ink", row["inkPx"] > 0, str(row))
-        check(f"§8.4 {code} adds .is-revealing", row["revealing"] is True, str(row))
-        check(f"§8.3 {code} disc diameter is 0.42 of the canvas",
-              abs(row["diameter"] - 200 * 0.42 * 2) <= 6, str(row["diameter"]))
-
-    check("§6.3.1 E1 满月无云 has no cloud cover", out["E1"]["paperPx"] == 0, str(out["E1"]))
-    for code in ["E2", "E3", "E4", "E5"]:
-        check(f"§6.3.1 {code} 薄云 covers part of the disc with 米纸底",
-              out[code]["paperPx"] > 0, str(out[code]))
-
     order = ["E1", "E2", "E3", "E4", "E5"]
-    bands = [out[c]["paperPx"] for c in order]
-    check("§6.3.1 cloud cover increases monotonically E1 → E5",
+    for code in order:
+        row = out[code]
+        check(f"§6.3.5-b {code} builds all five CSS pixel moon parts",
+              row["parts"] == 5, str(row))
+        check(f"§6.3.5-b {code} paints the disc in the --moon token",
+              row["discBg"] == out["moonRgb"], str((row["discBg"], out["moonRgb"])))
+        check(f"§6.3.5-b {code} tags the host with its own code",
+              row["tagged"] == code, str(row))
+        check(f"§6.3.1 {code} writes the locked cover into --cover",
+              abs(float(row["cover"]) - row["expectCover"]) < 1e-9, str(row))
+        check(f"§8.4 {code} adds .is-revealing", row["revealing"] is True, str(row))
+        check(f"§6.3.5-b {code} keeps the 148px pixel disc",
+              row["discW"] == 148 and row["discH"] == 148, str(row))
+
+    check("§6.3.1 E1 满月无云 has no cloud band", out["E1"]["bandH"] == 0, str(out["E1"]))
+    check("§6.3.1 E1 满月无云 carries no cloud wisp", out["E1"]["wisps"] == 0, str(out["E1"]))
+    for code in ["E2", "E3", "E4", "E5"]:
+        check(f"§6.3.1 {code} raises a cloud band over the disc",
+              out[code]["bandH"] > 0, str(out[code]))
+
+    bands = [out[c]["bandH"] for c in order]
+    check("V-21c ① cloud cover increases monotonically E1 → E5",
           all(bands[i] < bands[i + 1] for i in range(4)), str(bands))
-    check("§6.3.1 each ending keeps the same disc size",
-          len({out[c]["diameter"] for c in order}) == 1,
-          str([out[c]["diameter"] for c in order]))
-    check("§6.3.1 the cloud band never swallows the whole disc",
-          all(out[c]["moonPx"] > 0 for c in order), str(bands))
+    check("V-21c ① the band height is cover × the 148px disc",
+          all(abs(bands[i] - COVER[c] * 148) <= 1 for i, c in enumerate(order)), str(bands))
+    check("V-21c ② each ending keeps the same disc size",
+          len({(out[c]["discW"], out[c]["discH"]) for c in order}) == 1
+          and len({(out[c]["rimW"], out[c]["rimH"]) for c in order}) == 1,
+          str([(out[c]["discW"], out[c]["rimW"]) for c in order]))
+    check("V-21c ③ the cloud band never swallows the whole disc",
+          all(out[c]["bandH"] < out[c]["discH"] for c in order), str(bands))
+
+    # V-21c ④ — the five phases must be tellable apart at a glance. Band height,
+    # wisp count, disc brightness and halo strength are the four distinguishing
+    # quantities; any two adjacent endings must differ in at least one of them.
+    vectors = [(out[c]["bandH"], out[c]["wisps"], out[c]["discOpacity"],
+                out[c]["haloOpacity"]) for c in order]
+    check("V-21c ④ all five phases are pairwise distinct",
+          len(set(vectors)) == 5, str(vectors))
+    check("V-21c ④ the wisp ladder rises with the cloud",
+          [v[1] for v in vectors] == [0, 1, 2, 2, 3], str([v[1] for v in vectors]))
+    check("V-21c ④ the halo ladder dims with the cloud",
+          [float(v[3]) for v in vectors] == [0.58, 0.44, 0.34, 0.24, 0.14],
+          str([v[3] for v in vectors]))
+    check("V-21c ④ E5 薄云遮月 dims the disc and switches the band tone",
+          out["E5"]["discOpacity"] == "0.78"
+          and out["E5"]["bandBg"] != out["E4"]["bandBg"],
+          str((out["E5"]["discOpacity"], out["E5"]["bandBg"], out["E4"]["bandBg"])))
 
 
 def test_moon_reveal(page):
     start = page.evaluate("""() => {
       const S = window.YueYan.Scene;
-      const c = document.createElement('canvas');
+      const c = document.createElement('div');
       c.id = 'art-reveal-probe';
-      c.width = 200; c.height = 200;
       c.className = 'end-moon';
       c.style.position = 'absolute'; c.style.left = '-999px';
       document.body.appendChild(c);
@@ -236,7 +334,7 @@ def test_moon_reveal(page):
       return opacity;
     }""")
 
-    check("§8.4 the canvas starts hidden", start["before"] == "0", str(start))
+    check("§8.4 the moon host starts hidden", start["before"] == "0", str(start))
     check("§8.4 drawMoon adds the one-shot reveal class",
           start["cls"] == "end-moon is-revealing", str(start["cls"]))
     check("§8.4 the transition lasts exactly 1.2s", start["trans"] == "1.2s", str(start["trans"]))
@@ -456,29 +554,36 @@ def test_wiring_ending(page):
     out = page.evaluate("""([ROUTE]) => {
       const E = window.YueYan.Engine, S = window.YueYan.Scene, D = window.YueYan.Data;
       """ + RUN_ROUTE + """
-      """ + RGB + """
       const assign = { grandma: 0, father: 1, mother: 2, younger: 3, brother: 4 };
       const s = E.applyAssignment(E.runRoute(days, null), assign);
       const code = S.renderEnding(s);
       const c = document.getElementById('end-moon');
-      const moon = rgb(D.palette.moon);
-      const data = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
-      let moonPx = 0;
-      for (let i = 0; i < data.length; i += 4) {
-        if (data[i] === moon[0] && data[i+1] === moon[1] && data[i+2] === moon[2]) { moonPx++; }
-      }
-      return { code, tagged: c.getAttribute('data-ending'), moonPx,
+      const disc = c.querySelector('.em-disc');
+      const probe = document.createElement('span');
+      probe.style.background = 'var(--moon)';
+      c.appendChild(probe);
+      const moonRgb = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return { code, tagged: c.getAttribute('data-ending'),
+               discBg: getComputedStyle(disc).backgroundColor, wantMoon: moonRgb,
+               parts: ['.em-halo', '.em-rim', '.em-disc', '.em-clouds', '.em-band']
+                 .filter(sel => c.querySelector(sel)).length,
                revealing: c.classList.contains('is-revealing'),
+               revealed: document.getElementById('view-ending')
+                 .classList.contains('is-revealed'),
                opacity: getComputedStyle(c).opacity,
                bg: document.body.style.backgroundImage.slice(0, 30) };
     }""", [ROUTE])
 
-    check("§6.3.1 the ending canvas is painted with the moon disc",
-          out["moonPx"] > 0, str(out["moonPx"]))
-    check("§6.3.1 the painted canvas is tagged with the engine's code",
+    check("§6.3.5-b the ending moon disc carries the --moon token",
+          out["discBg"] == out["wantMoon"], str((out["discBg"], out["wantMoon"])))
+    check("§6.3.5-b the ending moon builds all five CSS pixel parts",
+          out["parts"] == 5, str(out))
+    check("§6.3.1 the moon host is tagged with the engine's code",
           out["tagged"] == out["code"] == "E1", str(out))
-    check("§8.4 the painted canvas carries the one-shot reveal",
-          out["revealing"] is True and out["opacity"] == "0", str(out))
+    check("§6.3.5-a both reveal classes flip in the same tick",
+          out["revealing"] is True and out["revealed"] is True and out["opacity"] == "0",
+          str(out))
     page.wait_for_timeout(1400)
     settled = page.evaluate(
         "() => getComputedStyle(document.getElementById('end-moon')).opacity")
@@ -492,7 +597,8 @@ def test_boot_layer(page):
     check("§8.3 buildPaperLayer runs once at boot", bg.startswith('url("data:image/png;base64'),
           bg[:32])
     canvases = page.evaluate("() => document.querySelectorAll('canvas').length")
-    check("the offscreen layer leaves no stray canvas in the DOM", canvases == 1, str(canvases))
+    check("§6.3.5-b the ending moon moved off canvas, so the DOM holds no canvas at all",
+          canvases == 0, str(canvases))
     check("§8.4 the boot layer adds no per-frame loop",
           page.evaluate("() => document.querySelectorAll('.end-moon').length") == 1)
 
@@ -502,7 +608,7 @@ def main():
         browser = pw.chromium.launch(headless=True)
         page, errors = open_page(browser)
 
-        for fn in [test_source_hygiene, test_no_image_assets, test_moon_phases,
+        for fn in [test_source_hygiene, test_sprite_manifest, test_moon_phases,
                    test_moon_reveal, test_cake_patterns, test_lantern_tint,
                    test_paper_layer, test_paper_determinism, test_wiring_assign,
                    test_wiring_preview, test_wiring_ending, test_boot_layer]:

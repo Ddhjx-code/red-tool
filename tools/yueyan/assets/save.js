@@ -36,7 +36,7 @@
 
   // §10.2 是完整 schema：存档缺任一字段就整体视为无存档，而不是带着残缺状态续局。
   var PROGRESS_FIELDS = ['day', 'silver', 'stock', 'cakes', 'family', 'assignment',
-                         'flags', 'pendingEgg', 'patterns', 'banquet', 'ambience',
+                         'flags', 'patterns', 'banquet', 'ambience',
                          'slotsUsed'];
 
   function shapeOk(p) {

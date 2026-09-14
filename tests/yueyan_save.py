@@ -165,7 +165,7 @@ def test_schema(page):
     got = save(page, "readProgress")
     check("§10.2 top-level fields",
           set(got) == {"version", "day", "slotsUsed", "silver", "stock",
-                       "pendingEgg", "cakes", "patterns", "banquet", "ambience",
+                       "cakes", "patterns", "banquet", "ambience",
                        "family", "flags", "assignment"},
           f"got {sorted(got)}")
     check("§10.2 stock fields",

@@ -49,7 +49,6 @@
       slotsUsed: 0,
       silver: D.initial.silver,
       stock: { putong: D.initial.putong, haoliao: 0, xiandanhuang: 0, guihua: 0 },
-      pendingEgg: [],
       cakes: [],
       patterns: 0,
       banquet: 0,
@@ -100,9 +99,7 @@
     if (!it) { fail('unknown item ' + item); }
     if (D.gates[item] && !inWindow(day, D.gates[item])) { return false; }
     if (state.silver < it.silver) { return false; }
-    var add = it.gain;
-    if (it.order) { add = 1 + state.pendingEgg.length; }   // future arrivals count too
-    if (stockSum(state) + add > D.stockCap) { return false; }
+    if (stockSum(state) + it.gain > D.stockCap) { return false; }
     return true;
   }
 
@@ -118,7 +115,7 @@
     if (!buyOk(s, act.item, day)) { fail('buy rejected: ' + act.item + ' on D' + day); }
     var it = D.items[act.item];
     s.silver -= it.silver;
-    if (it.order) { s.pendingEgg.push(day); } else { s.stock[act.item] += it.gain; }
+    s.stock[act.item] += it.gain;
   }
 
   function execShishi(s, day) {
@@ -198,19 +195,6 @@
   }
 
   // ------------------------------------------------------ day settlement §3.7
-  function arriveEggs(s) {
-    var keep = [], i, orderDay;
-    for (i = 0; i < s.pendingEgg.length; i++) {
-      orderDay = s.pendingEgg[i];
-      if (orderDay + D.items.xiandanhuang.delayDays === s.day) {
-        s.stock.xiandanhuang += 1;
-      } else {
-        keep.push(orderDay);
-      }
-    }
-    s.pendingEgg = keep;
-  }
-
   function applyDay(state, actions) {
     if (!actions || actions.length === undefined) { fail('actions must be an array'); }
     if (state.day > D.board.days) { fail('no actions after D7'); }
@@ -226,33 +210,26 @@
     // step 1: validate the slot budget
     if (s.slotsUsed > D.board.slotsPerDay) { fail('slotsUsed ' + s.slotsUsed + ' > 3'); }
 
-    // step 2: arrivals (order day + 2 == this day), before the day advance, so a
-    // D1 order lands at the D3 settlement and is unusable by D3 crafts
-    arriveEggs(s);
-
-    // step 3: commit this day's cakes
+    // step 2: commit this day's cakes
     for (i = 0; i < staged.length; i++) {
       if (s.cakes.length >= D.board.cakeCap) { fail('cakes exceed 5'); }
       s.cakes.push(staged[i]);
     }
 
-    // step 4: clamp banquet / ambience. The banquet cap is dynamic (V-24)
+    // step 3: clamp banquet / ambience. The banquet cap is dynamic (V-24)
     s.banquet = Math.min(s.banquet, banquetCap(s));
     s.ambience = Math.min(s.ambience, D.actions.buzhi.ambienceCap);
 
-    // step 5: meter preview. meters(state) is the single read path (§10.3.2),
+    // step 4: meter preview. meters(state) is the single read path (§10.3.2),
     // so the engine caches nothing here.
 
-    // step 6: advance the day, reset the slot counter
+    // step 5: advance the day, reset the slot counter
     s.day += 1;
     s.slotsUsed = 0;
     return s;
   }
 
-  // §3.7 step 2 settles arrivals AFTER this day's actions, so a D1 order that
-  // lands at the D3 settlement stays unusable by D3 crafts. A preview that ran
-  // arriveEggs would offer an action the real settlement then refuses, so the
-  // read path keeps the same order and leaves the day counter open.
+  // §10.3.2 read path: applyDay minus the day advance.
   function applyDayPreview(state, actions) {
     if (!actions || actions.length === undefined) { fail('actions must be an array'); }
     if (state.day > D.board.days) { fail('no actions after D7'); }
@@ -276,15 +253,6 @@
   }
 
   // ------------------------------------------------------------ craft path
-  function tolOf(patterns, stepId) {
-    var tol = D.tolBase;
-    if (stepId === D.patternStepId) {                       // 纹样只增益 S3 (§4.3.2)
-      tol = D.tolBase + D.tolPerPattern * patterns;
-      if (tol > D.tolCap) { tol = D.tolCap; }
-    }
-    return tol;
-  }
-
   function precision(d, tol) {
     if (tol <= 0) { return 0; }
     var v = 1 - d / tol;                                    // §4.3.1
@@ -328,6 +296,411 @@
     s.cakes.push({ filling: filling, grade: gradeOf(batch, P),
                    method: 'shouzuo', batch: batch, P: P });
     return s;
+  }
+
+  // ------------------------------------------------------- micro layer §4.3
+  // Pure, DOM-free, clock-free (§4.3.9 / §10.3.2): elapsed time is always a
+  // parameter; the engine never reads a wall clock, the DOM, or a timer.
+
+  // §4.8.2 deadline ladder: D3 → 40.0 … D7 → 22.0, shared by every session of a day
+  function deadlineOf(day) {
+    if (typeof day !== 'number' || day < D.unlocks.shouzuo || day > D.board.days) {
+      fail('bad craft day ' + day);
+    }
+    var v = D.micro.deadlineBase - D.micro.deadlinePerDay * (day - D.unlocks.shouzuo);
+    return v < D.micro.deadlineFloor ? D.micro.deadlineFloor : v;
+  }
+
+  // §4.7.1 A-4b: the 1/2/3/4 ladder survives verbatim; §4.8.1 clamps real order
+  // qty to 1 (one cake per family member), so spawnOrders never uses 2/3/4.
+  function qtyOf(m) {
+    var ladder = D.micro.qtyLadder, i;
+    for (i = 0; i < ladder.length; i++) {
+      if (m < ladder[i][0]) { return ladder[i][1]; }
+    }
+    return 4;
+  }
+
+  function sessionCapOf(n) {
+    if (n !== 1 && n !== 2) { fail('bad n ' + n); }
+    return D.micro.sessionCap[n];
+  }
+
+  // §4.3.12: the pattern channel now widens the bake window, half-width capped 0.19
+  function heatHalfWidth(patterns) {
+    if (typeof patterns !== 'number' || patterns < 0 || patterns > D.micro.patternCap) {
+      fail('bad patterns ' + patterns);
+    }
+    var w = D.micro.heatHalfBase + D.micro.heatHalfPerPattern * patterns;
+    return w > D.micro.heatHalfCap ? D.micro.heatHalfCap : w;
+  }
+
+  // §4.3.2 heat scale: p4 = precision(|h − 0.70|, half-width), precision verbatim
+  function p4Of(h, patterns) {
+    return precision(Math.abs(h - D.micro.heatCenter), heatHalfWidth(patterns));
+  }
+
+  // §4.3.5 four states are labels over one formula, not four formulas
+  function heatLabelOf(h, lit) {
+    if (h >= D.micro.burntAt) { return '焦'; }
+    if (h >= D.micro.goldenAt) { return '佳'; }
+    return lit ? '在烘' : '生';
+  }
+
+  // §4.3.5: h = clamp(litElapsed / T_burn, 0, 1); litElapsed counts only lit time,
+  // so a cold stove freezes h (§4.3.6). 从容模式 returns 0.70 regardless (§4.3.10).
+  function heatAt(litElapsed, stoveId, congRong) {
+    if (congRong === true) { return D.micro.congRongHeat; }
+    var T = D.micro.burn[stoveId];
+    if (T === undefined) { fail('unknown stove ' + stoveId); }
+    if (typeof litElapsed !== 'number' || litElapsed < 0) { fail('bad litElapsed ' + litElapsed); }
+    var h = litElapsed / T;
+    if (h < 0) { return 0; }
+    if (h > 1) { return 1; }
+    return h;
+  }
+
+  // §4.3.6: fuel left since lighting; fire dies at 0 and never deletes a cake
+  function fuelAt(elapsed) {
+    if (typeof elapsed !== 'number' || elapsed < 0) { fail('bad elapsed ' + elapsed); }
+    var f = D.micro.fuelSeconds - elapsed;
+    return f > 0 ? f : 0;
+  }
+
+  // §4.9.2: path is a waypoint list [{x, y}]; the chef starts at path[0] when
+  // elapsed = 0 and walks on at 104 CSS px/s. Output is integer (§4.3.9).
+  function chefAt(elapsed, path) {
+    if (typeof elapsed !== 'number' || elapsed < 0) { fail('bad elapsed ' + elapsed); }
+    if (!path || path.length === undefined || path.length < 1) { fail('chefAt needs waypoints'); }
+    var x = path[0].x, y = path[0].y;
+    var budget = elapsed * D.micro.chefSpeed, i, dx, dy, dist;
+    for (i = 1; i < path.length && budget > 0; i++) {
+      dx = path[i].x - x; dy = path[i].y - y;
+      dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist <= budget) { x = path[i].x; y = path[i].y; budget -= dist; }
+      else { x += dx * budget / dist; y += dy * budget / dist; budget = 0; }
+    }
+    return { x: Math.round(x), y: Math.round(y) };
+  }
+
+  // §4.10.2 next-station resolver: eleven priority rules, proximity gate ignored,
+  // deterministic. k = { stoves: { A, B }, carrying, board, wood, rackWork } where
+  // each stove is { cake: null | { state }, lit }, carrying is null or { kind } with
+  // kind ∈ bowl / raw / golden / burnt / wood, wood is the柴堆存量, and rackWork says
+  // whether the rack still holds a filling the order needs. The last two keep the
+  // hint off a pile that is empty and off a rack that has nothing left to give.
+  function nextGuide(k) {
+    if (!k || !k.stoves || !k.stoves.A || !k.stoves.B) { fail('nextGuide needs stove state'); }
+    if (typeof k.wood !== 'number' || k.wood < 0) { fail('nextGuide needs wood'); }
+    if (typeof k.rackWork !== 'boolean') { fail('nextGuide needs rackWork'); }
+    var a = k.stoves.A, b = k.stoves.B, c = k.carrying || null;
+    function hot(st) {
+      return st.cake && (st.cake.state === 'golden' || st.cake.state === 'burnt');
+    }
+    if (hot(a)) { return 'stoveA'; }                        // 1 take beats everything
+    if (hot(b)) { return 'stoveB'; }                        // 2
+    if (c && (c.kind === 'golden' || c.kind === 'burnt')) { return 'plate'; }   // 3 serve
+    if (c && c.kind === 'raw') {                            // 4 any empty stove, lit first
+      if (!a.cake && a.lit) { return 'stoveA'; }
+      if (!b.cake && b.lit) { return 'stoveB'; }
+      if (!a.cake) { return 'stoveA'; }                     // 4b cold stove takes the cake
+      if (!b.cake) { return 'stoveB'; }                     // (§4.3.6 冷灶放饼)
+      return k.wood > 0 ? 'wood' : 'rack';                  // both busy: fuel, else rack
+    }
+    if (k.board && k.board.active) { return 'board'; }      // 5
+    if (c && c.kind === 'bowl') { return 'board'; }         // 6
+    if (c && c.kind === 'wood') {                           // 7 unlit stove, else rack
+      if (!a.lit) { return 'stoveA'; }
+      if (!b.lit) { return 'stoveB'; }
+      return 'rack';
+    }
+    // 8 both stoves cold. A cake on a stove means that cake needs fire → the pile.
+    // No cake yet means the bundle should wait: shape the cake first, then light, so
+    // one 15.0 s bundle covers the whole bake instead of dying during the board work.
+    if (!a.lit && !b.lit) { return (a.cake || b.cake) && k.wood > 0 ? 'wood' : 'rack'; }
+    if (k.rackWork) { return 'rack'; }                      // 9 the order still needs a cake
+    if (a.cake) { return 'stoveA'; }                        // 10 wait on the one live stove
+    if (b.cake) { return 'stoveB'; }
+    return 'rack';                                          // 11 fallback
+  }
+
+  // §7.3 preference bonus: hit ∧ grade 3 → +12 (overrides), hit ∧ grade 2 → +8,
+  // bronze or miss → +0. The macro path in applyAssignment keeps its own copy.
+  function preferBonus(filling, familyKey, grade) {
+    var fam = D.family[familyKey];
+    if (!fam) { fail('unknown family ' + familyKey); }
+    if (filling !== fam.pref) { return 0; }
+    if (grade === 3) { return D.preferBonus.grade3; }
+    if (grade >= 2) { return D.preferBonus.grade2; }
+    return 0;
+  }
+
+  // §4.8: orders are the five family members' requests. Deterministic pick:
+  // members whose pref matches the session fillings first (in familyOrder), then
+  // the rest of familyOrder — so one spec always yields one identical list (A-4c).
+  function spawnOrders(spec) {
+    if (!spec || (spec.n !== 1 && spec.n !== 2)) { fail('spawnOrders needs n 1 or 2'); }
+    var chosen = [], i, j, key, dl = deadlineOf(spec.day);
+    for (i = 0; i < spec.n; i++) {
+      for (j = 0; j < D.familyOrder.length; j++) {
+        key = D.familyOrder[j];
+        if (D.family[key].pref === spec.fillings[i] && chosen.indexOf(key) < 0) {
+          chosen.push(key);
+          break;
+        }
+      }
+    }
+    for (j = 0; chosen.length < spec.n && j < D.familyOrder.length; j++) {
+      key = D.familyOrder[j];
+      if (chosen.indexOf(key) < 0) { chosen.push(key); }
+    }
+    var orders = [];
+    for (i = 0; i < chosen.length; i++) {
+      orders.push({ family: chosen[i], filling: D.family[chosen[i]].pref,
+                    qty: 1, deadline: dl, state: 'open' });   // qty clamped to 1 (§4.8.1)
+    }
+    return orders;
+  }
+
+  var SIM_OPS = ['tap', 'wood', 'light', 'place', 'take', 'serve', 'end'];
+
+  function simCheckSpec(spec) {
+    if (!spec) { fail('craftSim needs a spec'); }
+    if (spec.n !== 1 && spec.n !== 2) { fail('bad n ' + spec.n); }
+    if (spec.batch !== 'normal' && spec.batch !== 'premium') { fail('bad batch ' + spec.batch); }
+    if (!spec.fillings || spec.fillings.length !== spec.n) { fail('fillings must match n'); }
+    var i;
+    for (i = 0; i < spec.n; i++) {
+      if (!D.fillings[spec.fillings[i]]) { fail('unknown filling ' + spec.fillings[i]); }
+    }
+    heatHalfWidth(spec.patterns);
+    deadlineOf(spec.day);
+  }
+
+  // §4.3.9 craftSim: the short game's single numeric truth source.
+  // spec = { batch, n, fillings, patterns, day, congRong }; timeline items are
+  // { t, op, cake, step, d }, op ∈ tap|wood|light|place|take|serve|end,
+  // cake ∈ 1..n (null for wood/light/end), t non-decreasing. Illegal input throws
+  // (§10.3.2 contract); no save write, no state change — merging into state stays
+  // with finishCraft(state, P), called once per cake.
+  function craftSim(spec, timeline) {
+    simCheckSpec(spec);
+    if (!timeline || timeline.length === undefined) { fail('timeline must be an array'); }
+
+    var congRong = spec.congRong === true;
+    var n = spec.n;
+    var cap = congRong ? null : sessionCapOf(n);             // §4.3.7 40 / 48 seconds
+    var woodStock = D.micro.woodCap;
+    var carriedWood = 0;
+    var woodUsed = 0;
+    var stoves = {
+      A: { lit: false, expireAt: 0, cake: null },
+      B: { lit: false, expireAt: 0, cake: null }
+    };
+    var cakes = [], i;
+    for (i = 0; i < n; i++) {
+      cakes.push({ index: i, filling: spec.fillings[i],
+                   taps: { S1: 0, S2: 0, S3: 0 },
+                   p: [null, null, null, null],
+                   stove: null, tOn: null, tTake: null, tServe: null,
+                   litElapsed: 0, taken: false, served: false, orderServed: false,
+                   auto: false, h: null, litAtTake: false });
+    }
+    var orders = spawnOrders(spec);
+    var now = 0;
+    var endT = null;
+
+    // Burn fuel and accrue litElapsed only while a stove is lit; fire-out freezes
+    // h and never deletes the cake (§4.3.6). Open orders past their deadline
+    // expire: the family leaves, no score penalty, no loss (§4.8).
+    function advance(toT) {
+      var dt = toT - now;
+      if (dt < 0) { fail('timeline t must be non-decreasing'); }
+      if (dt > 0) {
+        var id, st, burning, oi;
+        for (id in stoves) {
+          if (!stoves.hasOwnProperty(id)) { continue; }
+          st = stoves[id];
+          if (!st.lit || st.cake === null || congRong) { continue; }   // 从容: no burn (§4.3.10)
+          burning = st.expireAt - now;
+          if (dt >= burning) {
+            if (burning > 0) { cakes[st.cake].litElapsed += burning; }
+            st.lit = false;
+          } else {
+            cakes[st.cake].litElapsed += dt;
+          }
+        }
+        if (!congRong) {
+          for (oi = 0; oi < orders.length; oi++) {
+            if (orders[oi].state === 'open' && toT >= orders[oi].deadline) {
+              orders[oi].state = 'expired';
+            }
+          }
+        }
+      }
+      now = toT;
+    }
+
+    function cakeIdx(ev, op) {
+      if (typeof ev.cake !== 'number' || ev.cake < 1 || ev.cake > n) {
+        fail(op + ' needs cake 1..' + n);
+      }
+      return ev.cake - 1;
+    }
+
+    for (i = 0; i < timeline.length; i++) {
+      var ev = timeline[i];
+      if (!ev || SIM_OPS.indexOf(ev.op) < 0) { fail('unknown op ' + (ev ? ev.op : ev)); }
+      if (typeof ev.t !== 'number' || ev.t < 0) { fail('bad t ' + ev.t); }
+      if (ev.t < now) { fail('timeline t must be non-decreasing'); }
+      if (cap !== null && ev.t > cap) { fail('op past session cap ' + cap); }
+
+      if (ev.op === 'end') {                                 // rule 10: one end, last
+        if (endT !== null) { fail('only one end'); }
+        if (i !== timeline.length - 1) { fail('end must be last'); }
+        advance(ev.t);
+        endT = ev.t;
+        break;
+      }
+      advance(ev.t);
+
+      if (ev.op === 'tap') {
+        var ck = cakes[cakeIdx(ev, 'tap')];
+        var step = ev.step;
+        if (step !== 'S1' && step !== 'S2' && step !== 'S3') { fail('bad step ' + step); }
+        // fixed order S1 → S2 → S3, no skipping, no parallelism (§4.3.2)
+        if (step === 'S2' && ck.taps.S1 < D.micro.tapsPerStep) { fail('S2 before S1 done'); }
+        if (step === 'S3' && ck.taps.S2 < D.micro.tapsPerStep) { fail('S3 before S2 done'); }
+        if (ck.taps[step] >= D.micro.tapsPerStep) { fail('step ' + step + ' already done'); }
+        if (ev.d !== ck.taps[step] + 1) { fail('tap d must climb 1, 2, 3; got ' + ev.d); }
+        ck.taps[step] = ev.d;
+        if (ck.taps[step] === D.micro.tapsPerStep) {
+          var si = step === 'S1' ? 0 : (step === 'S2' ? 1 : 2);
+          // §4.3.7 anchor: cake 1 from session start, cake 2 from cake 1's t_on
+          var anchor = ck.index === 0 ? 0 : (cakes[0].tOn === null ? 0 : cakes[0].tOn);
+          ck.p[si] = (congRong || ev.t <= anchor + D.micro.stepCum[step]) ? 1 : 0;
+        }
+      } else if (ev.op === 'wood') {
+        if (ev.cake !== null && ev.cake !== undefined) { fail('wood takes cake null'); }
+        if (!congRong) {                                     // 从容: stock untouched (§4.3.10)
+          if (woodStock <= 0) { fail('wood stock empty'); }  // rule 5
+          woodStock -= 1;
+          carriedWood += 1;
+          woodUsed += 1;
+        }
+      } else if (ev.op === 'light') {
+        var lid = ev.step;
+        if (lid !== 'A' && lid !== 'B') { fail('light needs stove A|B'); }   // rule 6
+        if (congRong) { stoves[lid].lit = true; }            // always lit, no fuel (§4.3.10)
+        else {
+          // rule 6's stock check reads through the carried bundle: every lighting
+          // consumes one bundle taken from the pile (§4.3.6)
+          if (carriedWood <= 0) { fail('light needs a bundle taken from the pile'); }
+          carriedWood -= 1;
+          stoves[lid].lit = true;
+          stoves[lid].expireAt = ev.t + D.micro.fuelSeconds;
+        }
+      } else if (ev.op === 'place') {
+        var pk = cakes[cakeIdx(ev, 'place')];
+        var pid = ev.step;
+        if (pid !== 'A' && pid !== 'B') { fail('place needs stove A|B'); }   // rule 7
+        if (pk.taps.S3 < D.micro.tapsPerStep) { fail('place before S3 done'); }
+        if (pk.stove !== null) { fail('cake already on a stove'); }
+        if (stoves[pid].cake !== null) { fail('stove ' + pid + ' occupied'); }
+        pk.stove = pid;
+        pk.tOn = ev.t;
+        pk.litElapsed = 0;
+        stoves[pid].cake = pk.index;
+      } else if (ev.op === 'take') {
+        var tk = cakes[cakeIdx(ev, 'take')];
+        if (tk.stove === null || tk.taken) { fail('take needs a placed, untaken cake'); }  // rule 8
+        stoves[tk.stove].cake = null;
+        tk.h = heatAt(tk.litElapsed, tk.stove, congRong);
+        tk.litAtTake = stoves[tk.stove].lit || congRong;
+        tk.taken = true;
+        tk.tTake = ev.t;
+        tk.p[3] = p4Of(tk.h, spec.patterns);
+      } else if (ev.op === 'serve') {
+        var sk = cakes[cakeIdx(ev, 'serve')];
+        if (!sk.taken) { fail('serve needs a taken cake'); } // rule 9
+        if (sk.served) { fail('cake already served'); }
+        sk.served = true;
+        sk.tServe = ev.t;
+        // §4.8.5: a match lets the family take the cake; a mismatch wastes it but
+        // it still ships and still lands in cakes[] — so a mismatch never throws
+        var oj;
+        for (oj = 0; oj < orders.length; oj++) {
+          if (orders[oj].state === 'open' && orders[oj].filling === sk.filling) {
+            orders[oj].state = 'served';
+            sk.orderServed = true;
+            break;
+          }
+        }
+      }
+
+      // trigger ① (§4.3.8): every cake shipped ends the session immediately;
+      // only a trailing end marker at the same moment may follow
+      var done = true, dj;
+      for (dj = 0; dj < n; dj++) { if (!cakes[dj].served) { done = false; break; } }
+      if (done) {
+        var nxt = (i === timeline.length - 1) ? null : timeline[i + 1];
+        if (nxt === null) { break; }
+        if (timeline.length - i === 2 && nxt.op === 'end'
+            && typeof nxt.t === 'number' && nxt.t >= ev.t
+            && (cap === null || nxt.t <= cap)) {
+          advance(nxt.t);
+          endT = nxt.t;
+          break;
+        }
+        fail('session ends when every cake is served');
+      }
+    }
+
+    // T_end: earliest of the explicit end, the session cap, and trigger ① (§4.3.8)
+    var servedAll = true, lastServe = 0;
+    for (i = 0; i < n; i++) {
+      if (!cakes[i].served) { servedAll = false; }
+      else if (cakes[i].tServe > lastServe) { lastServe = cakes[i].tServe; }
+    }
+    var tEnd = cap === null ? Infinity : cap;
+    if (endT !== null && endT < tEnd) { tEnd = endT; }
+    if (servedAll && lastServe < tEnd) { tEnd = lastServe; }
+    if (tEnd === Infinity) { fail('从容 session needs an end op or every cake served'); }
+    advance(tEnd);
+
+    // auto-finale (§4.3.8): every cake ships — the zero-failure theorem has no
+    // delete branch. On-stove cakes come out at their current or frozen h; the
+    // rest get their board steps completed at p = 0 and come out raw (h = 0).
+    for (i = 0; i < n; i++) {
+      var ak = cakes[i];
+      if (ak.taken) { continue; }
+      ak.auto = true;
+      ak.tTake = tEnd;
+      if (ak.stove !== null) {
+        stoves[ak.stove].cake = null;
+        ak.h = heatAt(ak.litElapsed, ak.stove, congRong);
+        ak.litAtTake = stoves[ak.stove].lit || congRong;
+      } else {
+        var aj;
+        for (aj = 0; aj < 3; aj++) { if (ak.p[aj] === null) { ak.p[aj] = 0; } }
+        ak.tOn = tEnd;
+        ak.h = heatAt(0, 'A', congRong);
+        ak.litAtTake = false;
+      }
+      ak.p[3] = p4Of(ak.h, spec.patterns);
+    }
+
+    var out = [], oc, P;
+    for (i = 0; i < n; i++) {
+      oc = cakes[i];
+      P = oc.p[0] + oc.p[1] + oc.p[2] + oc.p[3];
+      out.push({ index: oc.index, filling: oc.filling, stove: oc.stove,
+                 tOn: oc.tOn, tTake: oc.tTake, tServe: oc.tServe, auto: oc.auto,
+                 p: oc.p, P: P, grade: gradeOf(spec.batch, P),
+                 heatAtTake: oc.h, heatLabel: heatLabelOf(oc.h, oc.litAtTake),
+                 orderServed: oc.orderServed });
+    }
+    return { n: n, endedAt: tEnd, woodUsed: woodUsed, cakes: out };
   }
 
   // ------------------------------------------------------- UI availability
@@ -486,6 +859,20 @@
     ending: ending,
     isE1: isE1, isE2: isE2, isE3: isE3, isE4: isE4, isE5: isE5,
     gradeOf: gradeOf,
+    // §4.3.9 / §10.3.2 micro-layer hooks (pure, DOM-free, clock-free)
+    craftSim: craftSim,
+    heatAt: heatAt,
+    chefAt: chefAt,
+    nextGuide: nextGuide,
+    fuelAt: fuelAt,
+    deadlineOf: deadlineOf,
+    qtyOf: qtyOf,
+    spawnOrders: spawnOrders,
+    sessionCapOf: sessionCapOf,
+    heatHalfWidth: heatHalfWidth,
+    p4Of: p4Of,
+    heatLabelOf: heatLabelOf,
+    preferBonus: preferBonus,
     // internal helpers
     stockSum: stockSum,
     banquetCap: banquetCap,
@@ -496,7 +883,6 @@
     fillingOk: fillingOk,
     batchOk: batchOk,
     actionOk: actionOk,
-    tolOf: tolOf,
     precision: precision,
     beginCraft: beginCraft,
     abortCraft: abortCraft,

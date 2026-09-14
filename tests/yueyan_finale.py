@@ -29,6 +29,20 @@ LOCKED_FINALE_IDS = ["assign-cake-list", "assign-family-list", "btn-assign-confi
 SEVEN_EVENTS = {"slot", "craft", "step", "grade", "banquet", "assign", "moon"}
 NEGATIVE = ["可惜", "遗憾", "未完成", "失败", "失望", "归零"]
 
+# §8.2 splits the palette into two closed boards. §8.2.2 keeps the original seven
+# verbatim; §8.2.1 adds the 30-token shared pixel board, whose values CSS may also
+# use because §4.12 / §4.12.3 / §4.10.1 / §8.3.2 render customers, lanterns,
+# affordance rings and the kitchen world from CSS pixel blocks.
+UI_TOKENS = {"--paper": "#F7EFE2", "--amber": "#B8733A", "--cinnabar": "#C9483C",
+             "--ink": "#3A2E26", "--moon": "#F2E4C4", "--osmanthus": "#E8B84B",
+             "--lantern": "#F5C77E"}
+PIXEL_BOARD = {"#24140E", "#402718", "#C99A5E", "#A67440", "#7F532B", "#C6B294",
+               "#A08B70", "#7A6751", "#FFF6E4", "#E7D6B6", "#C3AF8D", "#F0B88A",
+               "#C78453", "#E05745", "#A82E24", "#A89480", "#776352", "#4E3E31",
+               "#E87A2A", "#F7C03E", "#E9B84B", "#F2E6CB", "#DDC99F", "#EEC46E",
+               "#D09C43", "#93571E", "#2C1C14", "#D9BD8E", "#E27A1C", "#FAF0DC"}
+BOARDS = PIXEL_BOARD | set(UI_TOKENS.values())
+
 PASS = []
 FAIL = []
 
@@ -173,16 +187,20 @@ def test_source_hygiene():
         check(f"{label} hardcodes no hex",
               re.search(r"#[0-9a-fA-F]{3,8}\b", src) is None, "a literal colour appeared")
 
-    tokens = set(re.findall(r"--([a-z]+):\s*#[0-9A-Fa-f]{6}", css))
-    check("style.css declares exactly the seven tokens",
-          tokens == {"paper", "amber", "cinnabar", "ink", "moon", "osmanthus", "lantern"},
-          str(sorted(tokens)))
+    # §8.2.2 keeps the seven interface tokens verbatim, so they must still be
+    # declared at their exact locked values. --ink and --osmanthus are deliberately
+    # declared a second time inside #view-kitchen at their pixel-board values
+    # (§8.2.2 "两值刻意不合并"), so the interface pair must be present rather than last.
+    pairs = set(re.findall(r"(--[a-z-]+):\s*(#[0-9A-Fa-f]{6})", css))
+    missing = sorted(f"{k} {v}" for k, v in UI_TOKENS.items()
+                     if (k, v) not in pairs)
+    check("§8.2.2 the seven interface tokens are declared verbatim", not missing,
+          str(missing))
+
     stripped = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
-    token_values = {"#f7efe2", "#b8733a", "#c9483c", "#3a2e26",
-                    "#f2e4c4", "#e8b84b", "#f5c77e"}
-    stray = [h for h in re.findall(r"#[0-9A-Fa-f]{3,8}\b", stripped)
-             if h.lower() not in token_values]
-    check("style.css uses no colour outside the seven tokens", not stray, str(stray))
+    stray = sorted({h.upper() for h in re.findall(r"#[0-9A-Fa-f]{3,8}\b", stripped)}
+                   - {b.upper() for b in BOARDS})
+    check("§8.2 style.css uses no colour outside either locked board", not stray, str(stray))
 
     cinnabar_rules = re.findall(r"([^{}\n]*)\{[^{}]*--cinnabar[^{}]*\}", stripped)
     check("cinnabar is confined to #btn-open-feast",
@@ -545,6 +563,133 @@ def test_ending_panel(page):
               out["share"] == "生成分享卡", out["share"])
 
 
+# ------------------------------------------------- §6.3.5 the ceremonial ending
+def test_ending_ceremony(page):
+    for route, want in ROUTE_ENDING.items():
+        out = page.evaluate("""([route, assign]) => {
+          const E = window.YueYan.Engine, S = window.YueYan.Scene, D = window.YueYan.Data;
+          const days = route.map(day => day.map(spec => {
+            const p = spec.split(':');
+            if (p[0] === 'buy')    { return { type: 'buy', item: p[1] }; }
+            if (p[0] === 'daizuo') { return { type: 'daizuo', filling: p[1] }; }
+            if (p[0] === 'shouzuo'){ return { type: 'shouzuo', filling: p[1], batch: p[2], P: 4 }; }
+            return { type: p[0] };
+          }));
+          const s = E.applyAssignment(E.runRoute(days, null), assign);
+          const code = S.renderEnding(s);
+          const delays = sel => [...document.querySelectorAll(sel)]
+            .map(n => getComputedStyle(n).animationDelay);
+          return { code: code, engineCode: E.ending(s), A: E.meters(s).A,
+                   assigned: Object.keys(s.assignment)
+                     .filter(k => s.assignment[k] !== null).length,
+                   seats: [...document.querySelectorAll('.et-seat')].map(n => ({
+                     slot: n.getAttribute('data-slot'),
+                     member: n.getAttribute('data-member'),
+                     empty: n.classList.contains('is-empty'),
+                     label: n.querySelector('.et-name')
+                       ? n.querySelector('.et-name').textContent : null,
+                     figure: !!n.querySelector('.et-fig') })),
+                   cakes: [...document.querySelectorAll('.et-cake')].map(n => ({
+                     slot: n.getAttribute('data-slot'), src: n.getAttribute('src'),
+                     natural: n.naturalWidth, w: n.offsetWidth,
+                     pixelated: getComputedStyle(n).imageRendering })),
+                   delays: { seat: delays('.et-seat'), cake: delays('.et-cake'),
+                             name: delays('.end-name'), text: delays('.end-text'),
+                             rule: delays('.ep-rule'), actions: delays('.end-actions'),
+                             halo: delays('.em-halo'), clouds: delays('.em-clouds'),
+                             disc: delays('.em-disc') },
+                   scrollW: document.documentElement.scrollWidth,
+                   scrollH: document.documentElement.scrollHeight,
+                   shareH: document.getElementById('btn-share')
+                     .getBoundingClientRect().height };
+        }""", [ROUTES[route], ROUTE_ASSIGN[route]])
+
+        check(f"§6.3.5-c {route} always draws five seats",
+              len(out["seats"]) == 5, str(len(out["seats"])))
+        check(f"§6.3.5-c {route} seats follow D.familyOrder",
+              [s["member"] for s in out["seats"]] ==
+              ["grandma", "father", "mother", "younger", "brother"],
+              str([s["member"] for s in out["seats"]]))
+        check(f"§7.1 {route} seats in attendance carry a figure and a label",
+              all(s["figure"] and s["label"] for s in out["seats"] if not s["empty"]),
+              str(out["seats"]))
+        check(f"X-11 {route} an empty seat carries no figure and no text",
+              all((not s["figure"]) and s["label"] is None
+                  for s in out["seats"] if s["empty"]), str(out["seats"]))
+        check(f"§7.1 {route} empty seats match the engine's attendance",
+              5 - sum(1 for s in out["seats"] if s["empty"]) == out["A"], str(out))
+        check(f"§7.2 {route} one mooncake per assigned member, no more",
+              len(out["cakes"]) == out["assigned"], str(out))
+        assigned_slots = {str(i + 1) for i, k in enumerate(
+            ["grandma", "father", "mother", "younger", "brother"])
+            if ROUTE_ASSIGN[route].get(k) is not None}
+        check(f"§6.6 {route} cakes land on their own member's seat, not on the first slots",
+              {c["slot"] for c in out["cakes"]} == assigned_slots,
+              str([c["slot"] for c in out["cakes"]]))
+        check(f"§5.1.2 {route} each mooncake is the 24px sprite at prop scale 2",
+              all(c["natural"] == 24 and c["w"] == 48 for c in out["cakes"]),
+              str(out["cakes"]))
+        check(f"V-38 {route} mooncakes stay pixelated",
+              all(c["pixelated"] == "pixelated" for c in out["cakes"]), str(out["cakes"]))
+
+        # V-21d ① — the reveal is staged, never a single fade.
+        flat = [d for group in out["delays"].values() for d in group]
+        distinct = sorted(set(flat))
+        check(f"§6.3.5-a {route} the reveal is staged over at least three distinct delays",
+              len(distinct) >= 3, str(distinct))
+        check(f"§6.3.5-a {route} the seven steps keep their locked schedule",
+              out["delays"]["disc"][0] == "0s"
+              and out["delays"]["clouds"][0] == "0.9s"
+              and out["delays"]["name"][0] == "2.1s"
+              and out["delays"]["text"][0] == "2.55s"
+              and out["delays"]["seat"] == ["3s", "3.12s", "3.24s", "3.36s", "3.48s"]
+              and out["delays"]["cake"] == [
+                  ["3.38s", "3.5s", "3.62s", "3.74s", "3.86s"][int(s) - 1]
+                  for s in sorted({c["slot"] for c in out["cakes"]}, key=int)]
+              and out["delays"]["actions"][0] == "4.25s", str(out["delays"]))
+        check(f"§6.3.5-d {route} the finale fits 390x844 with no scroll",
+              out["scrollW"] <= 390 and out["scrollH"] <= 844,
+              str((out["scrollW"], out["scrollH"])))
+        check(f"§6.3.5-d {route} the share control keeps its 56px touch target",
+              out["shareH"] >= 56, str(out["shareH"]))
+
+    # V-21d ② — steps(n, end) must not leave its (n-1)/n step behind, so every
+    # element has to land exactly on its resting state once the ritual is over.
+    page.evaluate("""([route, assign]) => {
+      const E = window.YueYan.Engine, S = window.YueYan.Scene;
+      const days = route.map(day => day.map(spec => {
+        const p = spec.split(':');
+        if (p[0] === 'buy')    { return { type: 'buy', item: p[1] }; }
+        if (p[0] === 'daizuo') { return { type: 'daizuo', filling: p[1] }; }
+        if (p[0] === 'shouzuo'){ return { type: 'shouzuo', filling: p[1], batch: p[2], P: 4 }; }
+        return { type: p[0] };
+      }));
+      S.renderEnding(E.applyAssignment(E.runRoute(days, null), assign));
+    }""", [ROUTES["R1"], ROUTE_ASSIGN["R1"]])
+    page.wait_for_timeout(4800)
+    settled = page.evaluate("""() => {
+      const sels = ['.end-moon', '.em-disc', '.em-rim', '.em-halo', '.em-clouds',
+                    '.ep-rule', '.end-name', '.end-text', '.end-actions',
+                    '.et-seat', '.et-cake'];
+      const bad = [];
+      for (const sel of sels) {
+        for (const n of document.querySelectorAll(sel)) {
+          const c = getComputedStyle(n);
+          // §6.3.5-b: the halo's resting opacity IS its per-ending strength
+          // (0.58 for E1), so only transform/filter must return to none there.
+          const wantOpacity = sel === '.em-halo' ? '0.58' : '1';
+          if (c.opacity !== wantOpacity || (c.transform !== 'none' && c.transform !== '')
+              || (c.filter !== 'none' && c.filter !== '')) {
+            bad.push([sel, c.opacity, c.transform, c.filter]);
+          }
+        }
+      }
+      return bad;
+    }""")
+    check("V-21d ② every finale element lands on its exact resting state",
+          settled == [], str(settled[:4]))
+
+
 def test_audio_wiring(page):
     page.evaluate(SPY)
     log = page.evaluate("""([route, assign]) => {
@@ -711,6 +856,103 @@ def test_touch_targets(page):
     check("focused finale controls keep a visible focus ring", outline is True)
 
 
+def test_ending_polish(page):
+    """§6.3.5-c / §6.3.4 — the three ending-polish defects stay fixed.
+
+    ① every attending figure carries a head that cannot collapse into the night
+       sky; ② the round table holds no undocumented centre piece; ③ no locked
+       ending name ever breaks across two lines.
+    """
+    css = CSS.read_text(encoding="utf-8")
+    check("§6.3.5-d the round table keeps no centre piece in the stylesheet",
+          "et-centre" not in css, "an et-centre rule came back")
+
+    for route, want in ROUTE_ENDING.items():
+        out = page.evaluate("""([route, assign]) => {
+          const E = window.YueYan.Engine, S = window.YueYan.Scene, D = window.YueYan.Data;
+          const days = route.map(day => day.map(spec => {
+            const p = spec.split(':');
+            if (p[0] === 'buy')    { return { type: 'buy', item: p[1] }; }
+            if (p[0] === 'daizuo') { return { type: 'daizuo', filling: p[1] }; }
+            if (p[0] === 'shouzuo'){ return { type: 'shouzuo', filling: p[1], batch: p[2], P: 4 }; }
+            return { type: p[0] };
+          }));
+          const s = E.applyAssignment(E.runRoute(days, null), assign);
+          S.renderEnding(s);
+          const bg = n => n ? getComputedStyle(n).backgroundColor : null;
+          const lines = (host, from, to) => {
+            const node = host.firstChild;
+            const r = document.createRange();
+            r.setStart(node, from); r.setEnd(node, to);
+            return r.getClientRects().length;
+          };
+          const name = document.getElementById('end-name');
+          const text = document.getElementById('end-text');
+          const names = Object.values(D.endings).map(m => m.name);
+          const inner = names.filter(n => text.textContent.indexOf(n) >= 0)
+            .map(n => lines(text, text.textContent.indexOf(n),
+                            text.textContent.indexOf(n) + n.length));
+          return { code: E.ending(s),
+                   sky: getComputedStyle(document.getElementById('view-ending')).backgroundColor,
+                   centre: !!document.querySelector('.et-centre'),
+                   figs: [...document.querySelectorAll('.et-seat')]
+                     .filter(n => !n.classList.contains('is-empty')).map(n => ({
+                       member: n.getAttribute('data-member'),
+                       parts: ['.fg-shd', '.fg-body', '.fg-head', '.fg-hair']
+                         .filter(sel => n.querySelector(sel)).length,
+                       head: bg(n.querySelector('.fg-head')),
+                       hair: bg(n.querySelector('.fg-hair')),
+                       body: bg(n.querySelector('.fg-body')) })),
+                   nameLines: lines(name, 0, name.textContent.length),
+                   innerNameLines: inner,
+                   wantName: D.endings[E.ending(s)].name };
+        }""", [ROUTES[route], ROUTE_ASSIGN[route]])
+
+        check(f"§6.3.5-d {route} the round table carries no centre piece in the DOM",
+              out["centre"] is False, str(out["centre"]))
+        check(f"§6.3.5-c {route} every attending figure draws shadow + body + head + hair",
+              all(f["parts"] == 4 for f in out["figs"]), str(out["figs"]))
+        check(f"§6.3.5-c {route} no head collapses into the night sky",
+              all(f["head"] != out["sky"] for f in out["figs"]),
+              str([(f["member"], f["head"], out["sky"]) for f in out["figs"]]))
+        check(f"§6.3.5-c {route} the head is a face tone, not the ink stroke tone",
+              all(f["head"] == "rgb(240, 184, 138)" for f in out["figs"]),
+              str([f["head"] for f in out["figs"]]))
+        check(f"§6.3.5-c {route} no hair collapses into its own head",
+              all(f["hair"] != f["head"] for f in out["figs"]), str(out["figs"]))
+        check(f"§6.3.4 {route} the ending name renders on a single line",
+              out["nameLines"] == 1, str((out["wantName"], out["nameLines"])))
+        check(f"§6.3.4 {route} an ending name inside the copy never splits across lines",
+              all(n == 1 for n in out["innerNameLines"]), str(out["innerNameLines"]))
+
+    # The full five-seat ending (R1) is the only route where all five figures are
+    # present at once, so it is the one place pairwise distinguishability is testable.
+    page.evaluate("""([route, assign]) => {
+      const E = window.YueYan.Engine, S = window.YueYan.Scene;
+      const days = route.map(day => day.map(spec => {
+        const p = spec.split(':');
+        if (p[0] === 'buy')    { return { type: 'buy', item: p[1] }; }
+        if (p[0] === 'daizuo') { return { type: 'daizuo', filling: p[1] }; }
+        if (p[0] === 'shouzuo'){ return { type: 'shouzuo', filling: p[1], batch: p[2], P: 4 }; }
+        return { type: p[0] };
+      }));
+      S.renderEnding(E.applyAssignment(E.runRoute(days, null), assign));
+    }""", [ROUTES["R1"], ROUTE_ASSIGN["R1"]])
+    five = page.evaluate("""() => [...document.querySelectorAll('.et-seat')]
+      .filter(n => !n.classList.contains('is-empty')).map(n => ({
+        member: n.getAttribute('data-member'),
+        head: getComputedStyle(n.querySelector('.fg-head')).backgroundColor,
+        hair: getComputedStyle(n.querySelector('.fg-hair')).backgroundColor,
+        body: getComputedStyle(n.querySelector('.fg-body')).backgroundColor }))""")
+    check("§7.1 all five family members sit at the table on the full route",
+          [f["member"] for f in five] ==
+          ["grandma", "father", "mother", "younger", "brother"], str(five))
+    check("§7.1 the five garments are pairwise distinguishable",
+          len({f["body"] for f in five}) == 5, str([f["body"] for f in five]))
+    check("§7.1 the five hair colours are pairwise distinguishable",
+          len({f["hair"] for f in five}) == 5, str([f["hair"] for f in five]))
+
+
 def main():
     test_source_hygiene()
     with sync_playwright() as p:
@@ -718,8 +960,8 @@ def main():
         for fn in [test_engine_contract, test_assign_panel, test_one_cake_per_member,
                    test_preference_bonus, test_assign_locks, test_preview_panel,
                    test_preview_absent_brother, test_preview_cakeless_seat,
-                   test_ending_panel, test_audio_wiring,
-                   test_full_flow, test_touch_targets]:
+                   test_ending_panel, test_ending_ceremony, test_ending_polish,
+                   test_audio_wiring, test_full_flow, test_touch_targets]:
             page, errors = open_page(browser)
             run(fn, page)
             check(f"{fn.__name__} raised no page error", not errors, str(errors[:2]))

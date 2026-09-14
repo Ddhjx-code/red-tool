@@ -99,22 +99,32 @@ def test_facade(page):
           out["inlineHandlers"] == 0, str(out["inlineHandlers"]))
 
 
-def test_inject_step_forward(page):
+def test_inject_timeline_forward(page):
+    """§4.3.9 names the hook injectTimeline and retires injectStep outright."""
     out = page.evaluate("""() => {
       const S = window.YueYan.Scene, M = window.YueYan.Main, F = window.__yueyan;
       const probe = (fn) => {
         if (typeof fn !== 'function') { return 'not-a-function'; }
         try { fn(0, 0); return 'no-throw'; } catch (e) { return String(e.message); }
       };
-      return { scene: probe(S.injectStep), main: probe(M.injectStep),
+      return { scene: probe(S.injectTimeline), main: probe(M.injectTimeline),
                facade: probe(F.craftStep),
-               mainKey: typeof M.injectStep === 'function' };
+               mainKey: typeof M.injectTimeline === 'function',
+               sceneKey: typeof S.injectTimeline === 'function',
+               retired: [typeof S.injectStep, typeof M.injectStep, typeof F.injectStep] };
     }""")
-    check("§10.3.1 Main exports injectStep", out["mainKey"] is True, str(out["mainKey"]))
-    check("V-15 Main.injectStep forwards to Scene.injectStep",
-          out["main"] == out["scene"] == "step index mismatch", str(out))
-    check("V-15 __yueyan.craftStep forwards to Scene.injectStep",
-          out["facade"] == out["scene"] == "step index mismatch", str(out))
+    check("§10.3.1 Main exports injectTimeline", out["mainKey"] is True, str(out["mainKey"]))
+    check("§4.3.9 Scene exports injectTimeline", out["sceneKey"] is True, str(out["sceneKey"]))
+    # §4.3.9: keeping injectStep would create a second, possibly inconsistent craft
+    # state machine, so all three exits must have dropped it.
+    check("§4.3.9 injectStep is retired from every exit",
+          out["retired"] == ["undefined"] * 3, str(out["retired"]))
+    check("V-15 Main.injectTimeline forwards to Scene.injectTimeline",
+          out["main"] == out["scene"] == "injectTimeline: timeline must be an array",
+          str(out))
+    check("V-15 __yueyan.craftStep forwards to Scene.injectTimeline",
+          out["facade"] == out["scene"] == "injectTimeline: timeline must be an array",
+          str(out))
 
 
 # --------------------------------------------------------------- currentPick
@@ -320,7 +330,7 @@ def test_single_wiring_source(page):
 def main():
     with sync_playwright() as pw:
         browser = pw.chromium.launch()
-        for fn in [test_facade, test_inject_step_forward, test_current_pick,
+        for fn in [test_facade, test_inject_timeline_forward, test_current_pick,
                    test_resume, test_fresh_boot, test_meta_write,
                    test_meta_not_run_state, test_moon_audio, test_no_double_bind]:
             page = open_page(browser)

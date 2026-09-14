@@ -8,8 +8,8 @@
   var dayBase = null;
   var plan = [];
 
-  // The day is still open, so the preview delegates to the engine's preview path,
-  // which keeps §3.7's order: no arrival is credited before 今日收工 settles the day.
+  // The day is still open, so the preview delegates to the engine's read path,
+  // which commits exactly what §3.7's settlement will commit.
   function projected() {
     if (!plan.length) { return dayBase; }
     return E.applyDayPreview(dayBase, plan);
@@ -25,13 +25,19 @@
     }
   }
 
+  function resumeSchedule() {
+    paint();
+    window.YueYan.Scene.show('view-schedule');
+    window.YueYan.Scene.closeSheet();
+  }
+
   function start() {
     if (!dayBase) { dayBase = E.initialState(); }                // V-17 续局不重置进度
     dayBase.flags.congRong = window.YueYan.Scene.el('toggle-congrong').checked === true;
     plan = [];
-    paint();
-    window.YueYan.Scene.show('view-schedule');
-    window.YueYan.Scene.closeSheet();
+    // §8.6: the one-shot narrative panel sits between the first screen and D1.
+    if (window.YueYan.Scene.showPrologue(dayBase)) { return; }
+    resumeSchedule();
   }
 
   function schedule(act) {
@@ -75,23 +81,35 @@
     S.renderCraft(projected());
   }
 
+  function startCraft(state, sel) {
+    window.YueYan.Scene.enterKitchen(state, sel);
+  }
+
+  // §4.3.9：injectTimeline 的双出口结构——Scene 持有，Main 转发。
+  function injectTimeline(actions) {
+    return window.YueYan.Scene.injectTimeline(actions);
+  }
+
   // The short game ran on a craft-local snapshot, so only its measured result
-  // enters the day; the engine settles the real cost at the day boundary.
+  // enters the day; the engine settles the real cost at the day boundary. A
+  // concurrent session ships n cakes (§4.3.1), so every cake is scheduled.
   function finishCraft(done) {
     if (!dayBase || !done) { return false; }
-    var cake = done.cakes[done.cakes.length - 1];
-    if (!cake) { return false; }
-    if (!schedule({ type: 'shouzuo', filling: cake.filling,
-                    batch: cake.batch, P: cake.P })) { return false; }
+    var i, ok = true;
+    for (i = 0; i < done.cakes.length; i++) {
+      var cake = done.cakes[i];
+      if (!schedule({ type: 'shouzuo', filling: cake.filling,
+                      batch: cake.batch, P: cake.P })) { ok = false; }
+    }
     window.YueYan.Scene.show('view-schedule');
-    return true;
+    paint();
+    return ok;
   }
 
   function abortCraft() {
-    var back = window.YueYan.Scene.abortCraft();
-    window.YueYan.Scene.show('view-schedule');
-    paint();
-    return back;
+    window.YueYan.Scene.abortCraft();
+    resumeSchedule();
+    return true;
   }
 
   // §6.6 the deal is made once, and §6.2 the preview is a read-only ledger, so
@@ -103,8 +121,8 @@
       engine: E,
       data: D,
       save: Save,
-      craftStep: function (i, d) { return window.YueYan.Scene.injectStep(i, d); },
-      ready: true
+      ready: true,
+      craftStep: injectTimeline
     };
     Object.defineProperty(window.__yueyan, 'share', {
       enumerable: true,
@@ -139,13 +157,15 @@
     state: projected,
     plan: function () { return plan.slice(); },
     start: start,
+    resumeSchedule: resumeSchedule,
     schedule: schedule,
     undo: undo,
     finishDay: finishDay,
     enterCraft: enterCraft,
+    startCraft: startCraft,
+    injectTimeline: injectTimeline,
     finishCraft: finishCraft,
     abortCraft: abortCraft,
-    injectStep: function (i, d) { return window.YueYan.Scene.injectStep(i, d); },
     boot: boot
   };
 
