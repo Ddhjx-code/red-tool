@@ -42,8 +42,7 @@
      一笔画下去几乎不位移，故细线、转折、纹样都立得住。 */
   var BRUSH = {
     line: { force: 0.06, radius: 0.008 },
-    wash: { force: 1.00, radius: 0.020 },
-    motif: { force: 0,   radius: 0.003 }
+    wash: { force: 1.00, radius: 0.020 }
   };
   var brush = 'line';
 
@@ -74,6 +73,7 @@
   var dye = null, velocity = null, divergenceFBO = null, curlFBO = null, pressureFBO = null;
   var bloomA = null, bloomB = null;
   var dyeFixed = null;
+  var stampTex = null;      /* 纹样描边贴图（每次刺入按需重分配） */
   var programs = {};
   var blitFn = null;
   var ready = false;
@@ -239,6 +239,24 @@
     'void main () {',
     '  vUv = aPosition * 0.5 + 0.5;',
     '  gl_Position = vec4(aPosition, 0.0, 1.0);',
+    '}'
+  ].join('\n');
+
+  /* ---------- 纹样刺入：把矢量描边好的贴图按 uv 矩形加进染料场 ----------
+     与 splat 的区别是「硬边」：splat 是高斯软边（拖尾约 2 倍半径），相邻特征
+     必然粘连；此处按像素取贴图的 alpha，线是硬边的，间隔 3px 也能分开。 */
+  var stampFrag = [
+    'precision highp float; precision highp sampler2D;',
+    'varying vec2 vUv;',
+    'uniform sampler2D uTarget; uniform sampler2D uStamp;',
+    'uniform vec4 uRect;',
+    'void main () {',
+    '  vec2 uv = (vUv - uRect.xy) / max(uRect.zw - uRect.xy, vec2(1e-6));',
+    '  vec3 base = texture2D(uTarget, vUv).rgb;',
+    '  float inside = step(0.0, uv.x) * step(uv.x, 1.0) *',
+    '                 step(0.0, uv.y) * step(uv.y, 1.0);',
+    '  vec4 s = texture2D(uStamp, uv);',
+    '  gl_FragColor = vec4(base + s.rgb * s.a * inside, 1.0);',
     '}'
   ].join('\n');
 
@@ -936,114 +954,212 @@
   /* 纹样点集：以灯心为原点、LAMP_HW/LAMP_HH 为单位的归一化坐标，y 正方向为屏幕上方。
      生成式参数曲线采样而非静态点表——比手列数百点紧凑，且纹样更平滑。
      半径一律控制在 ±0.60 内：四种灯形轮廓都在此范围，故纹样不会落到灯外。 */
-  function motifPoints(id) {
-    var pts = [], i, t, a, r, k, dir;
+  /* 纹样子路径：每个「形」一条子路径（描边时按子路径独立 stroke，不能连成一笔，
+     否则耳与头之间会被连出一条多余的线）。坐标含义与原先一致：以灯心为原点、
+     LAMP_HW/LAMP_HH 为单位，y 正方向为屏幕上方；半径一律控制在 ±0.60 内，
+     故四种灯形轮廓都容得下。 */
+  function motifPaths(id) {
+    var out = [], ps, i, t, a, r, k;
+
     if (id === 'moon') {
-      /* 月轮：闭合圆环。加密到 96 点（点距约 3px）才配得上细笔锋画成连续细线 */
+      ps = [];
       for (i = 0; i < 96; i++) {
         a = i / 96 * TAU;
-        pts.push([Math.cos(a) * 0.58, Math.sin(a) * 0.58]);
+        ps.push([Math.cos(a) * 0.58, Math.sin(a) * 0.58]);
       }
+      out.push(ps);
     } else if (id === 'gui') {
-      /* 桂花：五瓣放射花 + 花心小环（五瓣是五种里最像样的一张，只加密不改形） */
-      for (k = 0; k < 5; k++) {
+      for (k = 0; k < 5; k++) {                      /* 五瓣 */
+        ps = [];
         a = k / 5 * TAU;
-        for (t = 0; t <= 1.0001; t += 0.06) {
+        for (t = 0; t <= 1.0001; t += 0.08) {
           r = 0.18 + 0.40 * Math.sin(t * Math.PI);
-          pts.push([Math.cos(a + (t - 0.5) * 0.62) * r,
-                    Math.sin(a + (t - 0.5) * 0.62) * r]);
+          ps.push([Math.cos(a + (t - 0.5) * 0.62) * r,
+                   Math.sin(a + (t - 0.5) * 0.62) * r]);
         }
+        out.push(ps);
       }
+      ps = [];                                       /* 花心 */
       for (i = 0; i < 24; i++) {
         a = i / 24 * TAU;
-        pts.push([Math.cos(a) * 0.10, Math.sin(a) * 0.10]);
+        ps.push([Math.cos(a) * 0.10, Math.sin(a) * 0.10]);
       }
+      out.push(ps);
     } else if (id === 'tu') {
-      /* 玉兔：双耳 + 头 + 身 + 四足 + 尾。初版身体只画一个圆环、无足无尾，
-         细看像开瓶器；补足与尾后轮廓才成立。 */
-      for (k = 0; k < 2; k++) {
-        for (t = 0; t <= 1.0001; t += 0.05) {
-          pts.push([(k ? 0.15 : -0.15) + Math.sin(t * Math.PI) * 0.07 * (k ? 1 : -1),
-                    0.16 + t * 0.42]);
+      for (k = 0; k < 2; k++) {                      /* 双耳 */
+        ps = [];
+        for (t = 0; t <= 1.0001; t += 0.1) {
+          ps.push([(k ? 0.15 : -0.15) + Math.sin(t * Math.PI) * 0.07 * (k ? 1 : -1),
+                   0.16 + t * 0.42]);
         }
+        out.push(ps);
       }
+      ps = [];                                       /* 头 */
       for (i = 0; i < 40; i++) {
         a = i / 40 * TAU;
-        pts.push([Math.cos(a) * 0.19, -0.04 + Math.sin(a) * 0.17]);
+        ps.push([Math.cos(a) * 0.19, -0.04 + Math.sin(a) * 0.17]);
       }
+      out.push(ps);
+      ps = [];                                       /* 身 */
       for (i = 0; i < 48; i++) {
         a = i / 48 * TAU;
-        pts.push([Math.cos(a) * 0.27, -0.34 + Math.sin(a) * 0.21]);
+        ps.push([Math.cos(a) * 0.27, -0.34 + Math.sin(a) * 0.21]);
       }
-      for (t = 0; t <= 1.0001; t += 0.12) {
-        pts.push([-0.19 + t * 0.08, -0.54 - t * 0.05]);
-        pts.push([0.11 + t * 0.08, -0.54 - t * 0.05]);
-      }
-      for (t = 0; t <= 1.0001; t += 0.1) {
-        pts.push([0.27 + t * 0.10, -0.30 - t * 0.05]);
-      }
+      out.push(ps);
+      ps = [];                                       /* 前足 ×2 */
+      for (t = 0; t <= 1.0001; t += 0.25) { ps.push([-0.19 + t * 0.08, -0.54 - t * 0.05]); }
+      out.push(ps);
+      ps = [];
+      for (t = 0; t <= 1.0001; t += 0.25) { ps.push([0.11 + t * 0.08, -0.54 - t * 0.05]); }
+      out.push(ps);
+      ps = [];                                       /* 尾 */
+      for (t = 0; t <= 1.0001; t += 0.2) { ps.push([0.27 + t * 0.10, -0.30 - t * 0.05]); }
+      out.push(ps);
     } else if (id === 'yun') {
-      /* 云头：单条闭合轮廓（三瓣拱顶 + 压扁的底缘），不画内部笔画。
-         初版画螺旋尾，圈距约 4px 小于笔宽 5px，必然自粘成一颗花生。
-         能认的三个（月/桂/兔）共性是「轮廓大、结构简、对称强」—— 云也照此办。
-         瓣幅由 0.11 加到 0.17：0.11 时三瓣起伏只有约 9px，与线宽同量级，
-         渲染后读作「扁环尖角」而非云朵层叠。 */
-      for (i = 0; i < 108; i++) {
-        a = i / 108 * TAU;
-        r = 0.28 + 0.17 * Math.cos(a * 3.0);
-        pts.push([Math.cos(a) * r * 1.38,
-                  Math.sin(a) * (Math.sin(a) > 0 ? 0.23 : 0.13)]);
+      /* 云头：底缘一道平线 + 其上三个半圆拱（拱脚落在底缘上）。这才是云的
+         通用剪影。注意 sin 取正号 —— 取负号会把拱画到底缘下方，渲染成
+         「平线在顶、半圆朝下」，读作桥洞／扇贝边／倒云（实测判读原话）。 */
+      ps = [];
+      for (t = 0; t <= 1.0001; t += 0.04) {
+        ps.push([0.46 - t * 0.92, 0.14]);
       }
+      var bumps = [0.16, 0.20, 0.16];
+      for (k = 0; k < 3; k++) {
+        for (t = 0; t <= 1.0001; t += 0.03) {
+          a = Math.PI * t;
+          ps.push([(k - 1) * 0.30 - Math.cos(a) * bumps[k],
+                   0.14 + Math.sin(a) * bumps[k]]);
+        }
+      }
+      out.push(ps);
     } else if (id === 'huaniao') {
-      /* 花鸟：两支各自闭合的轮廓，左花右鸟，中间留空。
-         初版笔画交叠成一整团、只剩一个小孔，故改为「一个形一条闭合线」。 */
+      ps = [];                                       /* 花：五瓣闭合 */
       for (i = 0; i < 96; i++) {
         a = i / 96 * TAU;
         r = 0.15 + 0.09 * Math.cos(a * 5.0);
-        pts.push([-0.30 + Math.cos(a) * r, -0.06 + Math.sin(a) * r]);
+        ps.push([-0.30 + Math.cos(a) * r, -0.06 + Math.sin(a) * r]);
       }
-      /* 鸟的手工剪影：头—喙—胸—腹—尾—背 依序连成闭合轮廓，再按点距加密 */
-      var bird = [
-        [0.36, -0.22], [0.46, -0.20], [0.52, -0.13], [0.50, -0.07],
-        [0.44, -0.03], [0.38, 0.01], [0.30, 0.08], [0.18, 0.13],
-        [0.04, 0.13], [-0.10, 0.09], [-0.22, 0.03], [-0.12, -0.02],
-        [0.00, -0.04], [0.12, -0.07], [0.22, -0.13], [0.30, -0.20]
-      ];
-      for (k = 0; k < bird.length; k++) {
-        var p0 = bird[k], p1 = bird[(k + 1) % bird.length];
-        var seg = Math.max(2, Math.round(Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) / 0.025));
-        for (i = 0; i < seg; i++) {
-          var uu = i / seg;
-          pts.push([p0[0] + (p1[0] - p0[0]) * uu, p0[1] + (p1[1] - p0[1]) * uu]);
-        }
+      out.push(ps);
+      /* 鸟：民间画法 —— 身（斜椭圆）+ 头（小圆）+ 喙（小三角）+ 尾（两短笔）。
+         不用一体剪影也不用翼弧：实测一体剪影「喙尾尖角方向混乱」、翼弧「孤立
+         像对勾」。民间灯彩本就用「圆＋三角」搭形，重叠轮廓反而最好认。 */
+      ps = [];
+      for (i = 0; i < 64; i++) {
+        a = i / 64 * TAU;
+        ps.push([0.16 + Math.cos(a) * 0.21, 0.02 + Math.sin(a) * 0.15]);
       }
+      out.push(ps);
+      ps = [];
+      for (i = 0; i < 48; i++) {
+        a = i / 48 * TAU;
+        ps.push([0.40 + Math.cos(a) * 0.10, -0.14 + Math.sin(a) * 0.10]);
+      }
+      out.push(ps);
+      ps = [];
+      ps.push([0.48, -0.19]); ps.push([0.60, -0.14]); ps.push([0.48, -0.09]);
+      out.push(ps);
+      ps = [];
+      for (t = 0; t <= 1.0001; t += 0.25) { ps.push([-0.02 - t * 0.13, 0.06 + t * 0.11]); }
+      out.push(ps);
+      ps = [];
+      for (t = 0; t <= 1.0001; t += 0.25) { ps.push([-0.02 - t * 0.15, 0.02 - t * 0.02]); }
+      out.push(ps);
     }
-    return pts;
+    return out;
   }
 
-  /* 纹样落灯面：沿点集逐点 splatDye，走与手绘完全相同的颜料通路，
-     所以纹样天然融入流体——随染料晕开、随筒面转动、点亮时一起透光。
-
-     笔锋必须比勾线更细、点必须更密，两者缺一不可：
-     · 只细不密 → 线断成虚线；
-     · 只密不细 → 粗笔把轮廓膨胀成实心团，自交处留怪孔，并把中等复杂度纹样
-       （云头的卷尾、鸟的头翅、兔的腿）的特征抹死。
-     视觉复核原话：「五种里只三种能认（月/桂可辨、兔勉强），云与花鸟退化成
-     带孔的 blob 与粗对勾」，主因正是「点/笔触太粗太密糊成一团」。
-     量纲注意：半径走 BRUSH.motif.radius / 100 的约定（与 config.SPLAT_RADIUS
-     同制）。曾写成 MOTIF_RADIUS = 0.003 直接传入，漏掉 /100，比勾线大 37 倍，
-     纹样全成了巨大柔和色斑，可辨认数反而由 3 掉到 0。 */
+  /* 纹样落灯面：把纹样矢量描边成一张贴图，再按 uv 矩形刺进染料场。
+     为什么不再用点阵 splat：splat 是高斯软边（拖尾约 2 倍半径），相邻特征必然
+     粘连。实测五种纹样里云与花鸟三轮调参（半径 0.003→0.006→0.003、两次重画）
+     后稳定不可辨，而能认的月/桂/兔都只靠「单一强几何特征」—— 这不是参数问题，
+     是软边介质的固有上限。矢量描边是硬边，间隔 3px 也能分开，故云与花鸟才有救。
+     仍然写进同一个染料场，所以纹样照样随灯体转动、点亮时一起透光。 */
   function splatMotif(id, color) {
     if (!ready) { return 0; }
-    var pts = motifPoints(id);
-    if (!pts.length) { return 0; }
+    var paths = motifPaths(id);
+    if (!paths.length) { return 0; }
     paintHold = PAINT_HOLD;
     var c = color || currentColor;
-    for (var i = 0; i < pts.length; i++) {
-      splatDye(dyeX(pts[i][0], pts[i][1]),
-               LAMP_C.v + pts[i][1] * LAMP_HH, c, BRUSH.motif.radius / 100.0);
+
+    /* 1) 把每条子路径映射到染料 uv（含当前转角），求包围盒 */
+    var i, j, p, ux, uy, n = 0;
+    var minX = 9, maxX = -9, minY = 9, maxY = -9;
+    for (i = 0; i < paths.length; i++) {
+      for (j = 0; j < paths[i].length; j++) {
+        p = paths[i][j];
+        ux = dyeX(p[0], p[1]);
+        uy = LAMP_C.v + p[1] * LAMP_HH;
+        if (ux < minX) { minX = ux; }
+        if (ux > maxX) { maxX = ux; }
+        if (uy < minY) { minY = uy; }
+        if (uy > maxY) { maxY = uy; }
+        n++;
+      }
     }
-    return pts.length;
+    var pad = 0.008;
+    minX -= pad; maxX += pad; minY -= pad; maxY += pad;
+    var dw = dye.width, dh = dye.height;
+    var px0 = Math.max(0, Math.floor(minX * dw));
+    var px1 = Math.min(dw, Math.ceil(maxX * dw));
+    var py0 = Math.max(0, Math.floor(minY * dh));
+    var py1 = Math.min(dh, Math.ceil(maxY * dh));
+    var cw = px1 - px0, chh = py1 - py0;
+    if (cw < 3 || chh < 3) { return 0; }
+
+    /* 2) 在染料分辨率上矢量描边（硬边线，约 0.008 uv ≈ 3px 屏幕） */
+    var cv = document.createElement('canvas');
+    cv.width = cw;
+    cv.height = chh;
+    var g = cv.getContext('2d');
+    if (!g) { return 0; }
+    g.lineCap = 'round';
+    g.lineJoin = 'round';
+    g.fillStyle = 'rgba(' + Math.round(Math.min(1, c.r) * 255) + ',' +
+                           Math.round(Math.min(1, c.g) * 255) + ',' +
+                           Math.round(Math.min(1, c.b) * 255) + ',1)';
+    var base = Math.max(1.8, 0.009 * dw);
+    for (i = 0; i < paths.length; i++) {
+      var ps2 = paths[i];
+      /* 闭合环（首尾相接）走等宽；开放笔画（耳、足、尾、翼）走提按 ——
+         中段粗、两端细。等宽线读作图标描边，有提按才像手绘的笔。 */
+      var dx0 = dyeX(ps2[0][0], ps2[0][1]) - dyeX(ps2[ps2.length - 1][0], ps2[ps2.length - 1][1]);
+      var dy0 = ps2[0][1] - ps2[ps2.length - 1][1];
+      var closed = Math.abs(dx0) < 0.012 && Math.abs(dy0) < 0.06;
+      for (j = 0; j < ps2.length; j++) {
+        p = ps2[j];
+        var w = closed ? base
+                       : base * (0.60 + 0.55 * Math.sin(Math.PI * j / (ps2.length - 1)));
+        g.beginPath();
+        g.arc(dyeX(p[0], p[1]) * dw - px0,
+              py1 - (LAMP_C.v + p[1] * LAMP_HH) * dh,
+              Math.max(0.9, w / 2), 0, TAU);
+        g.fill();
+      }
+    }
+
+    /* 3) 上传为贴图并刺入染料场 */
+    if (!stampTex) {
+      stampTex = gl.createTexture();
+    }
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, stampTex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cv);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+
+    programs.stamp.bind();
+    gl.uniform1i(programs.stamp.uniforms.uTarget, dye.read.attach(0));
+    gl.uniform1i(programs.stamp.uniforms.uStamp, 1);
+    gl.uniform4f(programs.stamp.uniforms.uRect,
+                 px0 / dw, py0 / dh, px1 / dw, py1 / dh);
+    blitFn(dye.write);
+    dye.swap();
+    gl.activeTexture(gl.TEXTURE0);
+    return n;
   }
 
   /* 固色：把当前活层烙进固定层，再清空活层。
@@ -1136,6 +1252,7 @@
       var postVertex = compileShader(gl.VERTEX_SHADER, postVertexSrc);
       programs.clear = new Program(baseVertex, clearFrag);
       programs.add = new Program(baseVertex, addFrag);
+      programs.stamp = new Program(baseVertex, stampFrag);
       programs.splat = new Program(baseVertex, splatFrag);
       programs.advection = new Program(baseVertex, advectionFrag, ext.supportLinearFiltering ? null : ['MANUAL_FILTERING']);
       programs.divergence = new Program(baseVertex, divergenceFrag);
@@ -1178,7 +1295,11 @@
        重建时必须 preserve=true 把已画的灯面搬过去，否则画到一半视口一变就清空。 */
     resize: function () {
       if (!ready) return false;
-      if (resizeCanvas()) { initFramebuffers(true); return true; }
+      if (resizeCanvas()) {
+        initFramebuffers(true);
+        stampTex = null;
+        return true;
+      }
       return false;
     },
 
