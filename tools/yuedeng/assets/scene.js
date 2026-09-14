@@ -344,9 +344,11 @@
          缺一层大气透视」。零随机 —— 系数由序号定。 */
       var lum = 1 + jit * 0.025;
       if (far) {
+        /* 远排：略降饱和与亮度做大气透视，并整体偏暖 —— 首版远排晕色齐灰白，
+           评审要「再暖半档，灯核—晕层次更干脆」。hue-rotate 取负即向暖偏。 */
         lum *= 0.96;
         node.style.filter = 'brightness(' + lum.toFixed(3) +
-          ') saturate(0.88) hue-rotate(' + (jit * 3) + 'deg)';
+          ') saturate(0.88) hue-rotate(' + (-8 + jit * 3) + 'deg)';
       } else {
         node.style.filter = 'brightness(' + lum.toFixed(3) +
           ') hue-rotate(' + (jit * 2) + 'deg)';
@@ -356,7 +358,7 @@
       /* 尺寸：scale × LAMP_BASE_PX；居中用负 margin，把 transform 留给摇摆。
          抖动加在尺寸与竖直位置上（±10% / ±3px），破掉「严格等距同尺寸」。 */
       size = lampSize(l);
-      var kk = 1 + jit * 0.05;
+      var kk = 1 + jit * 0.075;
       var ww = size.w * kk, hh = size.h * kk;
       node.style.width = ww.toFixed(1) + 'px';
       node.style.height = hh.toFixed(1) + 'px';

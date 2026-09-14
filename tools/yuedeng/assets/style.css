@@ -679,9 +679,15 @@ body {
     rgba(226, 196, 150, 0.52) 0%,
     rgba(226, 196, 150, 0.24) 62%,
     rgba(226, 196, 150, 0) 100%);
+  /* 线顶一道极暗檐口横影：给吊线一个「上端有落点」的暗示。
+     评审：只加线不加落点，观者补不出「檐」，中排灯仍无归属。 */
+  border-top: 2px solid rgba(8, 12, 24, 0.62);
   pointer-events: none;
 }
 
+/* 未点亮也要显示（压暗去饱和）：只给点亮态挂 sprite，会让未点亮退化成纯色点，
+   点亮时才有罐形与竖纹，切换读作「换贴图」（评审指出「两态几何信息量差太大」）。
+   两态共用同一枚 sprite，只差明暗与饱和，结构才连续。 */
 .fl::after, .fest::after {
   content: ''; position: absolute; left: 50%; top: 50%;
   width: 420%; height: 380%;
@@ -690,12 +696,13 @@ body {
   background-position: center;
   background-repeat: no-repeat;
   background-size: contain;
-  opacity: 0;
-  transition: opacity var(--dur-3) var(--ease);
+  opacity: 0.30;
+  filter: grayscale(0.72) brightness(0.52);
+  transition: opacity var(--dur-3) var(--ease), filter var(--dur-3) var(--ease);
   pointer-events: none;
 }
 .stage.is-lit .fl::after,
-.stage.is-lit .fest::after { opacity: 1; }
+.stage.is-lit .fest::after { opacity: 1; filter: none; }
 
 /* --- 灯会群灯：中景 / 近景容器（固定表由 JS 填充，零随机） --- */
 .fest-lamps { position: absolute; inset: 0; pointer-events: none; }
@@ -806,8 +813,10 @@ body {
   position: absolute; left: 0; right: 0;
   top: calc(var(--cy) - var(--hh) - 48px);
   height: 6px;
-  background: var(--wood-dk);
-  box-shadow: inset 0 2px 0 0 rgba(247, 239, 226, 0.18);
+  /* 压到近剪影：原来的暖木色全宽实杆被评「读作脚手架，横切月亮下缘很抢戏」。
+     上缘留一道月光冷边，交代它也是被月照到的结构件。 */
+  background: linear-gradient(to bottom, #2A2018, #150F0A);
+  box-shadow: inset 0 1px 0 0 rgba(198, 214, 236, 0.16);
 }
 .hang-branch {
   position: absolute;
@@ -857,6 +866,27 @@ body {
   filter: drop-shadow(0 0 8px rgba(245, 199, 126, 0.60));
 }
 
+/* 统一调色链：把 WebGL 灯层（#lamp 画布）与 DOM 场景（星/月/屋檐/群灯）放进
+   同一条调色链。此前两层各自成像、无法统一调色，正是视觉评审所说「三种资产
+   三种风格同框，没有任何统一渲染规则」的结构性根因。
+   滤镜作用在 .stage 的合成结果上，故画布与 DOM 共享同一次调色；
+   .dock 在 .stage 之外，操作层不被调色，保证 UI 清晰可读。 */
+.stage {
+  /* contrast 1.04 被评「过强：灯心过曝成死白，朱砂纹样只剩一痕」，
+     降到 1.02 —— 高光 clip 反而会暴露合成感，比低对比更伤。 */
+  filter: contrast(1.02) saturate(1.06) brightness(1.01);
+}
+/* 暗角：把视线收拢到灯上，也给画面一个「镜头」的收边。
+   中心上移到 40%、底部衰减减半（0.52→0.30）：与底部黑屋顶剪影叠加时，
+   原来的 0.52 会把画面下 1/5 压成死黑块，屋顶仅存的轮廓层次全没。 */
+.stage-grade {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background: radial-gradient(122% 74% at 50% 40%,
+    rgba(0, 0, 0, 0) 56%,
+    rgba(3, 6, 14, 0.18) 84%,
+    rgba(3, 6, 14, 0.30) 100%);
+}
 /* --- 流体画布：覆盖整个舞台，形状外全透明，让 CSS 月与星透出 --- */
 #lamp {
   position: absolute; inset: 0;
