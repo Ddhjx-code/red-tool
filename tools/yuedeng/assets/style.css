@@ -577,13 +577,15 @@ body {
     rgba(58, 46, 38, 0.20) 100%);
   filter: blur(4px);
 }
-/* 月面：左上受光更亮（--paper 提亮），向 limb 柔过渡到 --moon-dk；
-   内阴影大范围低透明做柔和 limb 暗化 */
+/* 月面：写实月面照片。与首页 .vig-moon 必须同源同处理 —— 两屏用的是同一枚
+   资产，首页改了此处漏改就会变成「两个月亮」。blur + 降饱和 + sepia 是把
+   照片月海拉向暖月白、退出照片语言的关键；只做一处就会风格分裂。 */
 .m-disc {
   width: 198px; height: 198px; margin: -99px 0 0 -99px;
   overflow: hidden;
   background: url(img/moon.webp) center / 100% 100% no-repeat;
   transition: opacity var(--dur-3) var(--ease);
+  filter: blur(0.9px) saturate(0.68) brightness(1.02) sepia(0.25);
 }
 .m-clouds {
   width: 198px; height: 198px; margin: -99px 0 0 -99px;
@@ -644,6 +646,7 @@ body {
 /* --- 远景灯会：一条像素屋檐 + 六盏小灯（固定表，零随机） --- */
 .skyline {
   position: absolute; left: 0; right: 0; bottom: 0; height: 64px;
+  z-index: 2;
   background: var(--horizon);
   clip-path: polygon(0 44%, 9% 44%, 9% 26%, 15% 14%, 21% 26%, 21% 40%,
                      30% 40%, 30% 22%, 38% 22%, 38% 34%, 47% 34%, 47% 18%,
@@ -678,6 +681,31 @@ body {
   filter: drop-shadow(0 0 6px rgba(245, 199, 126, 0.55));
 }
 .stage.is-lit .fest.near { filter: drop-shadow(0 0 10px rgba(245, 199, 126, 0.62)); }
+
+/* 光照规则：点亮后灯光必须能在相邻剪影上留下受光边。否则灯与景只是叠在一起
+   的两张贴纸 —— 此前点亮前后，屋檐上缘与竹竿下缘都是同一种黑，灯照不亮任何
+   东西，这是「灯与背景不搭」最根本的一条。
+   注意：不能给 .skyline 自己加 filter/drop-shadow。CSS 里 filter 先于
+   clip-path 生效，光边会被同一元素的 clip-path 裁掉，永远不出现（试过，
+   实测檐上缘零变化）。故用一个同样裁剪、整体上移 1.5px 的暖色副本去露边。 */
+.skyline-lit {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 64px;
+  z-index: 1;
+  background: rgba(245, 199, 126, 0.80);
+  clip-path: polygon(0 44%, 9% 44%, 9% 26%, 15% 14%, 21% 26%, 21% 40%,
+                     30% 40%, 30% 22%, 38% 22%, 38% 34%, 47% 34%, 47% 18%,
+                     55% 8%, 63% 18%, 63% 36%, 72% 36%, 72% 24%, 80% 24%,
+                     80% 38%, 88% 38%, 88% 28%, 100% 28%, 100% 100%, 0 100%);
+  transform: translateY(-1.5px);
+  opacity: 0;
+  transition: opacity var(--dur-3) var(--ease);
+  pointer-events: none;
+}
+.stage.is-lit .skyline-lit { opacity: 1; }
+.stage.is-lit .hang-pole {
+  box-shadow: inset 2px 0 0 0 rgba(247, 239, 226, 0.22),
+              inset 0 -2px 0 0 rgba(245, 199, 126, 0.50);
+}
 
 /* --- 灯的骨架：提梁 / 灯盖 / 灯底 / 流苏（像素块） --- */
 .rig { position: absolute; inset: 0; pointer-events: none; }
