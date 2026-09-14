@@ -141,6 +141,12 @@ SMOOTH_MIN_COLORS = 1500   # quantized pixel art carries <= 24; smooth carries t
 # --------------------------------------------------------------------------
 # Byte-identical style suffix. 3/3 prompts must end with exactly this line.
 # --------------------------------------------------------------------------
+# 流派钉定值。preflight 用它断言「风格必须钉定到某个具名流派」。
+# 做成具名常量而非字面量，是为了让驱动脚本能合法地换流派（例如插画月），
+# 同时这条守卫依然生效 —— 换流派是改设计决策，必须显式声明并留下痕迹，
+# 而不是绕过检查。
+GENRE_PIN = "写实天文月面摄影质感"
+
 STYLE_SUFFIX = (
     "写实天文月面摄影质感，天文望远镜实拍风格，月面肌理柔和细腻明暗过渡自然，"
     "整体暖米白调，色板严格限定为月白#F2E4C4、月面暗部#C8B795、月缘墨褐#3A2E26，"
@@ -235,8 +241,8 @@ def preflight(assets):
             problems.append("%s prompt does not end with the shared suffix" % a["id"])
 
     # The genre must be pinned to a specific named kind, never a bare 国风.
-    if "写实天文月面摄影质感" not in STYLE_SUFFIX:
-        problems.append("style suffix does not pin a specific named genre")
+    if GENRE_PIN not in STYLE_SUFFIX:
+        problems.append("style suffix does not pin the declared genre %s" % GENRE_PIN)
     if "国风" in STYLE_SUFFIX or "Chinese style" in STYLE_SUFFIX:
         problems.append("style suffix contains a bare 国风 / Chinese style")
 
@@ -792,7 +798,7 @@ def main():
             print("  - %s" % p)
         sys.exit(1)
     print("preflight OK: %d assets, style suffix byte-identical across all %d, "
-          "genre pinned to 写实天文月面摄影质感" % (len(ASSETS), len(ASSETS)))
+          "genre pinned to %s" % (len(ASSETS), len(ASSETS), GENRE_PIN))
 
     rows = [inspect_ship(a) for a in ASSETS]
     if args.report:
