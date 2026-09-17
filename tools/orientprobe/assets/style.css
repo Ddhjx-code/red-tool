@@ -1,0 +1,155 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; }
+
+body {
+  background: #0d1016;
+  color: #e8ecf4;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+#app {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+#banner {
+  background: #161b26;
+  border-bottom: 2px solid #2b3446;
+  padding: 14px 12px;
+}
+
+#title {
+  font-size: 14px;
+  color: #c9d2e0;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+
+#verdict {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #ffd479;
+}
+
+#summary-sec {
+  background: #131924;
+}
+
+#summary-sec dd { font-weight: 700; }
+
+#dims {
+  font-size: 15px;
+  margin-top: 4px;
+  color: #9fe8ff;
+}
+
+#hint {
+  font-size: 12px;
+  margin-top: 6px;
+  color: #8b96a8;
+}
+
+#bar-wrap {
+  height: 6px;
+  background: #1d2432;
+}
+
+#bar {
+  height: 6px;
+  width: 0%;
+  background: #ffd479;
+}
+
+section {
+  border-bottom: 1px solid #1d2432;
+  padding: 12px;
+}
+
+h2 {
+  font-size: 13px;
+  color: #ffd479;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 46% 54%;
+  align-items: start;
+}
+
+dt {
+  color: #8b96a8;
+  padding-right: 8px;
+  word-break: break-word;
+}
+
+dd {
+  margin: 0;
+  min-width: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-all;
+  color: #e8ecf4;
+}
+
+dd.ok { color: #7ee787; }
+dd.no { color: #ff7b72; }
+dd.warn { color: #ffd479; }
+
+#rotlog {
+  list-style: none;
+  margin: 0;
+}
+
+#rotlog li {
+  border-left: 3px solid #2b3446;
+  padding: 3px 0 3px 8px;
+  margin-bottom: 4px;
+  color: #c9d2e0;
+  word-break: break-all;
+}
+
+#rotlog li.changed { border-left-color: #7ee787; color: #e8ecf4; }
+
+.note {
+  color: #8b96a8;
+  margin-bottom: 8px;
+}
+
+button {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  background: #ffd479;
+  color: #14181f;
+  border: 0;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+button:focus { outline: 2px solid #9fe8ff; }
+
+button[disabled] { opacity: 0.5; }
+
+#toast {
+  min-height: 20px;
+  margin-top: 8px;
+  color: #ffd479;
+  font-size: 12px;
+}

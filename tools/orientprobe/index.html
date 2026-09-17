@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>容器方向探针</title>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+  <div id="app">
+    <header id="banner">
+      <div id="title">小工具设备兼容性自检</div>
+      <div id="verdict">测量中…</div>
+      <div id="dims">—</div>
+      <div id="hint">自检项：屏幕方向 / 视口与安全区 / 内核与端能力 / 触感与音频 / 渲染帧率</div>
+    </header>
+
+    <div id="bar-wrap"><div id="bar"></div></div>
+
+    <section id="summary-sec">
+      <h2>自检结论</h2>
+      <dl id="sec-summary"></dl>
+      <p class="note" id="summary-note">数值为本次运行环境的实际读数。点下方按钮可把完整报告存成图片留存。</p>
+    </section>
+
+    <section>
+      <h2>旋转记录</h2>
+      <p class="note">把手机横过来停 2 秒再竖回去；若下方只停留 1 行，说明本环境不支持横屏旋转。</p>
+      <ol id="rotlog"></ol>
+    </section>
+
+    <section>
+      <h2>方向 API</h2>
+      <dl id="sec-orient"></dl>
+      <div id="orient-actions"></div>
+    </section>
+
+    <section>
+      <h2>视口与安全区</h2>
+      <dl id="sec-viewport"></dl>
+    </section>
+
+    <section>
+      <h2>容器与宿主</h2>
+      <dl id="sec-host"></dl>
+    </section>
+
+    <section>
+      <h2>能力探测</h2>
+      <dl id="sec-caps"></dl>
+    </section>
+
+    <section>
+      <h2>导出</h2>
+      <p class="note">点下面按钮把报告存成图片到相册；失败就直接截图本页。</p>
+      <button id="btn-save" type="button">存成图片到相册</button>
+      <div id="toast"></div>
+    </section>
+  </div>
+
+  <script src="./assets/probe.js"></script>
+</body>
+</html>
