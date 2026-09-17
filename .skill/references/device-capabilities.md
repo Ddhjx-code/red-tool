@@ -6,11 +6,12 @@
 ## 目录
 
 - §1 可用能力
-- §2 不可用能力（Web API）
-- §3 不可用行为
-- §4 WebGL / 图形计算边界
-- §5 常见交互怎么实现
-- §6 能力扫描清单
+- §2 Native 能力（JSBridge）
+- §3 不可用能力（Web API）
+- §4 不可用行为
+- §5 WebGL / 图形计算边界
+- §6 常见交互怎么实现
+- §7 能力扫描清单
 
 ---
 
@@ -18,7 +19,7 @@
 
 ### 页面与渲染
 
-标准 HTML / CSS / JS 完整可用：Flexbox / Grid / 动画 / 媒体查询、Canvas 2D（`getContext('2d')`）、WebGL（`getContext('webgl'/'webgl2')`，边界见 §4）、文本选择不限制。
+标准 HTML / CSS / JS 可用，但最终产物须满足目标内核基线：JS 见 [js-compatibility.md](./js-compatibility.md)，CSS 见 [css-compatibility.md](./css-compatibility.md)。可使用基线内的 Flexbox / Grid / 动画 / 媒体查询、Canvas 2D（`getContext('2d')`）、WebGL（`getContext('webgl'/'webgl2')`，能力边界见 §5、性能与低端机降级见 [performance-budget.md](./performance-budget.md) §4–5），文本选择不限制。
 
 ### 媒体与文件
 
@@ -39,25 +40,27 @@ Cookie 仅作本地存储：可读写、按 origin 隔离，但因不联网**不
 
 `alert()` / `confirm()` 可用，以原生 UI 展示。
 
-### 端能力 JS API（window.xhs.miniTool）
+---
 
-容器**自动注入** JS API SDK，可调用 App 原生能力，**无需在包内引入 SDK 脚本**：
+## 2. Native 能力（JSBridge）
 
-| API | 能力 |
+容器会注入 **`window.xhs.miniTool.*`**，通过它调用 Native 能力（发笔记、存相册、跳 App 页等）。
+
+| 规则 | 说明 |
 | --- | --- |
-| `postNote` | 唤起笔记发布页，带入标题 / 正文 / 图片 / 视频 |
-| `saveImageToPhotosAlbum` | 保存图片到系统相册 |
-| `writeTempFile` | 把 base64 写成容器内临时文件，换取 `filePath` |
+| 唯一入口 | 只用 `window.xhs.miniTool.<apiName>(options)`，**禁止**自行 `postMessage` 到 bridge |
+| 契约来源 | 以 [`jsbridge-api.md`](./jsbridge-api.md) 为准 |
+| 参数校验 | 必填项、长度、数组上限等以 [`jsbridge-api.md`](./jsbridge-api.md) 为准 |
+| 本地路径 | `saveImageToPhotosAlbum.filePath` 不支持网络 URL；base64 可先 `writeTempFile` 换 `filePath` |
+| data:uri | `writeTempFile.data` 必须是完整 `data:<mime>;base64,...`（`canvas.toDataURL()` 原样传），裸 base64 会失败 |
+| 发笔记 | `postNote.mediaInfo` 必填；图片走 `image_resources[].url`，视频走 `video_resources` |
+| 跳原生页 | `openRedPage.type` 须命中 Native 规则表白名单，`params` 为语义参数 |
 
-- 唯一入口 `window.xhs.miniTool.<apiName>(options)`；调用前 `window.xhs?.miniTool` 判空并留降级路径。
-- 媒体字段只接受 `data:` base64 或本地文件路径，**不接受网络地址**；大图先 `writeTempFile` 再传。
-- 详细字段、代码示例与降级见 [xhs-jsapi.md](./xhs-jsapi.md)。
-
-> ⚠️ `<img>` 加载 `data:` / `blob:` 需客户端 **9.37 及以上**版本。
+完整 API 列表、字段表与示例 → **[jsbridge-api.md](./jsbridge-api.md)**。
 
 ---
 
-## 2. 不可用能力（Web API）
+## 3. 不可用能力（Web API）
 
 以下 API 已禁用，调用会抛异常、返回空值或被拦截，必须移除或改用替代写法。
 
@@ -79,16 +82,16 @@ Cookie 仅作本地存储：可读写、按 origin 隔离，但因不联网**不
 
 ---
 
-## 3. 不可用行为
+## 4. 不可用行为
 
 | 行为 | 说明 | 替代方案 |
 | --- | --- | --- |
-| 网络请求 | `fetch` / `XMLHttpRequest`、加载外部图片 / 字体 / 媒体等一切联网请求 | 所有资源打包在内，改本地相对引用；数据用包内 `.json` 或写死在 JS |
+| 网络请求 | `fetch` / `XMLHttpRequest`、加载外部图片 / 字体 / 媒体等一切联网请求 | 所有资源打包在内，改本地相对引用；仅小型配置 / 数据可随包提供，大型只读数据集不适合小工具，见 [performance-budget.md](./performance-budget.md) §2 |
 | 动态执行代码 | `eval()`、`new Function()` | 改写为静态逻辑 |
 | WebAssembly | WASM 编译执行（依赖 WASM 的库无法运行） | 移除或改用纯 JS 实现 |
 | iframe / object | 内嵌 iframe / object，或被外部页面嵌入 | 内容直接写进页面 |
 | 表单跳转提交 | `<form>` 提交跳转 | `addEventListener('submit', e => e.preventDefault())` 后用 JS 处理 |
-| 文件下载 | `a[download]`、blob 下载 | 保存图片改用 `saveImageToPhotosAlbum`（见 [xhs-jsapi.md](./xhs-jsapi.md)）；其他下载移除 |
+| 文件下载 | `a[download]`、blob 下载 | 移除 |
 | 打开外链 / 新窗口 | `target="_blank"`、`window.open`、跳转站外 URL | 单页内 JS 切换视图 DOM |
 | 跳转其他小工具 | 小工具间互相跳转 | 移除 |
 | 长按菜单 | 系统长按菜单已禁用 | 用自定义交互替代 |
@@ -96,7 +99,7 @@ Cookie 仅作本地存储：可读写、按 origin 隔离，但因不联网**不
 
 ---
 
-## 4. WebGL / 图形计算边界
+## 5. WebGL / 图形计算边界
 
 纯 WebGL 渲染可用，组合能力受限：
 
@@ -108,11 +111,11 @@ Cookie 仅作本地存储：可读写、按 origin 隔离，但因不联网**不
 | 依赖 Worker 的离屏渲染（OffscreenCanvas + Worker） | 🔴 |
 | SharedArrayBuffer 多线程 | 🔴 |
 
-WebGL 适合用包内资源做本地渲染；AI 图像处理等重计算（需联网或 WASM 模型）无法支持。
+WebGL 适合用包内资源做本地渲染；AI 图像处理等重计算（需联网或 WASM 模型）无法支持。WebGL 可用不等于低端真机性能足够：DPR、像素、纹理、draw call、几何预算、动态降档与兜底必须遵守 [performance-budget.md](./performance-budget.md) §4–5。
 
 ---
 
-## 5. 常见交互怎么实现
+## 6. 常见交互怎么实现
 
 | 需求 | 实现 |
 | --- | --- |
@@ -123,10 +126,13 @@ WebGL 适合用包内资源做本地渲染；AI 图像处理等重计算（需�
 | 视觉全屏 | CSS 布局（`100vh` / flex + 隐藏滚动） |
 | 页面跳转 | 单页内用 JS 切换视图 DOM |
 | 输入弹窗 | 页内 Modal 组件 |
+| 保存图片到相册 | `writeTempFile({ data: canvas.toDataURL(...) })`（须完整 data:uri）→ `saveImageToPhotosAlbum({ filePath })`，见 [jsbridge-api.md](./jsbridge-api.md) |
+| 发布笔记 | `postNote({ mediaInfo, title?, content? })` |
+| 跳转 App 搜索 / 用户页等 | `openRedPage({ type, params? })`，`type` 须在白名单内 |
 
 ---
 
-## 6. 能力扫描清单
+## 7. 能力扫描清单
 
 扫描代码，命中下列模式则**必须删除或改用替代写法**：
 
@@ -160,5 +166,4 @@ localStorage / sessionStorage / IndexedDB / Cookie / Cache API   // 独立隔离
 alert() / confirm()
 touch / pointer events                                    // 手势交互
 标准 DOM / CSS / Canvas 2D / WebGL 渲染
-window.xhs.miniTool.postNote / saveImageToPhotosAlbum / writeTempFile   // 端能力，先判空
 ```
