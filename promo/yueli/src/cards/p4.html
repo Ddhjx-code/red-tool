@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<link rel="stylesheet" href="./shared.css" />
+<style>
+  .head { position: absolute; left: 96px; top: 146px; width: 900px; }
+  .head .num { margin-bottom: 32px; }
+  .col-title { font-size: 84px; letter-spacing: 0.03em; }
+  .col-title em { color: #a9a094; }
+  .body-t { margin-top: 38px; font-size: 27px; }
+
+  .win {
+    position: absolute;
+    left: 316px; top: 800px;
+    width: 448px; height: 640px;
+    overflow: hidden;
+    border-radius: 48px 48px 0 0;
+    background: var(--paper);
+    box-shadow: 0 -2px 40px rgba(60, 40, 25, 0.08);
+  }
+  .win img { display: block; width: 448px; }
+
+  .fade {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 90px;
+    background: linear-gradient(180deg, rgba(250, 247, 242, 0), var(--paper));
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="head">
+    <p class="num">03</p>
+    <h2 class="col-title">不给你一个日子<br /><em>给一段时间</em></h2>
+    <p class="body-t">
+      算出来的不是「12 月 5 日」，是「12 月 5 日前后 1 天」。
+    </p>
+    <p class="body-t">
+      身体本来就不是一个精确的数字。
+    </p>
+  </div>
+
+  <div class="win">
+    <img src="../../build/shots/main@2x.png" alt="" />
+    <div class="fade"></div>
+  </div>
+</div>
+</body>
+</html>

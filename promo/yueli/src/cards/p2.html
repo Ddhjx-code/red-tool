@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<link rel="stylesheet" href="./shared.css" />
+<style>
+  .txt { position: absolute; left: 96px; top: 190px; width: 470px; }
+  .txt .num { margin-bottom: 36px; }
+
+  .col-title { font-size: 86px; letter-spacing: 0.04em; }
+  .sub-title {
+    font-family: var(--serif);
+    font-size: 46px; color: var(--ink-3);
+    margin-top: 18px; letter-spacing: 0.04em;
+  }
+  .body-t { margin-top: 46px; font-size: 28px; }
+  .body-t + .body-t { margin-top: 28px; }
+
+  .phone { left: 596px; top: 400px; }
+
+  .ring {
+    position: absolute; width: 460px; height: 460px; border-radius: 50%;
+    left: -180px; bottom: -180px;
+    border: 1px solid rgba(200, 80, 60, 0.1);
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="ring"></div>
+
+  <div class="txt">
+    <p class="num">01</p>
+    <h2 class="col-title">三个问题</h2>
+    <p class="sub-title">之后不必再答</p>
+    <p class="body-t">
+      最近一次是哪天开始、<br />
+      一般持续几天、<br />
+      两次之间隔几天。
+    </p>
+    <p class="body-t">
+      不确定就按 28。<br />记满三次，它会按你的实际周期改。
+    </p>
+  </div>
+
+  <div class="phone phone--lg"><img src="../../build/shots/setup@2x.png" alt="" /></div>
+</div>
+</body>
+</html>

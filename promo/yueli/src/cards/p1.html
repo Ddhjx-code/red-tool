@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<link rel="stylesheet" href="./shared.css" />
+<style>
+  .head { position: absolute; left: 96px; top: 100px; width: 900px; }
+  .head .kicker { margin-bottom: 40px; }
+
+  h1 {
+    font-family: var(--serif);
+    font-size: 132px;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+  }
+  h1 .soft { color: #a9a094; }
+
+  .rule {
+    width: 72px; height: 3px; background: var(--red);
+    margin: 38px 0 26px; border-radius: 2px;
+  }
+
+  .sub {
+    font-size: 31px; line-height: 1.6; color: var(--ink-2);
+    letter-spacing: 0.04em;
+  }
+
+  .ring-a {
+    position: absolute; width: 560px; height: 560px; border-radius: 50%;
+    right: -200px; top: -150px;
+    border: 1px solid rgba(200, 80, 60, 0.12);
+  }
+  .ring-b {
+    position: absolute; width: 380px; height: 380px; border-radius: 50%;
+    right: -110px; top: -60px;
+    border: 1px solid rgba(200, 80, 60, 0.08);
+  }
+
+  .phone { left: 345px; top: 648px; }
+
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="ring-a"></div>
+  <div class="ring-b"></div>
+
+  <div class="head">
+    <p class="kicker">经期记录</p>
+    <h1>一个日历<br /><span class="soft">没有别的。</span></h1>
+    <div class="rule"></div>
+    <p class="sub">没有社区，没有商城，没有推送。</p>
+  </div>
+
+  <div class="phone"><img src="../../build/shots/main@2x.png" alt="" /></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<link rel="stylesheet" href="./shared.css" />
+<style>
+  .txt { position: absolute; left: 552px; top: 244px; width: 448px; }
+  .txt .num { margin-bottom: 36px; }
+
+  .col-title { font-size: 86px; letter-spacing: 0.04em; }
+  .sub-title {
+    font-family: var(--serif);
+    font-size: 46px; color: var(--ink-3);
+    margin-top: 18px; letter-spacing: 0.04em;
+  }
+  .body-t { margin-top: 46px; font-size: 28px; }
+  .body-t + .body-t { margin-top: 28px; }
+
+  .phone { left: 68px; top: 496px; }
+
+  .ring {
+    position: absolute; width: 420px; height: 420px; border-radius: 50%;
+    right: -170px; top: -160px;
+    border: 1px solid rgba(200, 80, 60, 0.1);
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="ring"></div>
+
+  <div class="txt">
+    <p class="num">02</p>
+    <h2 class="col-title">记一笔</h2>
+    <p class="sub-title">点两下就完事</p>
+    <p class="body-t">
+      点开始那天，选持续几天，确认。
+    </p>
+    <p class="body-t">
+      不追问流量、颜色、情绪、用药。<br />
+      你不想填的，它就不问。
+    </p>
+    <p class="body-t">
+      点已经记过的那次，<br />可以改，也可以删。
+    </p>
+  </div>
+
+  <div class="phone phone--md"><img src="../../build/shots/sheet@2x.png" alt="" /></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<link rel="stylesheet" href="./shared.css" />
+<style>
+  .head { position: absolute; left: 96px; top: 156px; width: 900px; }
+  .head .num { margin-bottom: 34px; }
+  .col-title { font-size: 88px; letter-spacing: 0.03em; line-height: 1.3; }
+  .col-title em { color: #a9a094; }
+
+  .list { position: absolute; left: 96px; top: 560px; width: 860px; }
+  .row {
+    display: flex; align-items: baseline;
+    padding: 30px 0 28px;
+    border-top: 1px solid var(--line);
+  }
+  .row:last-child { border-bottom: 1px solid var(--line); }
+  .row .no {
+    width: 96px; flex: none;
+    display: flex; align-items: center; height: 44px;
+  }
+  .row .no::before {
+    content: ""; width: 14px; height: 3px;
+    background: var(--red); border-radius: 2px;
+  }
+  .row .what {
+    font-size: 44px; letter-spacing: 0.06em; color: var(--ink);
+  }
+  .row .why {
+    margin-left: auto; font-size: 26px; color: var(--ink-3); letter-spacing: 0.02em;
+  }
+
+  .tail {
+    position: absolute; left: 96px; bottom: 110px; width: 880px;
+    font-size: 27px; line-height: 1.9; color: var(--ink-2);
+  }
+  .tail b { font-weight: 500; color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="head">
+    <p class="num">04</p>
+    <h2 class="col-title">数据不出<br /><em>这台手机</em></h2>
+  </div>
+
+  <div class="list">
+    <div class="row"><span class="no"></span><span class="what">没有账号</span><span class="why">不用注册</span></div>
+    <div class="row"><span class="no"></span><span class="what">没有手机号</span><span class="why">不验证</span></div>
+    <div class="row"><span class="no"></span><span class="what">没有云端备份</span><span class="why">不上传</span></div>
+    <div class="row"><span class="no"></span><span class="what">没有广告和内购</span><span class="why">不打扰</span></div>
+  </div>
+
+  <p class="tail">
+    记录加密后写在本机存储里，卸载或换手机就没了。<br />
+    <b>这是代价，也是它安全的原因。</b>
+  </p>
+</div>
+</body>
+</html>
