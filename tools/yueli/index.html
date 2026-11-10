@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="icon" href="data:," />
+  <title>月历</title>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- ===== 首次录入 ===== -->
+    <section id="view-setup" class="view" hidden>
+      <div class="setup">
+        <p class="kicker">开始记录</p>
+        <h1 class="setup-title">月历</h1>
+        <p class="setup-note">三个问题，之后不必再答。<br />数据只存在这台设备上。</p>
+
+        <div class="field">
+          <p class="field-label">最近一次是哪天开始的</p>
+          <input id="setup-date" class="field-input" type="date" />
+        </div>
+
+        <div class="field">
+          <p class="field-label">一般持续几天</p>
+          <div class="stepper">
+            <button class="step-btn" type="button" data-step="period" data-delta="-1">−</button>
+            <span class="step-val" id="setup-period">5</span>
+            <button class="step-btn" type="button" data-step="period" data-delta="1">＋</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <p class="field-label">两次之间一般隔几天</p>
+          <div class="stepper">
+            <button class="step-btn" type="button" data-step="cycle" data-delta="-1">−</button>
+            <span class="step-val" id="setup-cycle">28</span>
+            <button class="step-btn" type="button" data-step="cycle" data-delta="1">＋</button>
+          </div>
+          <p class="field-hint">不确定就按 28，记满三次之后会自动按你的实际情况修正</p>
+        </div>
+
+        <button id="setup-submit" class="primary" type="button">进入月历</button>
+        <p class="disclaimer">记录仅保存在本机，不会上传。</p>
+      </div>
+    </section>
+
+    <!-- ===== 主界面 ===== -->
+    <section id="view-main" class="view" hidden>
+      <header class="topbar">
+        <div class="pred">
+          <p class="pred-kicker" id="pred-kicker">下次预计</p>
+          <p class="pred-date" id="pred-date">—</p>
+          <p class="pred-note" id="pred-note"></p>
+        </div>
+        <button id="btn-settings" class="icon-btn" type="button" aria-label="设置">···</button>
+      </header>
+
+      <section class="cal">
+        <div class="cal-head">
+          <button id="cal-prev" class="cal-nav" type="button" aria-label="上个月">‹</button>
+          <button id="cal-title" class="cal-title" type="button">—</button>
+          <button id="cal-next" class="cal-nav" type="button" aria-label="下个月">›</button>
+        </div>
+        <div class="cal-week">
+          <span>一</span><span>二</span><span>三</span><span>四</span>
+          <span>五</span><span>六</span><span>日</span>
+        </div>
+        <div id="cal-grid" class="cal-grid"></div>
+      </section>
+
+      <p id="status-line" class="status"></p>
+
+      <button id="btn-record" class="primary" type="button">记一笔</button>
+      <p class="disclaimer">
+        周期预测基于历史记录估算，仅供参考，不构成医疗建议，<br />不能用于避孕或诊断。
+      </p>
+    </section>
+
+    <!-- ===== 底部面板 ===== -->
+    <div id="sheet" class="sheet is-hidden">
+      <div id="sheet-mask" class="sheet-mask"></div>
+      <div class="sheet-panel">
+        <div class="sheet-grip"></div>
+        <p id="sheet-title" class="sheet-title"></p>
+        <div id="sheet-body" class="sheet-body"></div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+  </div>
+
+  <script src="./assets/date.js"></script>
+  <script src="./assets/cycle.js"></script>
+  <script src="./assets/store.js"></script>
+  <script src="./assets/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,508 @@
+/* ===== 基础 ===== */
+:root {
+  --paper: #faf7f2;
+  --card: #fffdfa;
+  --ink: #2b2724;
+  --ink-2: #7a726a;
+  --ink-3: #b0a79c;
+  --line: #e8e1d7;
+  --red: #c8503c;
+  --red-soft: rgba(200, 80, 60, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+body {
+  font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+p {
+  margin: 0;
+}
+
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 22px 22px 0;
+}
+
+/* ===== 首次录入 ===== */
+.setup {
+  padding-top: 32px;
+  padding-bottom: 24px;
+}
+
+.kicker {
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  color: var(--ink-3);
+}
+
+.setup-title {
+  font-family: "Songti SC", "Source Han Serif SC", Georgia, serif;
+  font-size: 42px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  margin: 10px 0 12px;
+}
+
+.setup-note {
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.8;
+  margin-bottom: 32px;
+}
+
+.field {
+  margin-bottom: 26px;
+}
+
+.field-label {
+  font-size: 13px;
+  color: var(--ink-2);
+  margin-bottom: 10px;
+}
+
+.field-hint {
+  font-size: 12px;
+  color: var(--ink-3);
+  margin-top: 8px;
+  line-height: 1.6;
+}
+
+.field-input {
+  display: block;
+  width: 100%;
+  padding: 13px 14px;
+  font-family: inherit;
+  font-size: 16px;
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  width: 168px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.step-btn {
+  width: 52px;
+  height: 46px;
+  font-size: 20px;
+  color: var(--ink-2);
+  line-height: 1;
+}
+
+.step-btn:active {
+  background: var(--line);
+}
+
+.step-val {
+  flex: 1 1 auto;
+  text-align: center;
+  font-family: "Songti SC", Georgia, serif;
+  font-size: 19px;
+}
+
+/* ===== 主界面 ===== */
+.topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-top: 8px;
+}
+
+.pred {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pred-kicker {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--ink-3);
+}
+
+.pred-date {
+  font-family: "Songti SC", "Source Han Serif SC", Georgia, serif;
+  font-size: 30px;
+  line-height: 1.4;
+  letter-spacing: 0.03em;
+  margin-top: 2px;
+}
+
+.pred-note {
+  font-size: 12px;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+
+.icon-btn {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  margin-top: 4px;
+  font-size: 15px;
+  letter-spacing: 0.1em;
+  color: var(--ink-3);
+  border-radius: 50%;
+}
+
+.icon-btn:active {
+  background: var(--line);
+}
+
+/* ===== 日历 ===== */
+.cal {
+  margin-top: 22px;
+}
+
+.cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.cal-nav {
+  width: 40px;
+  height: 40px;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--ink-3);
+  border-radius: 50%;
+}
+
+.cal-nav:active {
+  background: var(--line);
+}
+
+.cal-title {
+  font-family: "Songti SC", Georgia, serif;
+  font-size: 16px;
+  letter-spacing: 0.1em;
+  padding: 6px 10px;
+}
+
+.cal-week {
+  display: flex;
+  padding: 4px 0 9px;
+  border-bottom: 1px solid var(--line);
+}
+
+.cal-week span {
+  flex: 1 1 0;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.4;
+  letter-spacing: 0.14em;
+  color: var(--ink-3);
+}
+
+.cal-grid {
+  display: flex;
+  flex-wrap: wrap;
+  padding-top: 8px;
+}
+
+.cal-cell {
+  flex: 0 0 14.2857%;
+  max-width: 14.2857%;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cal-day {
+  display: block;
+  width: 34px;
+  height: 34px;
+  line-height: 34px;
+  text-align: center;
+  border-radius: 50%;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.cal-cell.is-blank .cal-day {
+  visibility: hidden;
+}
+
+.cal-day.is-period {
+  background: var(--red);
+  color: #fff;
+}
+
+.cal-day.is-pred {
+  border: 1px dashed rgba(200, 80, 60, 0.55);
+  color: var(--red);
+  line-height: 32px;
+}
+
+/* 今天用「留白 + 细环」的画法，避免实心描边盖住经期或预测标记 */
+.cal-cell.is-today .cal-day {
+  box-shadow: 0 0 0 2px var(--paper), 0 0 0 3px var(--ink);
+}
+
+/* ===== 状态与动作 ===== */
+.status {
+  font-family: "Songti SC", Georgia, serif;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+  text-align: center;
+  padding: 22px 0 18px;
+}
+
+.primary {
+  display: block;
+  width: 100%;
+  height: 50px;
+  border-radius: 999px;
+  background: var(--red);
+  color: #fff;
+  font-size: 16px;
+  letter-spacing: 0.14em;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.primary:active {
+  transform: scale(0.985);
+  opacity: 0.9;
+}
+
+.disclaimer {
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--ink-3);
+  text-align: center;
+  padding: 18px 0 26px;
+}
+
+/* ===== 底部面板 ===== */
+.sheet {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 20;
+}
+
+.sheet.is-hidden {
+  pointer-events: none;
+}
+
+.sheet-mask {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(43, 39, 36, 0.3);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.sheet.is-hidden .sheet-mask {
+  opacity: 0;
+}
+
+.sheet:not(.is-hidden) .sheet-mask {
+  opacity: 1;
+}
+
+.sheet-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 78%;
+  overflow-y: auto;
+  background: var(--card);
+  border-radius: 20px 20px 0 0;
+  padding: 10px 22px 26px;
+  padding-bottom: calc(26px + env(safe-area-inset-bottom));
+  transform: translateY(100%);
+  transition: transform 0.24s ease;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sheet:not(.is-hidden) .sheet-panel {
+  transform: translateY(0);
+}
+
+.sheet-grip {
+  width: 34px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  margin: 0 auto 16px;
+}
+
+.sheet-title {
+  font-family: "Songti SC", Georgia, serif;
+  font-size: 19px;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.sheet-sub {
+  font-size: 13px;
+  color: var(--ink-2);
+  margin-bottom: 18px;
+  line-height: 1.7;
+}
+
+.sheet-body .field {
+  margin-bottom: 20px;
+}
+
+.sheet-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 0;
+  border-top: 1px solid var(--line);
+}
+
+.sheet-row-label {
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.sheet-row-note {
+  font-size: 12px;
+  color: var(--ink-3);
+  margin-top: 2px;
+  line-height: 1.5;
+}
+
+.sheet-actions {
+  padding-top: 20px;
+}
+
+.sheet-actions.is-gap {
+  padding-top: 22px;
+}
+
+.sheet-actions .sheet-btn:last-child {
+  margin-bottom: 0;
+}
+
+.sheet-btn {
+  display: block;
+  width: 100%;
+  height: 48px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+
+.sheet-btn:active {
+  background: var(--paper);
+}
+
+.sheet-btn.is-primary {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+}
+
+.sheet-btn.is-danger {
+  border-color: var(--red-soft);
+  color: var(--red);
+}
+
+/* 开关 */
+.switch {
+  width: 48px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--line);
+  position: relative;
+  transition: background 0.18s ease;
+  flex: 0 0 auto;
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.18s ease;
+}
+
+.switch.is-on {
+  background: var(--red);
+}
+
+.switch.is-on::after {
+  transform: translateX(20px);
+}
+
+/* ===== 浮层提示 ===== */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 88px;
+  transform: translateX(-50%) translateY(8px);
+  background: rgba(43, 39, 36, 0.9);
+  color: #fff;
+  font-size: 13px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 30;
+  white-space: nowrap;
+}
+
+.toast.is-show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
