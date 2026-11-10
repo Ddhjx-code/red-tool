@@ -52,3 +52,4 @@ metadata:
 | [css-compatibility.md](references/css-compatibility.md) | 写 CSS / 选择构建产物时：Chrome 61 基线、能力检测、现代 CSS 增强与局部回退 |
 | [cross-platform-h5.md](references/cross-platform-h5.md) | 适配多端时：触摸、滚动、安全区、PC 模拟器与真机差异 |
 | [performance-budget.md](references/performance-budget.md) | 开发和交付前：包体、静态数据、Base64、媒体、长列表与 WebGL 资源控制和降级 |
+| [../skills/minitool-reference-projects/SKILL.md](../skills/minitool-reference-projects/SKILL.md) | **本地增补**：要做新工具、缺玩法/视觉灵感或提示词时——36 个单文件效果参考库（CC0）、EVEngine 的提示词范式，以及「单文件 demo → 小工具 zip」的强制改造清单（内联脚本 / `type="module"` / CDN 三项必改） |
