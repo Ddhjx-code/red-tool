@@ -61,6 +61,16 @@
 
 移动端 WebView 本身也不支持：支付 `PaymentRequest`、系统通知 / 推送、NFC、MIDI、XR / AR / VR、后台同步 / 下载、PWA 安装、窗口管理、指针 / 键盘锁定。一律移除。
 
+> ⚠️ **本地增补（以在线文档 2026-11-06 为准）** — 下表三行结论已过时，不要照「移除」执行：
+>
+> | 能力 | 现规则 |
+> | --- | --- |
+> | Web Worker | **classic Dedicated Worker 自客户端 9.53 起可用**（每页 1 个，隐藏 30 秒回收）；SharedWorker / Service Worker / module Worker 仍禁用 |
+> | 定位 | Web 地理定位仍禁用，改用平台 `getLocation`（9.49+） |
+> | 传感器 | Web 设备运动 / 朝向仍禁用，陀螺仪改用平台 `startGyroscope` / `onGyroscopeChange`（9.50+） |
+>
+> 详见 [online-doc-delta.md](./online-doc-delta.md) §1.2 / §2。
+
 ---
 
 ## 3. 不可用行为
@@ -147,3 +157,7 @@ alert() / confirm()
 touch / pointer events                                    // 手势交互
 标准 DOM / CSS / Canvas 2D / WebGL 渲染
 ```
+
+> ⚠️ **本地增补**：上面扫描清单是 2026-09-23 快照。`new Worker(` 自客户端 **9.53** 起在满足
+> 「包内 classic `.js` 入口 + 每页 1 个 + 30 秒隐藏回收」时允许保留；`navigator.geolocation` 与
+> 设备传感器仍禁用，但可用平台 `getLocation` / 陀螺仪 API 替代。详见 [online-doc-delta.md](./online-doc-delta.md) §1.2 / §2。

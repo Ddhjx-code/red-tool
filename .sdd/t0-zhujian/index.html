@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>T0 竹简观兵 · 视觉验证</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; background: #070a12; }
+  body { font-family: "PingFang SC", "STKaiti", "KaiTi", serif; -webkit-user-select: none; user-select: none; }
+  #stage { position: fixed; inset: 0; display: block; }
+  #vignette { position: fixed; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 40%, transparent 32%, rgba(0,0,0,.52) 100%); }
+  #label { position: fixed; left: 22px; top: 18px; color: rgba(232,184,75,.85);
+    font-size: 14px; letter-spacing: 2px; text-shadow: 0 1px 4px #000; pointer-events: none; }
+  #hint { position: fixed; left: 22px; bottom: 18px; color: rgba(255,255,255,.45);
+    font-size: 12px; letter-spacing: 1px; pointer-events: none; }
+  #err { display: none; position: fixed; inset: 0; align-items: center; justify-content: center;
+    color: #f0c98a; font-size: 16px; text-align: center; padding: 40px; }
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+<div id="vignette"></div>
+<div id="label">T0 · 竹简观兵 · 视觉验证</div>
+<div id="hint">拖拽旋转 · 滚轮缩放</div>
+<div id="err">WebGL 不可用</div>
+<script src="../../tools/wenwu/assets/vendor/three.min.js"></script>
+<script src="./assets/main.js"></script>
+</body>
+</html>

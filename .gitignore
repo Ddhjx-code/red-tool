@@ -2,22 +2,15 @@
 __pycache__/
 *.pyc
 *.log
-tmp/
-test
-.omo/
-tools/*/assets/img/raw/
-tools/*/screenshots/
-docs/research/yuegong-drafts/
-docs/research/yueyan-drafts/
-docs/research/yuedeng-drafts/
-docs/research/wuhuolong-drafts/
-skill_list.md
-.playwright-mcp/
-docs/superpowers/
-docs/specs/
 
-.env
-.env.*
-*.key
-*.pem
-docs/research/xingshi-drafts/
+# 打包产物：由 tools/ 源码构建生成，入库会持续产生大体积 diff
+dist/
+release/
+
+# 本地规范参考与旧版备份，不入库
+.skill_upstream/
+.skill_backup_*/
+
+# 临时文件
+*.tmp
+*.pid

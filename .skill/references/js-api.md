@@ -1,6 +1,8 @@
 # 小工具 JS API 本地参考
 
 > 本文是 2026-09-23 的本地快照，按 `docs/index.html` 的 JS API 章节复刻，保留参数表、约束与示例。实现时应优先获取[小工具在线文档](https://miniapp-sandbox.xiaohongshu.com/minitool/doc)；仅当远程文档无法获取时，才以本文作为 API 契约参考。
+>
+> ⚠️ **本地增补**：在线文档已更新至 2026-11-06，本文快照之后新增了 `getWindowInfo`、`getLocation`、`vibrateShort` / `vibrateLong`、陀螺仪、`followAuthor` / `getFollowStatus`、`share`、云存储、排行榜、`window.xhs.AI` 等能力。清单与版本门槛见 [online-doc-delta.md](./online-doc-delta.md) §2。
 
 容器自动注入 `window.xhs`，无需在包内引入 SDK。端能力从 `window.xhs.miniTool` 调用。
 
@@ -104,6 +106,8 @@ async function getBuildVersion() {
 | `mediaInfo.image_resources` | `{ url }[]` | 图片，1–18 张；`url` 为 data URI 或本地路径 |
 | `mediaInfo.video_resources` | `{ video_url, cover_url? }` | 单个视频及可选封面 |
 | `mediaInfo.live_photo_sources` | `{ url, video_url }[]` | 实况照片，1–18 组（9.43+） |
+
+> ⚠️ **本地增补（以在线文档 2026-11-06 为准）**：在线文档 §3.3 的字段表与示例均为 `mediaInfo.live_photo_resources`，本文快照写的 `live_photo_sources` 已过时。按 `live_photo_resources` 实现。详见 [online-doc-delta.md](./online-doc-delta.md) §1.1。
 
 ```js
 await window.xhs.miniTool.postNote({

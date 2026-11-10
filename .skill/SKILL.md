@@ -5,6 +5,7 @@ description: >-
   新建或改写小工具 / H5 页面、打包小工具 zip、处理端能力限制与容器 CSP 约束时使用。
 metadata:
   version: "1.7.0"
+  localDelta: "online-doc-delta.md（在线文档 2026-11-06）"
 ---
 
 # 小工具 ZIP 构建指南
@@ -22,7 +23,7 @@ metadata:
 
 开始任何实现前，优先完成在线端能力发现；后续每一步动手前再读对应 reference，不要凭记忆产出：
 
-1. **获取当前规范** — 每个任务开始时先获取 [小工具在线文档](https://miniapp-sandbox.xiaohongshu.com/minitool/doc)，确认当前容器规则与实现所需能力；同一任务只获取一次。若受网络或沙箱限制无法访问，按当前工具的授权机制请求用户仅批准访问该链接和在当前工作区保存文档副本；不得试图绕过限制。授权后仍无法获取时，读取 [js-api.md](references/js-api.md) 作为本地 API 快照；远程文档成功获取后始终以远程内容为准
+1. **获取当前规范** — 每个任务开始时先获取 [小工具在线文档](https://miniapp-sandbox.xiaohongshu.com/minitool/doc)，确认当前容器规则与实现所需能力；同一任务只获取一次。若受网络或沙箱限制无法访问，按当前工具的授权机制请求用户仅批准访问该链接和在当前工作区保存文档副本；不得试图绕过限制。授权后仍无法获取时，读取 [js-api.md](references/js-api.md) 作为本地 API 快照，并读 [online-doc-delta.md](references/online-doc-delta.md) 补齐快照（2026-09-23）之后的能力变更与字段冲突；远程文档成功获取后始终以远程内容为准
 2. **优先匹配容器能力** — 实现每项需求前，先在远程文档中查找匹配的容器能力；远程文档不可用时改查 [js-api.md](references/js-api.md)。文档明确支持时必须优先使用，仅在没有匹配能力或当前环境不满足文档条件时才采用兼容的 Web 方案
 3. **编写 / 适配 HTML** — 先读 [zip-artifact-spec.md](references/zip-artifact-spec.md)：目录结构、`index.html` 模板、路径与资源引用规则，按其编写
 4. **端能力合规** — 先读 [device-capabilities.md](references/device-capabilities.md)：对照「不可用能力 / 行为」逐项核对；存在在线文档声明的替代能力时按文档改写，否则移除不可用能力
@@ -44,8 +45,9 @@ metadata:
 | --- | --- |
 | [小工具在线文档](https://miniapp-sandbox.xiaohongshu.com/minitool/doc) | 每个任务开始时优先获取：以当前页面为准实现所需能力与容器规则 |
 | [js-api.md](references/js-api.md) | 远程文档经授权仍无法获取时：使用本地 API 快照；远程文档恢复可用后以远程内容为准 |
+| [online-doc-delta.md](references/online-doc-delta.md) | **本地增补**：1.7.0 快照（2026-09-23）相对在线文档（2026-11-06）的增量与冲突（实况照片字段名、Worker 9.53、assets 静态资源优化、新增端能力） |
 | [zip-artifact-spec.md](references/zip-artifact-spec.md) | 写 HTML / 打包时：目录结构、`index.html` 模板、路径与资源引用规则、打包自检 |
-| [device-capabilities.md](references/device-capabilities.md) | 处理端能力时：哪些 Web 能力可用 / 不可用及替代写法、如何实现常见交互（手势、拍照、选图等） |
+| [device-capabilities.md](references/device-capabilities.md) | 处理端能力时：哪些 Web 能力可用 / 不可用及替代写法、如何实现常见交互（手势、拍照、选图等）；**Worker 与定位 / 陀螺仪的「一律移除」结论已过时，先看 online-doc-delta.md §1.2 / §2** |
 | [js-compatibility.md](references/js-compatibility.md) | 写 JS / 选择构建产物时：Android 8.1 出场 Chrome / WebView 61 最低基线、Web API 检测与局部降级 |
 | [css-compatibility.md](references/css-compatibility.md) | 写 CSS / 选择构建产物时：Chrome 61 基线、能力检测、现代 CSS 增强与局部回退 |
 | [cross-platform-h5.md](references/cross-platform-h5.md) | 适配多端时：触摸、滚动、安全区、PC 模拟器与真机差异 |
