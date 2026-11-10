@@ -1,17 +1,31 @@
-# 月历 · 宣传素材
+# 月历 · 发布集
 
-小工具 `tools/yueli` 的发布物料。**成品在图里，脚本能重出一遍。**
+小工具 `tools/yueli` 的上线物料。**zip 能上传，图能发笔记，脚本能重出这一整包。**
 
 | 路径 | 内容 | 要不要发 |
 | --- | --- | --- |
+| `yueli.zip` | 小工具包，12.7 KB，`index.html` 在根 | 上传用这个 |
 | `images/01.png` ~ `06.png` | 图文笔记六张，1080×1440（3:4） | 按序号发 |
-| `video/yueli-17s.mp4` | 视频笔记，1080×1920，25fps，17s，无音轨 | 发，音乐在站内选 |
-| `notes/xiaohongshu.md` | 两篇笔记的标题、正文、话题、发布顺序 | 照抄 |
+| `yueli-17s.mp4` | 视频笔记，1080×1920，25fps，17s，无音轨 | 发，音乐在站内选 |
+| `发布文案.md` | 两篇笔记的标题、正文、话题、发布顺序 | 照抄 |
 | `src/` | 生成上面这些东西的代码 | 不发 |
 | `build/` | 脚本产出的中间文件，已 gitignore | 不发 |
 
 `build/` 里的 `shots/`（界面截图）和 `cards/`（宣传图）是 `src/render.sh`、`src/shoot.sh`
 的输出，随时可以重出，不入库。**要改图就改 `src/cards/p*.html` 再跑一遍，不要直接改 PNG。**
+
+## 重新打包
+
+包是从源码打的，不是手工压的。改了 `tools/yueli/` 之后：
+
+```sh
+cd red-tool
+python3 scripts/build-tool.py yueli     # -> dist/yueli.zip，自动过体积审计
+cp dist/yueli.zip release/yueli/yueli.zip
+```
+
+脚本会拒收三种情况：`index.html` 不在根、多套一层目录、混进不允许的文件类型；
+`prototype*.html` / `*.md` / `*.map` / `.DS_Store` 自动排除。`dist/` 只是构建缓存，不入库。
 
 ## 六张图讲什么
 
@@ -39,7 +53,7 @@
 依赖：Google Chrome（无头）、ffmpeg、python3。全部在 macOS 上跑通。
 
 ```sh
-cd promo/yueli/src
+cd release/yueli/src
 
 ./shoot.sh              # 生成预览壳 → build/shots/*@2x.png（4 张 780×1688）
 ./render.sh             # 六张卡 → build/cards/p1..p6.png（1080×1440）
