@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>糖球转转</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div id="app">
+
+  <canvas id="cv"></canvas>
+
+  <div id="hud">
+    <div id="hearts"></div>
+    <div id="clock">3:00</div>
+    <div id="killBox"><b id="kills">0</b><span>只</span></div>
+    <div id="lvbar"><i id="lvfill"></i><b id="lvtxt">Lv.1</b></div>
+  </div>
+
+  <div id="joy"><div id="knob"></div></div>
+
+  <div id="start" class="screen on">
+    <div class="start-in">
+      <div class="logo">糖球转转</div>
+      <div class="sub">拖住左下摇杆走位<br>糖针会自己绕着转</div>
+      <button id="startBtn" class="btn">开始</button>
+      <div class="best" id="bestTxt"></div>
+    </div>
+  </div>
+
+  <div id="up" class="screen">
+    <div class="up-in">
+      <div class="up-kick">升到 <b id="upLv">2</b> 级</div>
+      <div class="up-sub">挑一个带走</div>
+      <div id="upCards"></div>
+    </div>
+  </div>
+
+  <div id="over" class="screen">
+    <div class="over-in">
+      <div class="over-kick" id="overKick">天亮了</div>
+      <div class="over-title" id="overTitle">糖球大师</div>
+      <div class="over-stats" id="overStats"></div>
+      <div class="over-weap" id="overWeap"></div>
+      <div class="over-btns">
+        <button id="shareBtn" class="btn ghost">存成图</button>
+        <button id="againBtn" class="btn">再来一局</button>
+      </div>
+      <div class="over-hint" id="overHint"></div>
+    </div>
+  </div>
+
+</div>
+<script src="assets/game.js"></script>
+</body>
+</html>

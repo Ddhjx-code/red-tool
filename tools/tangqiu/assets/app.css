@@ -1,0 +1,409 @@
+/* 糖球转转 —— 可爱风幸存者类
+   Chrome 61 基线：不用 flex gap / inset / aspect-ratio / clamp / :is()。
+   --u = 屏宽 1%（390 宽时 3.9px），由 game.js 写入。 */
+
+html {
+  --u: 3.9px;
+  --ink: #5B4B4B;
+  --pink: #FFC2D1;
+  --pink-d: #F2939F;
+  --cream: #FFF6F2;
+  --mint: #B8EBD9;
+  --lilac: #D9CDF6;
+  --butter: #FFE3A3;
+}
+
+*,
+*::before,
+*::after {
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--cream);
+  color: var(--ink);
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+#cv {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+}
+
+/* ---------- HUD ---------- */
+#hud {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  padding: calc(var(--u) * 2.6) calc(var(--u) * 3.4);
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* 顶部柔光底：怪从上方涌进来时，心心与计时器也读得清 */
+#hud::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: calc(var(--u) * 24);
+  background: -webkit-linear-gradient(top, rgba(255, 246, 242, 0.94), rgba(255, 246, 242, 0));
+  background: linear-gradient(to bottom, rgba(255, 246, 242, 0.94), rgba(255, 246, 242, 0));
+  z-index: -1;
+}
+
+#hearts {
+  position: absolute;
+  left: calc(var(--u) * 3.4);
+  top: calc(var(--u) * 2.2);
+  height: calc(var(--u) * 6);
+  line-height: calc(var(--u) * 6);
+}
+
+#hearts i {
+  display: inline-block;
+  margin-right: calc(var(--u) * 0.6);
+  font-style: normal;
+  font-size: calc(var(--u) * 5.6);
+  line-height: 1;
+  color: #F2939F;
+  -webkit-text-stroke: calc(var(--u) * 0.34) var(--ink);
+  vertical-align: middle;
+}
+
+#hearts i.off {
+  color: #EDE3DF;
+}
+
+#clock {
+  text-align: center;
+  font-size: calc(var(--u) * 5.2);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--ink);
+  text-shadow: 0 calc(var(--u) * 0.3) 0 #fff;
+}
+
+#killBox {
+  position: absolute;
+  right: calc(var(--u) * 3.4);
+  top: calc(var(--u) * 2.6);
+  font-size: calc(var(--u) * 3.2);
+  color: #9A8783;
+}
+
+#killBox b {
+  font-size: calc(var(--u) * 4.6);
+  color: var(--ink);
+  margin-right: calc(var(--u) * 0.5);
+}
+
+#killBox span {
+  font-size: calc(var(--u) * 2.8);
+}
+
+#lvbar {
+  position: relative;
+  margin: calc(var(--u) * 2.2) auto 0;
+  width: calc(var(--u) * 54);
+  height: calc(var(--u) * 3.4);
+  border: calc(var(--u) * 0.4) solid var(--ink);
+  border-radius: calc(var(--u) * 2);
+  background: #FFF;
+  overflow: hidden;
+}
+
+#lvfill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  background: var(--mint);
+  -webkit-transition: width 0.18s linear;
+  transition: width 0.18s linear;
+}
+
+#lvtxt {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  margin-top: calc(var(--u) * -1.55);
+  text-align: center;
+  font-size: calc(var(--u) * 2.5);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* ---------- 摇杆 ---------- */
+/* 浮动摇杆：不摸的时候几乎看不见，避免和主角撞脸 */
+#joy {
+  position: absolute;
+  left: calc(var(--u) * 8);
+  bottom: calc(var(--u) * 8);
+  width: calc(var(--u) * 21);
+  height: calc(var(--u) * 21);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  border: calc(var(--u) * 0.4) solid rgba(91, 75, 75, 0.18);
+  pointer-events: none;
+  opacity: 0.3;
+  z-index: 3;
+  -webkit-transition: opacity 0.12s linear;
+  transition: opacity 0.12s linear;
+}
+
+#joy.on {
+  opacity: 0.92;
+}
+
+#knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--u) * 8.4);
+  height: calc(var(--u) * 8.4);
+  margin-left: calc(var(--u) * -4.2);
+  margin-top: calc(var(--u) * -4.2);
+  border-radius: 50%;
+  background: #FFF;
+  border: calc(var(--u) * 0.5) solid rgba(91, 75, 75, 0.55);
+  box-shadow: 0 calc(var(--u) * 0.6) 0 rgba(91, 75, 75, 0.12);
+}
+
+/* ---------- 通用屏 ---------- */
+.screen {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: none;
+  z-index: 6;
+}
+
+.screen.on {
+  display: block;
+}
+
+.btn {
+  display: inline-block;
+  padding: calc(var(--u) * 2.6) calc(var(--u) * 7.5);
+  font-size: calc(var(--u) * 4.2);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--butter);
+  border: calc(var(--u) * 0.6) solid var(--ink);
+  border-radius: calc(var(--u) * 6);
+  box-shadow: 0 calc(var(--u) * 1.1) 0 var(--ink);
+  outline: 0;
+}
+
+.btn:active {
+  -webkit-transform: translateY(calc(var(--u) * 0.8));
+  transform: translateY(calc(var(--u) * 0.8));
+  box-shadow: 0 calc(var(--u) * 0.3) 0 var(--ink);
+}
+
+.btn.ghost {
+  background: #FFF;
+}
+
+/* ---------- 开场 ---------- */
+#start {
+  background: rgba(255, 246, 242, 0.92);
+}
+
+.start-in {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  margin-top: calc(var(--u) * -34);
+  text-align: center;
+}
+
+.logo {
+  font-size: calc(var(--u) * 12);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  text-shadow: calc(var(--u) * 0.7) calc(var(--u) * 0.7) 0 var(--pink);
+}
+
+.sub {
+  margin: calc(var(--u) * 3.4) 0 calc(var(--u) * 6);
+  font-size: calc(var(--u) * 3.6);
+  line-height: 1.7;
+  color: #8A7672;
+}
+
+.best {
+  margin-top: calc(var(--u) * 5);
+  font-size: calc(var(--u) * 3);
+  color: #A08C88;
+  min-height: calc(var(--u) * 4);
+}
+
+/* ---------- 升级面板 ---------- */
+#up {
+  background: rgba(91, 75, 75, 0.56);
+}
+
+.up-in {
+  position: absolute;
+  left: calc(var(--u) * 5);
+  right: calc(var(--u) * 5);
+  top: 50%;
+  margin-top: calc(var(--u) * -30);
+}
+
+.up-kick {
+  text-align: center;
+  font-size: calc(var(--u) * 3.4);
+  color: #FFF;
+  opacity: 0.92;
+}
+
+.up-kick b {
+  font-size: calc(var(--u) * 5.4);
+}
+
+.up-sub {
+  margin: calc(var(--u) * 1) 0 calc(var(--u) * 3.4);
+  text-align: center;
+  font-size: calc(var(--u) * 5);
+  font-weight: 800;
+  color: #FFF;
+  text-shadow: 0 calc(var(--u) * 0.4) 0 rgba(91, 75, 75, 0.5);
+}
+
+.card {
+  position: relative;
+  margin-bottom: calc(var(--u) * 2.6);
+  padding: calc(var(--u) * 3.2) calc(var(--u) * 4);
+  background: #FFF;
+  border: calc(var(--u) * 0.6) solid var(--ink);
+  border-radius: calc(var(--u) * 4);
+  box-shadow: 0 calc(var(--u) * 1) 0 var(--ink);
+}
+
+.card:active {
+  -webkit-transform: translateY(calc(var(--u) * 0.6));
+  transform: translateY(calc(var(--u) * 0.6));
+  box-shadow: 0 calc(var(--u) * 0.3) 0 var(--ink);
+}
+
+.card-tag {
+  display: inline-block;
+  padding: calc(var(--u) * 0.3) calc(var(--u) * 1.6);
+  font-size: calc(var(--u) * 2.4);
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--mint);
+  border-radius: calc(var(--u) * 2);
+  vertical-align: middle;
+}
+
+.card-tag.up {
+  background: var(--butter);
+}
+
+.card-tag.prop {
+  background: var(--lilac);
+}
+
+.card-name {
+  margin: calc(var(--u) * 1.4) 0 calc(var(--u) * 0.8);
+  font-size: calc(var(--u) * 4.6);
+  font-weight: 800;
+}
+
+.card-desc {
+  font-size: calc(var(--u) * 3);
+  line-height: 1.55;
+  color: #8A7672;
+}
+
+/* ---------- 结算 ---------- */
+#over {
+  background: rgba(255, 246, 242, 0.975);
+}
+
+.over-in {
+  position: absolute;
+  left: calc(var(--u) * 6);
+  right: calc(var(--u) * 6);
+  top: 50%;
+  margin-top: calc(var(--u) * -36);
+  text-align: center;
+}
+
+.over-kick {
+  font-size: calc(var(--u) * 3.4);
+  color: #A08C88;
+  letter-spacing: 0.12em;
+}
+
+.over-title {
+  margin: calc(var(--u) * 1.6) 0 calc(var(--u) * 4);
+  font-size: calc(var(--u) * 10);
+  font-weight: 800;
+  color: var(--ink);
+  text-shadow: calc(var(--u) * 0.5) calc(var(--u) * 0.5) 0 #FFDDE6;
+}
+
+.over-stats {
+  font-size: calc(var(--u) * 3.4);
+  line-height: 1.9;
+  color: #7A6662;
+}
+
+.over-weap {
+  margin: calc(var(--u) * 2.6) auto calc(var(--u) * 5);
+  width: calc(var(--u) * 86);
+  font-size: calc(var(--u) * 2.7);
+  line-height: 1.7;
+  color: #9A8783;
+}
+
+.over-btns .btn {
+  margin: 0 calc(var(--u) * 1.4);
+}
+
+.over-hint {
+  margin-top: calc(var(--u) * 3.4);
+  font-size: calc(var(--u) * 2.8);
+  color: #B0A09C;
+  min-height: calc(var(--u) * 4);
+}
+
+.over-stats .best-line {
+  font-size: calc(var(--u) * 2.7);
+  color: #A08C88;
+}

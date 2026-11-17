@@ -17,6 +17,7 @@ release/*
 !release/body/
 !release/det/
 !release/data/
+!release/tangqiu/
 
 # 素材中间产物：截图、帧序列、合成前的图，都能由 src/ 里的脚本重出
 release/*/build/
