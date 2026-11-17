@@ -4,6 +4,12 @@
 
 html {
   --u: 3.9px;
+  /* iOS 刘海/状态栏：全屏容器里 HUD 要避开。两句都写，旧 WebView 认 constant，
+     Chrome 69+ 认 env，都不认时 var(--sat, 0px) 回退成 0。 */
+  --sat: constant(safe-area-inset-top);
+  --sat: env(safe-area-inset-top);
+  --sab: constant(safe-area-inset-bottom);
+  --sab: env(safe-area-inset-bottom);
   --ink: #5B4B4B;
   --pink: #FFC2D1;
   --pink-d: #F2939F;
@@ -58,6 +64,10 @@ body {
   top: 0;
   right: 0;
   padding: calc(var(--u) * 2.6) calc(var(--u) * 3.4);
+  /* HUD 里心心/击杀/徽标是绝对定位，padding 推不动它们。
+     整块下移一个安全区高度，四种子元素（含顶部渐变底）一起让开状态栏。 */
+  -webkit-transform: translateY(var(--sat, 0px));
+  transform: translateY(var(--sat, 0px));
   pointer-events: none;
   z-index: 4;
 }
@@ -68,8 +78,8 @@ body {
   position: absolute;
   left: 0;
   right: 0;
-  top: 0;
-  height: calc(var(--u) * 24);
+  top: calc(var(--sat, 0px) * -1);
+  height: calc(var(--u) * 24 + var(--sat, 0px));
   background: -webkit-linear-gradient(top, rgba(255, 250, 248, 0.99) 0%, rgba(255, 250, 248, 0.92) 55%, rgba(255, 250, 248, 0) 100%);
   background: linear-gradient(to bottom, rgba(255, 250, 248, 0.99) 0%, rgba(255, 250, 248, 0.92) 55%, rgba(255, 250, 248, 0) 100%);
   z-index: -1;
@@ -164,7 +174,7 @@ body {
 #joy {
   position: absolute;
   left: calc(var(--u) * 8);
-  bottom: calc(var(--u) * 8);
+  bottom: calc(var(--u) * 8 + var(--sab, 0px));
   width: calc(var(--u) * 21);
   height: calc(var(--u) * 21);
   border-radius: 50%;
