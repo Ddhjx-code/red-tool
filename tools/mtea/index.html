@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>奶茶店老板</title>
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/game.css">
+</head>
+<body>
+<div id="app">
+
+  <div id="hud">
+    <div id="pips"><i class="pip on"></i><i class="pip"></i><i class="pip"></i></div>
+    <div id="hudName">备货</div>
+  </div>
+
+  <div id="stage">
+
+    <!-- ===== 第 1 关：备货 ===== -->
+    <div class="scene on" id="s1">
+      <div class="qhead">
+        <div class="qline1">第 <b id="ordNo">1</b> 单 · 明天要卖</div>
+        <div class="qline2 ord" id="ordTxt"></div>
+      </div>
+
+      <div id="cups" class="cups"></div>
+
+      <div class="calc">
+        <div class="calc-cap"><b>b</b> = <b>X</b> · <b>w</b><span>每列乘杯数，四行加起来</span></div>
+        <div class="grid" id="grid"></div>
+        <div class="cline" id="cline"></div>
+        <div class="calc-note" id="calcNote"></div>
+      </div>
+    </div>
+
+    <!-- ===== 第 2 关：揪假新品 ===== -->
+    <div class="scene" id="s2">
+      <div class="qhead">
+        <div class="qline1">菜单上有 <b>4</b> 款</div>
+        <div class="qline2">有一款是重复的</div>
+      </div>
+
+      <div id="cards" class="cards"></div>
+
+      <div id="ruler" class="ruler">
+        <div class="ruler-head"><b id="ratioTxt">×1.00</b><span id="rulerHint">点两张卡，再拖倍率</span></div>
+        <div class="sl" id="ratioSl">
+          <div class="sl-track"><i class="sl-fill"></i></div>
+          <div class="sl-thumb"></div>
+        </div>
+        <div class="chips" id="chips"></div>
+      </div>
+    </div>
+
+    <!-- ===== 第 3 关：反推配方 ===== -->
+    <div class="scene" id="s3">
+      <div class="qhead">
+        <div class="qline1 big" id="s3title">隔壁的进货单</div>
+        <div class="qline2 sub" id="s3sub">他这周进了多少料</div>
+      </div>
+
+      <div class="bill" id="bill"></div>
+
+      <div class="map-wrap">
+        <svg id="map" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+
+      <div id="s3cups" class="cups small"></div>
+      <div class="diff" id="diff"></div>
+      <div class="found" id="found"></div>
+    </div>
+
+  </div>
+
+  <div id="foot">
+    <div id="footTxt">拖一拖就知道了</div>
+    <button id="mainBtn" class="btn">下一步</button>
+  </div>
+
+  <div id="end" class="end">
+    <div class="end-card">
+      <div class="end-kick">三关都过了</div>
+      <div class="end-title" id="endTitle">同一堆数字<br>表格只能翻，矩阵能算</div>
+      <div class="end-body" id="endBody"></div>
+      <button id="againBtn" class="btn">再玩一次</button>
+    </div>
+  </div>
+
+</div>
+<script src="assets/game.js"></script>
+</body>
+</html>

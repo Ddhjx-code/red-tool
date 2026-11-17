@@ -1,0 +1,324 @@
+/* 奶茶店老板 —— 基础样式
+   Chrome 61 基线：不用 flex gap / inset / aspect-ratio / clamp / :is()。
+   尺寸单位 --u = 屏宽 1%，由 game.js 写入；未写入时用 390 宽的默认值。 */
+
+html {
+  --u: 3.9px;
+}
+
+*,
+*::before,
+*::after {
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: #EFEBE4;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  color: #23201C;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  margin: 0 auto;
+  background: #F6F3EE;
+  overflow: hidden;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+}
+
+/* ---------- 顶部进度 ---------- */
+#hud {
+  -webkit-flex: 0 0 auto;
+  flex: 0 0 auto;
+  padding: calc(var(--u) * 6) calc(var(--u) * 6) 0;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+}
+
+#pips {
+  display: -webkit-flex;
+  display: flex;
+}
+
+.pip {
+  width: calc(var(--u) * 7);
+  height: calc(var(--u) * 1.7);
+  border-radius: calc(var(--u) * 1);
+  background: #DFD8CB;
+  margin-right: calc(var(--u) * 1.6);
+  -webkit-transition: background 0.3s ease, width 0.3s ease;
+  transition: background 0.3s ease, width 0.3s ease;
+}
+
+.pip.on {
+  background: #23201C;
+  width: calc(var(--u) * 12);
+}
+
+#hudName {
+  font-size: calc(var(--u) * 3.3);
+  color: #8C8378;
+  letter-spacing: 0.1em;
+}
+
+/* ---------- 舞台 ---------- */
+#stage {
+  position: relative;
+  -webkit-flex: 1 1 auto;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.scene {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: calc(var(--u) * 3) calc(var(--u) * 6) calc(var(--u) * 2);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  opacity: 0;
+  pointer-events: none;
+  -webkit-transition: opacity 0.24s ease;
+  transition: opacity 0.24s ease;
+}
+
+.scene.on {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ---------- 场景标题 ---------- */
+.qhead {
+  margin-bottom: calc(var(--u) * 2.4);
+}
+
+.qline1 {
+  font-size: calc(var(--u) * 3.4);
+  color: #8C8378;
+  letter-spacing: 0.06em;
+}
+
+.qline1 b {
+  color: #23201C;
+}
+
+.qline2 {
+  margin-top: calc(var(--u) * 1.2);
+  font-size: calc(var(--u) * 7.4);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+}
+
+/* ---------- 滑杆 ---------- */
+.sl {
+  position: relative;
+  height: calc(var(--u) * 8);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sl-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: calc(var(--u) * 1.5);
+  margin-top: calc(var(--u) * -0.75);
+  background: #E4DDD0;
+  border-radius: calc(var(--u) * 1);
+}
+
+.sl-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 0;
+  background: #23201C;
+  border-radius: calc(var(--u) * 1);
+}
+
+.sl-thumb {
+  position: absolute;
+  top: 50%;
+  width: calc(var(--u) * 6.4);
+  height: calc(var(--u) * 6.4);
+  margin-top: calc(var(--u) * -3.2);
+  margin-left: calc(var(--u) * -3.2);
+  left: 0;
+  border-radius: 50%;
+  background: #FFFDF9;
+  border: calc(var(--u) * 0.55) solid #23201C;
+  -webkit-box-shadow: 0 calc(var(--u) * 0.5) calc(var(--u) * 1.4) rgba(35, 32, 28, 0.14);
+  box-shadow: 0 calc(var(--u) * 0.5) calc(var(--u) * 1.4) rgba(35, 32, 28, 0.14);
+}
+
+.sl.snap .sl-thumb {
+  border-color: #4E9E75;
+  background: #EAF6EE;
+}
+
+/* 目标刻度 */
+.sl-mark {
+  position: absolute;
+  top: 50%;
+  width: 2px;
+  height: calc(var(--u) * 4);
+  margin-top: calc(var(--u) * -2);
+  margin-left: -1px;
+  background: #B9AE9C;
+  border-radius: 1px;
+}
+
+/* ---------- 按钮 ---------- */
+.btn {
+  display: inline-block;
+  width: 100%;
+  padding: calc(var(--u) * 4.2) 0;
+  border: 0;
+  border-radius: calc(var(--u) * 3);
+  background: #23201C;
+  color: #FFFDF9;
+  font-family: inherit;
+  font-size: calc(var(--u) * 4.4);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.btn:active {
+  -webkit-transform: scale(0.985);
+  transform: scale(0.985);
+}
+
+.btn.ghost {
+  background: transparent;
+  color: #23201C;
+  border: 1px solid rgba(35, 32, 28, 0.2);
+}
+
+/* ---------- 底部 ---------- */
+#foot {
+  -webkit-flex: 0 0 auto;
+  flex: 0 0 auto;
+  padding: calc(var(--u) * 2.5) calc(var(--u) * 6) calc(var(--u) * 6);
+}
+
+#footTxt {
+  font-size: calc(var(--u) * 3.4);
+  color: #8C8378;
+  text-align: center;
+  letter-spacing: 0.04em;
+  min-height: calc(var(--u) * 4.6);
+  -webkit-transition: color 0.2s ease;
+  transition: color 0.2s ease;
+}
+
+#mainBtn {
+  margin-top: calc(var(--u) * 2.4);
+  display: none;
+}
+
+#mainBtn.on {
+  display: block;
+}
+
+/* ---------- 结算 ---------- */
+.end {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(35, 32, 28, 0.42);
+  display: -webkit-flex;
+  display: flex;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  padding: calc(var(--u) * 7);
+  opacity: 0;
+  pointer-events: none;
+  -webkit-transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease;
+  z-index: 30;
+}
+
+.end.on {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.end-card {
+  width: 100%;
+  background: #FFFDF9;
+  border-radius: calc(var(--u) * 5);
+  padding: calc(var(--u) * 7) calc(var(--u) * 6);
+  -webkit-box-shadow: 0 calc(var(--u) * 2) calc(var(--u) * 6) rgba(35, 32, 28, 0.2);
+  box-shadow: 0 calc(var(--u) * 2) calc(var(--u) * 6) rgba(35, 32, 28, 0.2);
+  -webkit-transform: translateY(calc(var(--u) * 3));
+  transform: translateY(calc(var(--u) * 3));
+  -webkit-transition: transform 0.34s cubic-bezier(0.22, 0.9, 0.3, 1);
+  transition: transform 0.34s cubic-bezier(0.22, 0.9, 0.3, 1);
+}
+
+.end.on .end-card {
+  -webkit-transform: translateY(0);
+  transform: translateY(0);
+}
+
+.end-kick {
+  font-size: calc(var(--u) * 3.2);
+  color: #8C8378;
+  letter-spacing: 0.14em;
+}
+
+.end-title {
+  margin-top: calc(var(--u) * 2.4);
+  font-size: calc(var(--u) * 6.4);
+  font-weight: 600;
+  line-height: 1.32;
+}
+
+.end-body {
+  margin-top: calc(var(--u) * 4);
+  font-size: calc(var(--u) * 3.7);
+  line-height: 1.72;
+  color: #57504A;
+}
+
+.end-body b {
+  color: #23201C;
+}
+
+.end-card .btn {
+  margin-top: calc(var(--u) * 6);
+}

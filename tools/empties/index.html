@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="icon" href="data:," />
+  <title>空瓶记</title>
+  <link rel="stylesheet" href="./assets/app.css" />
+  <link rel="stylesheet" href="./assets/empties.css" />
+</head>
+<body>
+<div id="app">
+  <div id="head">
+    <div id="kicker">空瓶记</div>
+    <div id="title">这瓶，还能用到哪天</div>
+    <div id="dayline">按到期日排好了</div>
+  </div>
+
+  <div id="body">
+    <!-- 在用 -->
+    <div class="page on" id="pList">
+      <div id="listTop">
+        <span id="cnt"></span>
+        <span id="sortTag">剩余天数 ↑</span>
+      </div>
+      <div id="list"></div>
+      <div id="foot">「开封后 12 个月」是从开封那天算的，不是包装上的保质期。</div>
+    </div>
+
+    <!-- 空瓶 -->
+    <div class="page" id="pDone">
+      <div class="stats" id="doneStats"></div>
+      <div id="doneTop"></div>
+      <div id="doneList"></div>
+      <div id="doneFoot">一年之后回看，才知道哪些是真的值得买。</div>
+    </div>
+
+    <!-- 记一瓶 -->
+    <div class="page" id="pAdd">
+      <div class="fld">
+        <div class="lab">是什么</div>
+        <input id="fName" type="text" maxlength="16" placeholder="比如 兰蔻小黑瓶 30ml" />
+      </div>
+
+      <div class="fld">
+        <div class="lab">哪一类</div>
+        <div class="chips" id="fCat"></div>
+      </div>
+
+      <div class="fld">
+        <div class="lab">哪天开的</div>
+        <input id="fOpen" type="date" />
+      </div>
+
+      <div class="fld">
+        <div class="lab">开封后能用多久</div>
+        <div class="chips" id="fPao"></div>
+        <div class="hint">瓶子背面那个小罐子图标旁边的数字，就是它。</div>
+      </div>
+
+      <button class="btn" id="addBtn">记下来</button>
+    </div>
+  </div>
+
+  <div id="tabs">
+    <div class="tab on" id="t0"><i></i>在用</div>
+    <div class="tab" id="t1"><i></i>空瓶</div>
+    <div class="tab" id="t2"><i></i>记一瓶</div>
+  </div>
+
+  <div id="mask"></div>
+  <div id="sheet">
+    <div id="shName"></div>
+    <div id="shMeta"></div>
+    <button class="btn" id="shDone">用完了，收进空瓶</button>
+    <button class="btn ghost" id="shDel">删掉这瓶</button>
+    <button class="btn ghost" id="shCancel">取消</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script src="./assets/empties.js"></script>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="icon" href="data:," />
+  <title>今天什么颜色</title>
+  <link rel="stylesheet" href="./assets/app.css" />
+  <link rel="stylesheet" href="./assets/color.css" />
+</head>
+<body>
+<div id="app">
+  <div id="head">
+    <div id="kicker">今天什么颜色</div>
+    <div id="title">今天，是什么颜色</div>
+    <div id="dayline"></div>
+  </div>
+
+  <div id="body">
+    <!-- 今天 -->
+    <div class="page on" id="pToday">
+      <div id="palette"></div>
+      <div id="tip">点一下今天的颜色</div>
+      <div id="noteWrap">
+        <input id="note" type="text" maxlength="14" placeholder="留一句话（可不写）" />
+        <span id="count">0/14</span>
+      </div>
+      <button class="btn" id="saveBtn">记下来</button>
+
+      <div id="recent">
+        <div id="rTitle">最近七天</div>
+        <div id="strip"></div>
+        <div id="mLine"></div>
+      </div>
+
+      <div id="dist">
+        <div id="distTitle">这个月的颜色</div>
+        <div id="distBar"></div>
+        <div id="distCap"></div>
+      </div>
+    </div>
+
+    <!-- 这个月 -->
+    <div class="page" id="pMonth">
+      <div class="mhead">
+        <div class="arrow" id="prevM">‹</div>
+        <div id="mTitle"></div>
+        <div class="arrow dim" id="nextM">›</div>
+      </div>
+      <div id="mStat"></div>
+      <div id="mWeek">
+        <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span class="last">日</span>
+      </div>
+      <div id="mGrid"></div>
+      <div id="mTotal"></div>
+      <div id="mDist"></div>
+    </div>
+
+    <!-- 月卡 -->
+    <div class="page" id="pCard">
+      <div id="cardShot"><img id="cardImg" alt="月卡" /></div>
+      <div id="cardHint">长按图片保存，或直接截图</div>
+      <button class="btn ghost" id="cardRefresh">重新生成</button>
+    </div>
+  </div>
+
+  <div id="tabs">
+    <div class="tab on" id="t0"><i></i>今天</div>
+    <div class="tab" id="t1"><i></i>这个月</div>
+    <div class="tab" id="t2"><i></i>月卡</div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script src="./assets/app.js"></script>
+</body>
+</html>

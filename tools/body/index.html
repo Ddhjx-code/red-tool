@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="icon" href="data:," />
+  <title>体重围度</title>
+  <link rel="stylesheet" href="./assets/app.css" />
+  <link rel="stylesheet" href="./assets/body.css" />
+</head>
+<body>
+<div id="app">
+  <div id="head">
+    <div id="kicker">体重围度</div>
+    <div id="title">看趋势，别看今天</div>
+    <div id="dayline"></div>
+  </div>
+
+  <div id="body">
+    <!-- 记录 -->
+    <div class="page on" id="pRec">
+      <div id="big">
+        <span id="bigNum">—</span><span id="bigUnit">kg</span>
+      </div>
+      <div id="bigSub">还没有记录</div>
+
+      <div id="inputs">
+        <div class="inp">
+          <div class="lab">体重 kg</div>
+          <input id="fw" type="number" step="0.1" inputmode="decimal" placeholder="62.5" />
+        </div>
+        <div class="inp">
+          <div class="lab">腰围 cm（可不填）</div>
+          <input id="fwa" type="number" step="0.5" inputmode="decimal" placeholder="74" />
+        </div>
+      </div>
+
+      <button class="btn" id="saveBtn">记下今天</button>
+
+      <div id="recs"></div>
+    </div>
+
+    <!-- 曲线 -->
+    <div class="page" id="pChart">
+      <div id="range">
+        <span class="rg on" data-r="7">7 天</span>
+        <span class="rg" data-r="30">30 天</span>
+        <span class="rg" data-r="0">全部</span>
+      </div>
+      <div id="chartWrap">
+        <canvas id="chart"></canvas>
+      </div>
+      <div id="legend"></div>
+    </div>
+
+    <!-- 小结 -->
+    <div class="page" id="pSum">
+      <div id="sumList"></div>
+      <div id="sumNote">一天的体重说明不了什么，看一周的平均。</div>
+    </div>
+  </div>
+
+  <div id="tabs">
+    <div class="tab on" id="t0"><i></i>记录</div>
+    <div class="tab" id="t1"><i></i>曲线</div>
+    <div class="tab" id="t2"><i></i>小结</div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script src="./assets/body.js"></script>
+</body>
+</html>
