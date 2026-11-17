@@ -9,6 +9,7 @@ dist/
 # release/<工具>/ 是发布集（zip + 图 + 视频 + 文案 + 复现脚本），要入库
 # 其余（8 月漆扇那批大 zip 与录屏，合计 60MB+）保持忽略
 release/*
+!release/README.md
 !release/yueli/
 !release/mtea/
 !release/color/
