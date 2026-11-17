@@ -14,19 +14,31 @@
 
   <div id="hud">
     <div id="hearts"></div>
-    <div id="clock">3:00</div>
+    <div id="clock">1:30</div>
     <div id="killBox"><b id="kills">0</b><span>只</span></div>
     <div id="lvbar"><i id="lvfill"></i><b id="lvtxt">Lv.1</b></div>
+    <div id="stageBadge"></div>
   </div>
 
   <div id="joy"><div id="knob"></div></div>
 
+  <div id="levelCard" class="screen">
+    <div class="lc-in">
+      <div class="lc-no" id="lcNo">第 1 关</div>
+      <div class="lc-name" id="lcName">糖果工厂</div>
+      <div class="lc-sub" id="lcSub">布丁从这儿下线</div>
+    </div>
+  </div>
+
   <div id="start" class="screen on">
     <div class="start-in">
       <div class="logo">糖球转转</div>
-      <div class="sub">拖住左下摇杆走位<br>糖针会自己绕着转</div>
-      <button id="startBtn" class="btn">开始</button>
+      <div class="sub">七关闯关 · 拖摇杆走位<br>武器自己会打</div>
+      <div class="skin-row" id="skinRow"></div>
+      <div class="stage-row" id="stageRow"></div>
+      <button id="startBtn" class="btn">开始闯关</button>
       <div class="best" id="bestTxt"></div>
+      <div class="start-hint" id="startHint"></div>
     </div>
   </div>
 
@@ -40,13 +52,13 @@
 
   <div id="over" class="screen">
     <div class="over-in">
-      <div class="over-kick" id="overKick">天亮了</div>
-      <div class="over-title" id="overTitle">糖球大师</div>
+      <div class="over-kick" id="overKick">第 1 关通过</div>
+      <div class="over-title" id="overTitle">糖果工厂</div>
       <div class="over-stats" id="overStats"></div>
       <div class="over-weap" id="overWeap"></div>
       <div class="over-btns">
         <button id="shareBtn" class="btn ghost">存成图</button>
-        <button id="againBtn" class="btn">再来一局</button>
+        <button id="againBtn" class="btn">下一关</button>
       </div>
       <div class="over-hint" id="overHint"></div>
     </div>

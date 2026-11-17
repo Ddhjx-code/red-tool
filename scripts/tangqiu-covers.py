@@ -15,11 +15,11 @@ FONT = "/System/Library/Fonts/Hiragino Sans GB.ttc"
 W, H = 900, 1200
 
 SHOTS = [
-    ("01.png", "03-中期.png", "糖球转转", "三分钟，怪从四面涌上来"),
-    ("02.png", "02-战斗.png", "糖针绕着转", "近身自动打，不用瞄准"),
-    ("03.png", "04-升级三选一.png", "升级三选一", "新武器 / 升武器 / 加属性"),
-    ("04.png", "05-BOSS.png", "大蛋糕来了", "160 秒后的 BOSS 关"),
-    ("05.png", "06-结算.png", "活到天亮", "结算卡能存成图"),
+    ("01.png", "03-战斗.png", "糖球转转", "七关闯关 · 摇杆走位，武器自己打"),
+    ("02.png", "01-标题.png", "四个角色", "糖球 / 薄荷糖 / 可可球 / 星星糖"),
+    ("04.png", "05-升级三选一.png", "升级三选一", "新武器 / 升武器 / 加属性"),
+    ("05.png", "06-BOSS.png", "关底 BOSS", "每关最后 20 秒，王冠怪下场"),
+    ("06.png", "07-结算.png", "过关结算", "成绩卡能直接存成图"),
 ]
 
 
@@ -75,6 +75,13 @@ def main():
         d.text((W // 2, 1160), "小红书小工具 · 搜索「糖球转转」", font=font(26, False), fill=(176, 160, 156), anchor="mm")
         canvas.save(OUT / name, quality=92)
         print("wrote", OUT / name)
+
+    # 03 直接用「七关一览」长图，缩到 1080 宽，图上自带标题
+    pano = Image.open(SRC / "08-七关一览.png").convert("RGB")
+    pw = 1080
+    ph = int(pano.size[1] * pw / pano.size[0])
+    pano.resize((pw, ph), Image.LANCZOS).save(OUT / "03.png", quality=92)
+    print("wrote", OUT / "03.png", (pw, ph))
 
 
 if __name__ == "__main__":
