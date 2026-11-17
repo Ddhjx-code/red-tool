@@ -10,6 +10,12 @@ dist/
 # 其余（8 月漆扇那批大 zip 与录屏，合计 60MB+）保持忽略
 release/*
 !release/yueli/
+!release/mtea/
+!release/color/
+!release/empties/
+!release/body/
+!release/det/
+!release/data/
 
 # 素材中间产物：截图、帧序列、合成前的图，都能由 src/ 里的脚本重出
 release/*/build/
@@ -21,3 +27,6 @@ release/*/build/
 # 临时文件
 *.tmp
 *.pid
+
+# 本地登录凭证（redapp 复用），绝不入库
+.auth/
