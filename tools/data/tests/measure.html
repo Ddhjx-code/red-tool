@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>measure</title>
+  <link rel="stylesheet" href="../assets/theme.css" />
+  <link rel="stylesheet" href="../assets/ui.css" />
+  <style>
+    @page { size: 390px 800px; margin: 0; }
+    body { background: #000; color: #fff; }
+    #m { font-size: 34px; line-height: 1.5; font-family: monospace; padding: 10px; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="screen">
+    <main class="body" id="b">
+      <div class="wall" id="w"></div>
+    </main>
+  </div>
+</div>
+<div id="m">?</div>
+<script src="../scenes/_util.js"></script>
+<script>
+(function () {
+  var app = document.getElementById('app');
+  document.documentElement.style.setProperty('--u', app.clientWidth / 100 + 'px');
+  document.getElementById('w').innerHTML = window.DU.wall(40, 'is-full');
+
+  var u = getComputedStyle(document.documentElement).getPropertyValue('--u');
+  var blk = document.querySelector('.blk');
+  var w = document.getElementById('w');
+  var rows = {};
+  for (var i = 0; i < 40; i++) {
+    var b = document.querySelectorAll('.blk')[i];
+    rows[b.offsetTop] = (rows[b.offsetTop] || 0) + 1;
+  }
+  var per = 0;
+  for (var k in rows) { per = Math.max(per, rows[k]); }
+
+  document.getElementById('m').textContent =
+    'VW=' + window.innerWidth +
+    ' APP=' + app.clientWidth +
+    ' U=' + u +
+    ' WALL=' + w.clientWidth +
+    ' BLK=' + blk.offsetWidth +
+    ' PERROW=' + per +
+    ' VISIBLE=' + Object.keys(rows).length;
+})();
+</script>
+</body>
+</html>

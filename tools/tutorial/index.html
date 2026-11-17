@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="icon" href="data:," />
+  <title>点了就会</title>
+  <link rel="stylesheet" href="./assets/theme.css" />
+  <link rel="stylesheet" href="./assets/ui.css" />
+</head>
+<body>
+<div id="app">
+
+  <section class="home" id="home"></section>
+
+  <header class="top">
+    <div class="top-row">
+      <p class="kicker" id="kicker">点了就会</p>
+      <span class="top-meta" id="meta">01 / 11</span>
+    </div>
+    <h1 class="top-title" id="title">点了就会</h1>
+    <div class="stepbar" id="stepbar"></div>
+  </header>
+
+  <main class="stage" id="stage"></main>
+
+  <footer class="nav">
+    <button class="nav-back" id="back" type="button">上一步</button>
+    <div class="nav-spacer"></div>
+    <span class="nav-count" id="count">1 / 11</span>
+    <button class="btn" id="next" type="button">下一步</button>
+  </footer>
+
+</div>
+
+<script src="./data/series.js"></script>
+<script src="./data/lesson-cdrive.js"></script>
+<script src="./data/lesson-wechat.js"></script>
+<script src="./data/lesson-phone.js"></script>
+<script src="./data/lesson-boot.js"></script>
+<script src="./assets/engine.js"></script>
+</body>
+</html>

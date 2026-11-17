@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <link rel="icon" href="data:," />
+  <title>词兽守夜</title>
+  <link rel="stylesheet" href="./assets/theme.css" />
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+<div id="app">
+
+  <div id="main">
+
+    <!-- ===== 首页 ===== -->
+    <section id="v-home" class="view">
+      <div class="home">
+        <p class="eyebrow">拼词守夜</p>
+        <h1 class="home-title">词兽<br />守夜</h1>
+        <p class="home-note">
+          灯油只有十滴。<br />
+          拼对一个词，词兽就散一只。<br />
+          拼错的，它会记住。
+        </p>
+        <button class="start" id="btn-start" type="button">开始守夜</button>
+        <p class="home-best" id="home-best"></p>
+      </div>
+    </section>
+
+    <!-- ===== 战斗 ===== -->
+    <section id="v-battle" class="view" hidden>
+      <header class="hd">
+        <div class="hd-row">
+          <p class="eyebrow" id="hud-label">第一夜</p>
+          <span class="meta" id="hud-wave">01 / 12</span>
+        </div>
+        <div class="rule"></div>
+        <div class="oil" id="oil-wrap"></div>
+      </header>
+      <div class="stage" id="stage">
+        <canvas id="cv"></canvas>
+      </div>
+    </section>
+
+    <!-- ===== 商店 ===== -->
+    <section id="v-shop" class="view" hidden>
+      <header class="hd">
+        <div class="hd-row">
+          <p class="eyebrow">路边小店</p>
+          <span class="meta" id="shop-coins">◈ 0</span>
+        </div>
+        <div class="rule"></div>
+      </header>
+      <div class="lede">
+        <h1 class="lede-title">拼对，就带走。</h1>
+        <p class="lede-note">拼错不付钱，只是这件留在架上。</p>
+      </div>
+      <div class="list" id="shop-list"></div>
+      <div class="shop-foot">
+        <div class="rule"></div>
+        <div class="shop-foot-row">
+          <p class="shop-note">每次犹豫，它都<b>更近一步</b>。</p>
+          <button class="action" id="btn-leave" type="button">离开</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 结算 ===== -->
+    <section id="v-result" class="view" hidden>
+      <div class="result">
+        <p class="eyebrow" id="res-eyebrow">灯灭了</p>
+        <h1 class="res-title" id="res-title">第 5 夜</h1>
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-k">击杀</span>
+            <span class="stat-v" id="res-kills">0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-k">拼对</span>
+            <span class="stat-v" id="res-right">0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-k">最高连击</span>
+            <span class="stat-v" id="res-combo">0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-k">新记住</span>
+            <span class="stat-v" id="res-mastered">0</span>
+          </div>
+        </div>
+        <div class="result-actions">
+          <button class="start" id="btn-again" type="button">再来一次</button>
+          <button class="action is-quiet" id="btn-home" type="button">回到首页</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ===== 拼词面板（战斗与商店共用） ===== -->
+  <div id="sheet" hidden>
+    <div class="sheet-head">
+      <p class="eyebrow" id="ask-eyebrow">拼出它</p>
+      <p class="ask-word" id="ask-word">提灯的人</p>
+      <p class="ask-hint" id="ask-hint">7 个字母</p>
+    </div>
+    <div class="slots" id="slots"></div>
+    <div class="bank" id="bank"></div>
+    <div class="foot">
+      <div class="rule"></div>
+      <div class="foot-row">
+        <span class="gold" id="foot-coins">◈ 0</span>
+        <span class="combo" id="foot-combo">连击 ×2</span>
+        <button class="action" id="btn-hint" type="button">提示</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="./assets/words.js"></script>
+<script src="./assets/app.js"></script>
+</body>
+</html>

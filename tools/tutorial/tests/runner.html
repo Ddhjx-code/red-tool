@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>runner</title>
+  <link rel="stylesheet" href="../assets/theme.css" />
+  <link rel="stylesheet" href="../assets/ui.css" />
+</head>
+<body>
+<div id="app">
+  <section class="home" id="home"></section>
+  <header class="top">
+    <div class="top-row">
+      <p class="kicker" id="kicker"></p>
+      <span class="top-meta" id="meta"></span>
+    </div>
+    <h1 class="top-title" id="title"></h1>
+    <div class="stepbar" id="stepbar"></div>
+  </header>
+  <main class="stage" id="stage"></main>
+  <footer class="nav">
+    <button class="nav-back" id="back" type="button"></button>
+    <div class="nav-spacer"></div>
+    <span class="nav-count" id="count"></span>
+    <button class="btn" id="next" type="button"></button>
+  </footer>
+</div>
+<pre id="log" style="display:none"></pre>
+
+<script src="../data/series.js"></script>
+<script src="../data/lesson-cdrive.js"></script>
+<script src="../data/lesson-wechat.js"></script>
+<script src="../data/lesson-phone.js"></script>
+<script src="../data/lesson-boot.js"></script>
+<script src="../assets/engine.js"></script>
+<script>
+(function () {
+  var log = [];
+  var fails = [];
+  var REG = window.DJL_LESSONS;
+  var ORDER = window.SERIES.order;
+
+  function out(s) {
+    log.push(s);
+    document.getElementById('log').textContent = log.join('\n');
+  }
+  function fail(s) {
+    fails.push(s);
+    out('FAIL ' + s);
+  }
+  function el(id) { return document.getElementById(id); }
+
+  function clearProgress() {
+    try {
+      var kill = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && k.indexOf('djl:') === 0) kill.push(k);
+      }
+      for (var j = 0; j < kill.length; j++) localStorage.removeItem(kill[j]);
+    } catch (e) {}
+  }
+
+  function clickRow(id) {
+    var node = document.querySelector('[data-rid="' + id + '"]');
+    if (!node) return null;
+    node.click();
+    return node;
+  }
+
+  function longPress(id, cb) {
+    var node = document.querySelector('[data-rid="' + id + '"]');
+    if (!node) return cb(false);
+    var d = document.createEvent('MouseEvents');
+    d.initEvent('mousedown', true, true);
+    node.dispatchEvent(d);
+    setTimeout(function () {
+      var u = document.createEvent('MouseEvents');
+      u.initEvent('mouseup', true, true);
+      node.dispatchEvent(u);
+      cb(true);
+    }, 520);
+  }
+
+  function curIndex() {
+    return parseInt(el('count').textContent, 10) - 1;
+  }
+
+  function nextEnabled() { return !el('next').disabled; }
+
+  function solveSim(step, cb) {
+    var sim = step.sim;
+    var key = sim.start;
+    var checked = {};
+    var guard = 0;
+
+    function tick() {
+      guard++;
+      if (guard > 40) return cb('sim 卡在 state: ' + key);
+      var st = sim.states[key];
+      if (!st) return cb('state 不存在: ' + key);
+
+      if (st.multi) {
+        var pending = null;
+        for (var i = 0; i < st.need.length; i++) {
+          if (!checked[st.need[i]]) { pending = st.need[i]; break; }
+        }
+        if (pending) {
+          checked[pending] = true;
+          if (!clickRow(pending)) return cb('找不到多选项 ' + pending);
+          return setTimeout(tick, 20);
+        }
+        var btn = document.querySelector('#stage .btn.is-accent');
+        if (!btn) return cb('need 全勾了但没出现确定按钮');
+        btn.click();
+        return setTimeout(function () {
+          if (nextEnabled()) return cb(null);
+          tick();
+        }, 30);
+      }
+
+      var target = null;
+      for (var j = 0; j < st.rows.length; j++) {
+        var r = st.rows[j];
+        if (r.go || r.longpress || r.done) { target = r; break; }
+      }
+      if (!target) return cb('state「' + key + '」没有可推进的行');
+
+      if (target.longpress) {
+        return longPress(target.id, function (okPress) {
+          if (!okPress) return cb('长按失败: ' + target.id);
+          key = target.longpress;
+          setTimeout(tick, 30);
+        });
+      }
+
+      if (!clickRow(target.id)) return cb('找不到行 ' + target.id);
+      if (target.done) return cb(null);
+      key = target.go;
+      setTimeout(tick, 30);
+    }
+
+    setTimeout(tick, 30);
+  }
+
+  function solveChoose(step, cb) {
+    var good = -1;
+    for (var i = 0; i < step.options.length; i++) {
+      if (step.options[i].ok) { good = i; break; }
+    }
+    var node = document.querySelector('#stage .opt[data-i="' + good + '"]');
+    if (!node) return cb('找不到正确选项');
+    node.click();
+    setTimeout(function () { cb(null); }, 30);
+  }
+
+  /* ---------- 单期通关 ---------- */
+
+  var visited = [];
+
+  function runLesson(lid, done) {
+    var L = REG[lid];
+    var idx = 0;
+
+    out('');
+    out('== 第 ' + (ORDER.indexOf(lid) + 1) + ' 期：' + L.title + '（' + L.steps.length + ' 步）==');
+    location.hash = '#/' + lid + '/1';
+
+    setTimeout(function () {
+      if (el('title').textContent !== L.title) {
+        fail(lid + ' 标题未切换，实际「' + el('title').textContent + '」');
+      }
+      if (el('stepbar').children.length !== L.steps.length) {
+        fail(lid + ' 步条格子数不对，期望 ' + L.steps.length + ' 实际 ' + el('stepbar').children.length);
+      }
+      if (document.getElementById('app').className === 'is-home') {
+        fail(lid + ' 进入了课程但仍是目录态');
+      }
+      advance();
+    }, 90);
+
+    function advance() {
+      var step = L.steps[idx];
+      visited.push(lid + ':' + (idx + 1) + ':' + step.kind + ':' +
+        (step.title || '').replace(/<[^>]+>/g, ''));
+      out('  enter ' + (idx + 1) + ' kind=' + step.kind + ' nextDisabled=' +
+        el('next').disabled + ' count=' + el('count').textContent);
+
+      if (idx === L.steps.length - 1) return finish();
+
+      function goNext() {
+        if (!nextEnabled()) {
+          var st = el('stage');
+          var first = st.children[0];
+          return fail(lid + ' 第 ' + (idx + 1) + ' 步完成后仍不可继续｜stage=' +
+            (first ? first.className : 'empty') + '｜say=' +
+            (function () {
+              var s = document.querySelector('.sim-say');
+              return s ? s.textContent.slice(0, 30) : 'none';
+            })());
+        }
+        el('next').click();
+        setTimeout(function () {
+          var got = curIndex();
+          if (got !== idx + 1) return fail(lid + ' 推进错位，期望 ' + (idx + 1) + ' 实际 ' + got);
+          idx = got;
+          setTimeout(advance, 30);
+        }, 40);
+      }
+
+      if (step.kind === 'sim') {
+        solveSim(step, function (err) {
+          if (err) return fail(lid + ' 第 ' + (idx + 1) + ' 步 ' + err);
+          setTimeout(goNext, 30);
+        });
+      } else if (step.kind === 'choose') {
+        solveChoose(step, function (err) {
+          if (err) return fail(lid + ' 第 ' + (idx + 1) + ' 步 ' + err);
+          setTimeout(goNext, 30);
+        });
+      } else {
+        setTimeout(goNext, 30);
+      }
+    }
+
+    function finish() {
+      /* 结算页：主按钮应是下一期或回到目录 */
+      var main = document.querySelector('#stage .end-actions .btn.is-accent');
+      if (!main) fail(lid + ' 结算页缺少主按钮');
+      else {
+        var expectNext = ORDER.indexOf(lid) < ORDER.length - 1;
+        var isNext = main.textContent.indexOf('下一期') === 0;
+        if (expectNext !== isNext) {
+          fail(lid + ' 结算按钮不对：期望' + (expectNext ? '下一期' : '回到目录') +
+            '，实际「' + main.textContent + '」');
+        }
+      }
+
+      /* 回溯：点第 1 格，验证不拦路 */
+      var segs = el('stepbar').children;
+      segs[0].click();
+      setTimeout(function () {
+        if (curIndex() !== 0) fail(lid + ' 回溯失败，点第 1 格没回去');
+        if (el('back').disabled !== true) fail(lid + ' 第 1 步的上一步应禁用');
+        if (el('next').disabled) fail(lid + ' 回溯状态下下一步不该禁用');
+
+        var segs2 = el('stepbar').children;
+        var doneCount = 0;
+        for (var i = 1; i < segs2.length; i++) {
+          if ((segs2[i].className || '').indexOf('is-done') >= 0) doneCount++;
+        }
+        if (doneCount !== L.steps.length - 1) {
+          fail(lid + ' 步条已完成数不对，期望 ' + (L.steps.length - 1) + ' 实际 ' + doneCount);
+        }
+
+        /* 任意跳转 */
+        segs2[L.steps.length - 1].click();
+        setTimeout(function () {
+          if (curIndex() !== L.steps.length - 1) fail(lid + ' 跳到最后一步失败');
+          el('stepbar').children[0].click();
+          setTimeout(function () {
+            if (curIndex() !== 0) fail(lid + ' 跳回第一步失败');
+            /* 完成后应记入已学 */
+            var mark = null;
+            try { mark = localStorage.getItem('djl:done:' + lid); } catch (e) {}
+            if (mark !== '1') fail(lid + ' 通完没有写入完成标记');
+            done();
+          }, 40);
+        }, 40);
+      }, 40);
+    }
+  }
+
+  /* ---------- 目录页 ---------- */
+
+  function checkHome(done) {
+    location.hash = '#/';
+    setTimeout(function () {
+      out('');
+      out('== 目录页 ==');
+      if (document.getElementById('app').className !== 'is-home') {
+        return fail('目录页未进入 home 态');
+      }
+      var cards = document.querySelectorAll('#home .course');
+      if (cards.length !== ORDER.length) {
+        fail('目录卡片数不对，期望 ' + ORDER.length + ' 实际 ' + cards.length);
+      }
+      var finished = 0;
+      for (var i = 0; i < cards.length; i++) {
+        var state = cards[i].querySelector('.course-state');
+        var txt = state ? state.textContent : '';
+        var id = cards[i].getAttribute('data-id');
+        if (txt === '已学完') finished++;
+        else fail('目录里「' + id + '」状态是「' + txt + '」，应已学完');
+        out('  ' + (i + 1) + ' ' + cards[i].querySelector('.course-title').textContent +
+          '｜' + txt + '｜' + cards[i].querySelector('.course-meta').textContent);
+      }
+      if (finished !== ORDER.length) fail('已学完计数不对：' + finished + '/' + ORDER.length);
+      var prog = document.querySelector('#home .home-prog-t');
+      if (!prog || prog.textContent.indexOf(ORDER.length + ' / ' + ORDER.length) < 0) {
+        fail('系列进度文案不对：' + (prog ? prog.textContent : '缺元素'));
+      }
+
+      /* 卡片能进课程 */
+      cards[0].click();
+      setTimeout(function () {
+        if (document.getElementById('app').className === 'is-home') {
+          return fail('点目录卡片没有进入课程');
+        }
+        if (curIndex() !== 0) fail('点卡片后未从第 1 步开始，实际 ' + (curIndex() + 1));
+        done();
+      }, 60);
+    }, 90);
+  }
+
+  /* ---------- 主流程 ---------- */
+
+  clearProgress();
+
+  var seq = ORDER.slice();
+  function step() {
+    if (!seq.length) {
+      return checkHome(function () {
+        out('');
+        out('走完 ' + ORDER.length + ' 期，共 ' + visited.length + ' 步');
+        for (var i = 0; i < visited.length; i++) out('  ' + visited[i]);
+        out('');
+        if (fails.length) {
+          out('失败 ' + fails.length + ' 项');
+          document.documentElement.setAttribute('data-result', 'fail');
+        } else {
+          out('ALL PASS');
+          document.documentElement.setAttribute('data-result', 'pass');
+        }
+      });
+    }
+    var lid = seq.shift();
+    runLesson(lid, function () {
+      setTimeout(step, 60);
+    });
+  }
+
+  setTimeout(step, 80);
+})();
+</script>
+</body>
+</html>

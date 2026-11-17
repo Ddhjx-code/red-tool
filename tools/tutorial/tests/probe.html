@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>probe</title>
+<link rel="stylesheet" href="../assets/theme.css"><link rel="stylesheet" href="../assets/ui.css"></head>
+<body>
+<div id="app">
+  <header class="top"><div class="top-row"><p class="kicker" id="kicker"></p><span class="top-meta" id="meta"></span></div>
+  <h1 class="top-title" id="title"></h1><div class="stepbar" id="stepbar"></div></header>
+  <main class="stage" id="stage"></main>
+  <footer class="nav"><button class="nav-back" id="back" type="button"></button><div class="nav-spacer"></div>
+  <span class="nav-count" id="count"></span><button class="btn" id="next" type="button"></button></footer>
+</div>
+<pre id="out" style="display:none"></pre>
+<pre id="out" style="display:none"></pre>
+<script src="../data/lesson-cdrive.js"></script>
+<script src="../assets/engine.js"></script>
+<script>
+(function () {
+  var out = [];
+  function g(sel, props) {
+    var e = document.querySelector(sel);
+    if (!e) return out.push(sel + ' | MISSING');
+    var cs = getComputedStyle(e);
+    var r = e.getBoundingClientRect();
+    out.push(sel + ' | ' + props.map(function (p) {
+      return p + '=' + (cs[p] || '');
+    }).join(' ') + ' | box=' + Math.round(r.width) + 'x' + Math.round(r.height) +
+      ' @' + Math.round(r.top) + ',' + Math.round(r.left));
+  }
+  var u = getComputedStyle(document.documentElement).getPropertyValue('--u');
+  out.push('--u=' + u.trim() + ' innerW=' + window.innerWidth + ' innerH=' + window.innerHeight);
+  g('#app', ['height']);
+  g('.top', ['height']);
+  g('.stage', ['height', 'overflowY']);
+  g('.nav', ['height']);
+  g('.step-title', ['fontSize', 'lineHeight', 'fontFamily']);
+  g('.step-body', ['fontSize', 'lineHeight']);
+  g('.step-no', ['fontSize', 'fontFamily']);
+  g('.btn', ['fontSize', 'height', 'backgroundColor', 'color']);
+  g('.seg', ['height', 'backgroundColor']);
+  g('.bar-track', ['height']);
+  g('.note', ['fontSize', 'borderLeftColor']);
+  g('.figure', ['backgroundColor', 'borderTopColor']);
+  g('.sim-row', ['fontSize', 'height', 'lineHeight']);
+  g('.sim-bar', ['height', 'backgroundColor']);
+  g('.chk', ['width', 'height']);
+  g('.opt', ['fontSize', 'height']);
+  g('.end-title', ['fontSize']);
+  g('.recap-t', ['fontSize']);
+  g('.recap-row', ['height']);
+
+  var doc = document.documentElement;
+  out.push('hOverflow=' + (doc.scrollWidth > doc.clientWidth) + ' sw=' + doc.scrollWidth + ' cw=' + doc.clientWidth);
+  var st = document.getElementById('stage');
+  out.push('stageScroll=' + (st.scrollHeight > st.clientHeight) + ' sh=' + st.scrollHeight + ' ch=' + st.clientHeight);
+  out.push('bodyBg=' + getComputedStyle(document.body).backgroundColor);
+  var pre = document.getElementById('out');
+  pre.textContent = out.join('\n');
+})();
+</script>
+</body></html>

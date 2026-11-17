@@ -1,0 +1,42 @@
+/* 令牌层。题材：机房 / 磁盘。深色底，数据发蓝光，被删的东西发灰。
+   尺寸单位 --u = 容器宽度的 1%，由 engine.js 写入。Chrome 61 无容器查询，所以走 JS 变量。 */
+
+:root {
+  --u: 3.9px;
+
+  --bg: #0A0E13;
+  --bg-2: #10161D;
+  --panel: #161E27;
+  --panel-2: #1D2732;
+
+  --ink: #E8EDF3;
+  --ink-2: #9AA7B4;
+  --muted: #67737F;
+
+  --line: rgba(232, 237, 243, 0.12);
+  --line-2: rgba(232, 237, 243, 0.26);
+
+  --data: #38BDF8;
+  --data-2: #0B7EA8;
+  --data-soft: rgba(56, 189, 248, 0.14);
+  --hot: #FBBF24;
+  --bad: #F87171;
+  --bad-soft: rgba(248, 113, 113, 0.14);
+  --ok: #34D399;
+  --ok-soft: rgba(52, 211, 153, 0.14);
+
+  --font: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui,
+    -apple-system, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Courier New", monospace;
+
+  --edge: calc(var(--u) * 6);
+  --s1: calc(var(--u) * 1.6);
+  --s2: calc(var(--u) * 3);
+  --s3: calc(var(--u) * 5);
+  --s4: calc(var(--u) * 8);
+
+  --t-kicker: calc(var(--u) * 2.8);
+  --t-body: calc(var(--u) * 4);
+  --t-lead: calc(var(--u) * 5.2);
+  --t-title: calc(var(--u) * 8.6);
+}

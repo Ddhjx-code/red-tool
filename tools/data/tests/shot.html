@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>shot · 删了</title>
+  <link rel="stylesheet" href="../assets/theme.css" />
+  <link rel="stylesheet" href="../assets/ui.css" />
+  <style>
+    /* 只为出图：纸面拉长、滚动区域展开、尺寸锁死，动画不跑也要可见。
+       必须写在 @media print 里并用 !important —— 引擎会把 --u 写回行内样式。 */
+    @page { size: 390px 844px; margin: 0; }
+    @media print {
+      :root { --u: 3.9px !important; }
+      html, body { height: auto; overflow: visible; }
+      #app {
+        width: 390px !important;
+        max-width: none !important;
+        height: auto !important;
+        overflow: visible !important;
+      }
+      .screen { height: auto !important; }
+      .body { overflow: visible !important; height: auto !important; }
+      #app::before { position: fixed; }
+    }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+
+<script src="../scenes/_util.js"></script>
+<script src="../scenes/s0-intro.js"></script>
+<script src="../scenes/s1-delete.js"></script>
+<script src="../scenes/s2-download.js"></script>
+<script src="../scenes/s3-recover.js"></script>
+<script src="../scenes/s4-end.js"></script>
+<script src="../assets/engine.js"></script>
+<script>
+/* 出图专用：把布局锁成 390 宽手机。
+   headless 的视口宽最小 500，纸面却是 390，不锁就会按 500 排版再被缩印，比例全错。 */
+(function () {
+  function lock() {
+    document.documentElement.style.setProperty('--u', '3.9px');
+    document.getElementById('app').style.width = '390px';
+    document.getElementById('app').style.maxWidth = 'none';
+  }
+  lock();
+  window.addEventListener('beforeprint', lock);
+})();
+
+/* ?k=home|deleted|download|recovered|covered|end
+   把某个关键时刻"摆"出来，供 print-to-pdf 抓图。 */
+(function () {
+  var k = (/[?&]k=([a-z0-9]+)/.exec(location.search) || [])[1] || '';
+  var q = function (s) { return document.querySelector(s); };
+
+  function on(id, fn) {
+    var n = q(id);
+    if (n) n.addEventListener('click', fn);
+  }
+
+  function after(n, fn) { setTimeout(fn, n); }
+
+  if (!k) return;
+
+  if (k === 'deleted') {
+    window.DATA.go(1);
+    after(40, function () {
+      on('#del', function () {});
+      q('#del').click();
+    });
+    return;
+  }
+
+  if (k === 'download') {
+    window.DATA.go(2);
+    after(60, function () {
+      var n = 0;
+      var t = setInterval(function () {
+        var packs = document.querySelectorAll('.pack');
+        var d = document.querySelectorAll('.pack.is-done').length;
+        if (d === 4 || n > 40) {
+          clearInterval(t);
+          after(700, function () {
+            var opt = q('#opts .opt[data-k="1"]');
+            if (opt) opt.click();
+          });
+          return;
+        }
+        for (var i = 0; i < packs.length; i++) {
+          if ((packs[i].className || '').indexOf('is-done') < 0) {
+            packs[i].click();
+            break;
+          }
+        }
+        n += 1;
+      }, 40);
+    });
+    return;
+  }
+
+  if (k === 'recovered') {
+    window.DATA.go(3);
+    after(60, function () {
+      q('#scan').click();
+      after(2200, function () {
+        var opt = q('#opts .opt[data-k="2"]');
+        if (opt) opt.click();
+      });
+    });
+    return;
+  }
+
+  if (k === 'covered') {
+    window.DATA.go(3);
+    after(60, function () {
+      q('#scan').click();
+      after(2200, function () {
+        var opt = q('#opts .opt[data-k="2"]');
+        if (opt) opt.click();
+        after(900, function () {
+          var n = 0;
+          var t = setInterval(function () {
+            var b = q('#cover');
+            if (!b || b.disabled || n > 8) {
+              clearInterval(t);
+              after(600, function () {
+                var s2 = q('#scan2');
+                if (s2) s2.click();
+              });
+              return;
+            }
+            b.click();
+            n += 1;
+          }, 90);
+        });
+      });
+    });
+    return;
+  }
+
+  if (k === 'end') {
+    window.DATA.go(4);
+    return;
+  }
+})();
+</script>
+</body>
+</html>

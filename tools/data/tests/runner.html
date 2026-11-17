@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>runner · 删了</title>
+  <link rel="stylesheet" href="../assets/theme.css" />
+  <link rel="stylesheet" href="../assets/ui.css" />
+</head>
+<body>
+<div id="app"></div>
+<pre id="log" style="display:none"></pre>
+
+<script src="../scenes/_util.js"></script>
+<script src="../scenes/s0-intro.js"></script>
+<script src="../scenes/s1-delete.js"></script>
+<script src="../scenes/s2-download.js"></script>
+<script src="../scenes/s3-recover.js"></script>
+<script src="../scenes/s4-end.js"></script>
+<script src="../assets/engine.js"></script>
+<script>
+(function () {
+  var log = [];
+  var fails = [];
+
+  function out(s) {
+    log.push(s);
+    document.getElementById('log').textContent = log.join('\n');
+  }
+  function fail(s) {
+    fails.push(s);
+    out('FAIL ' + s);
+  }
+  function q(sel) {
+    return document.querySelector(sel);
+  }
+  function nextBtn() {
+    return document.getElementById('n');
+  }
+  function canGo() {
+    return nextBtn() && !nextBtn().disabled;
+  }
+
+  /* 反复查，直到条件成立或超时 */
+  function waitFor(fn, label, cb, timeout) {
+    var t0 = new Date().getTime();
+    var limit = timeout || 6000;
+    (function tick() {
+      var v = null;
+      try {
+        v = fn();
+      } catch (e) {}
+      if (v) return cb(v);
+      if (new Date().getTime() - t0 > limit) {
+        fail('等待超时：' + label);
+        return cb(null);
+      }
+      setTimeout(tick, 80);
+    })();
+  }
+
+  function goNext(label) {
+    if (!canGo()) {
+      fail(label + '：下一步没解锁');
+      return false;
+    }
+    nextBtn().click();
+    return true;
+  }
+
+  /* ---------- 开幕 ---------- */
+
+  function scene0(cb) {
+    var kick = q('.kicker');
+    if (!kick || kick.textContent !== '三个实验') fail('开场 kicker 不对：' + (kick ? kick.textContent : '无'));
+    var blocks = document.querySelectorAll('.blk');
+    out('开场：格子 ' + blocks.length + ' 个');
+    if (blocks.length !== 40) fail('开场格子数应为 40，实际 ' + blocks.length);
+    if (!goNext('开场')) return cb();
+    setTimeout(cb, 120);
+  }
+
+  /* ---------- 实验一 ---------- */
+
+  function scene1(cb) {
+    out('');
+    out('实验一：删得有多快');
+    var del = q('#del');
+    if (!del) {
+      fail('实验一：找不到删除按钮');
+      return cb();
+    }
+    del.click();
+
+    waitFor(function () {
+      return q('#clk');
+    }, '秒表出现', function () {
+      out('  秒表已出现，等答问');
+      waitFor(function () {
+        return q('#dir');
+      }, '目录行出现', function (dir) {
+        if (!dir) return cb();
+
+        /* 先故意答错一次，验证格子会抖、且不锁死 */
+        var blk = document.querySelector('.blk[data-i="3"]');
+        if (blk) blk.click();
+        var stillLocked = !canGo();
+        out('  点格子（错误答案）后仍锁定：' + stillLocked);
+        if (!stillLocked) fail('实验一：答错却解锁了');
+
+        dir.click();
+        if (!canGo()) fail('实验一：答对后没解锁');
+        out('  答对：目录行被划掉，四十格未动');
+        if (!goNext('实验一')) return cb();
+        setTimeout(cb, 140);
+      });
+    });
+  }
+
+  /* ---------- 实验二 ---------- */
+
+  function scene2(cb) {
+    out('');
+    out('实验二：下载有多慢');
+    var clicks = 0;
+
+    (function pump() {
+      var packs = document.querySelectorAll('.pack');
+      if (packs.length !== 4) {
+        fail('实验二：数据包应为 4 个，实际 ' + packs.length);
+        return cb();
+      }
+      var done = document.querySelectorAll('.pack.is-done').length;
+      if (done === 4) return afterPacks();
+
+      var target = null;
+      for (var i = 0; i < packs.length; i++) {
+        if ((packs[i].className || '').indexOf('is-done') < 0) {
+          target = packs[i];
+          break;
+        }
+      }
+      if (!target) return afterPacks();
+      if (clicks > 40) {
+        fail('实验二：点了 40 次还没搬完');
+        return cb();
+      }
+      clicks += 1;
+      target.click();
+      setTimeout(pump, 40);
+    })();
+
+    function afterPacks() {
+      out('  四块搬完，共点 ' + clicks + ' 次（含一次重传）');
+      var clk = q('#clk');
+      out('  用时显示：' + (clk ? clk.textContent : '无'));
+      if (clk && clk.textContent !== '3:52') fail('实验二：应显示 3:52，实际 ' + clk.textContent);
+
+      waitFor(function () {
+        return q('#opts .opt[data-k="1"]');
+      }, '实验二的选项', function (opt) {
+        if (!opt) return cb();
+        opt.click();
+        if (!canGo()) fail('实验二：选对后没解锁');
+        else out('  选「同时开四条管道」后解锁');
+        if (!goNext('实验二')) return cb();
+        setTimeout(cb, 140);
+      });
+    }
+  }
+
+  /* ---------- 实验三 ---------- */
+
+  function scene3(cb) {
+    out('');
+    out('实验三：它还在');
+    var dead = document.querySelectorAll('.blk.is-dead').length;
+    out('  已删格子：' + dead + ' 个');
+    if (dead !== 6) fail('实验三：应有 6 个已删格，实际 ' + dead);
+
+    var scan = q('#scan');
+    if (!scan) {
+      fail('实验三：找不到扫描按钮');
+      return cb();
+    }
+    scan.click();
+
+    waitFor(function () {
+      return q('#opts .opt[data-k="2"]');
+    }, '扫描后出现选项', function (opt) {
+      if (!opt) return cb();
+      var lit = document.querySelectorAll('.blk.is-lit').length;
+      out('  扫描点亮 ' + lit + ' 格');
+      if (lit !== 6) fail('实验三：扫描应点亮 6 格，实际 ' + lit);
+
+      opt.click();
+      waitFor(function () {
+        return q('#cover');
+      }, '覆盖按钮出现', function (cover) {
+        if (!cover) return cb();
+
+        var n = 0;
+        (function write() {
+          if (n >= 6) return scanAgain();
+          var btn = q('#cover');
+          if (!btn || btn.disabled) return scanAgain();
+          btn.click();
+          n += 1;
+          setTimeout(write, 60);
+        })();
+
+        function scanAgain() {
+          var over = document.querySelectorAll('.blk.is-over').length;
+          out('  覆盖 ' + over + ' 格');
+          if (over !== 6) fail('实验三：应覆盖 6 格，实际 ' + over);
+
+          waitFor(function () {
+            var b = q('#scan2');
+            return b && !b.disabled ? b : null;
+          }, '第二次扫描按钮', function (b) {
+            if (!b) return cb();
+            b.click();
+            waitFor(function () {
+              return canGo();
+            }, '实验三收尾解锁', function () {
+              out('  第二次扫描：0 项可恢复，已解锁');
+              if (!goNext('实验三')) return cb();
+              setTimeout(cb, 140);
+            });
+          });
+        }
+      });
+    });
+  }
+
+  /* ---------- 结算 ---------- */
+
+  function scene4(cb) {
+    out('');
+    out('结算页');
+    var rows = document.querySelectorAll('.creed-row');
+    if (rows.length !== 3) fail('结算：应有 3 条结论，实际 ' + rows.length);
+    for (var i = 0; i < rows.length; i++) {
+      out('  ' + (i + 1) + ' ' + rows[i].querySelector('.creed-t').textContent.slice(0, 28) + '…');
+    }
+    if (!q('.tail')) fail('结算：缺少卖旧手机的提醒');
+    if (!canGo()) fail('结算页按钮未解锁');
+    out('  按钮文案：' + nextBtn().textContent);
+
+    nextBtn().click();
+    setTimeout(function () {
+      var kick = q('.kicker');
+      if (!kick || kick.textContent !== '三个实验') fail('「再看一遍」没有回到开场');
+      else out('  再看一遍：已回到开场');
+      cb();
+    }, 140);
+  }
+
+  /* ---------- 跑 ---------- */
+
+  setTimeout(function () {
+    scene0(function () {
+      scene1(function () {
+        scene2(function () {
+          scene3(function () {
+            scene4(function () {
+              out('');
+              if (fails.length) {
+                out('失败 ' + fails.length + ' 项');
+                document.documentElement.setAttribute('data-result', 'fail');
+              } else {
+                out('ALL PASS');
+                document.documentElement.setAttribute('data-result', 'pass');
+              }
+            });
+          });
+        });
+      });
+    });
+  }, 60);
+})();
+</script>
+</body>
+</html>

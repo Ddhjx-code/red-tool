@@ -1,0 +1,949 @@
+/* 教程引擎：系列目录 + 步骤机 + 回溯 + 门控 + 沙盘状态机。
+   兼容 Chrome 61（小红书小工具容器基线）：不用箭头函数、不用模板字符串、
+   不用 flex gap、不用 :is()、不用 Array.prototype.includes。
+   尺寸统一走 --u（= 容器宽度 1%）。
+
+   路由（只认 hash，不打扰容器）：
+     #/            目录页
+     #/<id>        某期，从上次看到的地方继续
+     #/<id>/<n>    某期第 n 步（1 起），测试与截图用
+   ?reset=1 清空全部进度。 */
+
+(function () {
+  'use strict';
+
+  var app = document.getElementById('app');
+  var homeEl = document.getElementById('home');
+  var topEl = document.querySelector('.top');
+  var navEl = document.querySelector('.nav');
+  var stageEl = document.getElementById('stage');
+  var barEl = document.getElementById('stepbar');
+  var titleEl = document.getElementById('title');
+  var kickerEl = document.getElementById('kicker');
+  var metaEl = document.getElementById('meta');
+  var countEl = document.getElementById('count');
+  var nextEl = document.getElementById('next');
+  var backEl = document.getElementById('back');
+
+  var REG = window.DJL_LESSONS || {};
+  var ORDER = (window.SERIES && window.SERIES.order) || [];
+
+  var L = null;        /* 当前课程 */
+  var STEPS = [];      /* 当前课程的步骤 */
+  var TOTAL = 0;
+  var cur = 0;
+  var max = 0;
+  var gated = true;
+  var chapNo = [];
+
+  /* ---------- 章节编号 ---------- */
+
+  function computeChapters() {
+    chapNo = [];
+    var seen = {};
+    var n = 0;
+    for (var i = 0; i < TOTAL; i++) {
+      var ch = STEPS[i].chapter || '';
+      if (ch && !seen[ch]) {
+        n += 1;
+        seen[ch] = n;
+      }
+      chapNo.push(ch ? seen[ch] : 0);
+    }
+  }
+
+  /* ---------- 尺寸 ---------- */
+
+  function applyUnit() {
+    var w = app.clientWidth || window.innerWidth || 390;
+    document.documentElement.style.setProperty('--u', w / 100 + 'px');
+  }
+
+  /* ---------- 进度存档：按期分键，目录页要读全部 ---------- */
+
+  function saveKey(id) {
+    return 'djl:p:' + (id || L.id);
+  }
+
+  function doneKey(id) {
+    return 'djl:done:' + (id || L.id);
+  }
+
+  /* 存的是「已经走到第几步」的计数（1 起），不是下标。
+     这样第一次打开并看完第 1 步，目录里就能显示「看到 1/N」。 */
+
+  function save() {
+    try {
+      window.localStorage.setItem(saveKey(), String(max + 1));
+    } catch (e) {}
+  }
+
+  function load() {
+    try {
+      var v = window.localStorage.getItem(saveKey());
+      if (v) {
+        var c = parseInt(v, 10);
+        if (c > 0) return Math.min(c - 1, TOTAL - 1);
+      }
+    } catch (e) {}
+    return 0;
+  }
+
+  function markDone() {
+    try {
+      window.localStorage.setItem(doneKey(), '1');
+    } catch (e) {}
+  }
+
+  function isDone(id) {
+    try {
+      return window.localStorage.getItem(doneKey(id)) === '1';
+    } catch (e) {}
+    return false;
+  }
+
+  function progressOf(id) {
+    try {
+      var v = window.localStorage.getItem(saveKey(id));
+      var c = v ? parseInt(v, 10) || 0 : 0;
+      var lesson = REG[id];
+      var total = lesson && lesson.steps ? lesson.steps.length : 0;
+      if (total && c > total) c = total;
+      return c;
+    } catch (e) {}
+    return 0;
+  }
+
+  function resetAll() {
+    try {
+      var kill = [];
+      for (var i = 0; i < window.localStorage.length; i++) {
+        var k = window.localStorage.key(i);
+        if (k && k.indexOf('djl:') === 0) kill.push(k);
+      }
+      for (var j = 0; j < kill.length; j++) window.localStorage.removeItem(kill[j]);
+    } catch (e) {}
+  }
+
+  /* ---------- 工具 ---------- */
+
+  function pad2(n) {
+    return n < 10 ? '0' + n : '' + n;
+  }
+
+  function el(tag, cls) {
+    var d = document.createElement(tag);
+    if (cls) d.className = cls;
+    return d;
+  }
+
+  function textBlocks(parent, str) {
+    var parts = String(str).split('\n');
+    for (var i = 0; i < parts.length; i++) {
+      if (!parts[i]) continue;
+      var p = el('p');
+      p.textContent = parts[i];
+      parent.appendChild(p);
+    }
+  }
+
+  /* ---------- 步骤条 ---------- */
+
+  function buildBar() {
+    barEl.innerHTML = '';
+    for (var i = 0; i < TOTAL; i++) {
+      var seg = el('button', 'seg');
+      seg.type = 'button';
+      seg.setAttribute('data-i', String(i));
+      seg.setAttribute('aria-label', '第 ' + (i + 1) + ' 步');
+      barEl.appendChild(seg);
+    }
+  }
+
+  function paintBar() {
+    var segs = barEl.children;
+    for (var i = 0; i < segs.length; i++) {
+      var cls = 'seg';
+      if (i === cur) cls = 'seg is-now';
+      else if (i <= max) cls = 'seg is-done';
+      segs[i].className = cls;
+    }
+  }
+
+  /* ---------- 顶栏与导航 ---------- */
+
+  function lessonIndex(id) {
+    for (var i = 0; i < ORDER.length; i++) {
+      if (ORDER[i] === id) return i;
+    }
+    return -1;
+  }
+
+  function nextLessonId() {
+    if (!L) return null;
+    var i = lessonIndex(L.id);
+    if (i < 0 || i >= ORDER.length - 1) return null;
+    return ORDER[i + 1];
+  }
+
+  function seriesName() {
+    if (L && L.series) return L.series;
+    if (window.SERIES && window.SERIES.name) return window.SERIES.name;
+    return '点了就会';
+  }
+
+  function updateChrome(step) {
+    kickerEl.textContent = step.chapter
+      ? seriesName() + ' · ' + step.chapter
+      : seriesName();
+    metaEl.textContent = pad2(cur + 1) + ' / ' + pad2(TOTAL);
+    countEl.textContent = cur + 1 + ' / ' + TOTAL;
+    backEl.disabled = cur === 0;
+    if (step.kind === 'end') {
+      nextEl.textContent = nextLessonId() ? '下一期' : '回到目录';
+    } else {
+      nextEl.textContent = '下一步';
+    }
+    paintBar();
+  }
+
+  function setNext(on) {
+    nextEl.disabled = !on;
+  }
+
+  function unlock() {
+    if (gated) return;
+    gated = true;
+    setNext(true);
+  }
+
+  function lock() {
+    gated = false;
+    setNext(false);
+  }
+
+  /* ---------- 通用头部 ---------- */
+
+  function head(step, i) {
+    var wrap = el('div', 'step');
+    var ch = step.chapter || '';
+    if (ch && (i === 0 || STEPS[i - 1].chapter !== ch)) {
+      var row = el('div', 'chapter');
+      var n = el('span', 'chapter-n');
+      n.textContent = pad2(chapNo[i]);
+      var t = el('span', 'chapter-t');
+      t.textContent = ch;
+      row.appendChild(n);
+      row.appendChild(t);
+      wrap.appendChild(row);
+    }
+    var no = el('p', 'step-no');
+    no.textContent = 'STEP ' + pad2(i + 1);
+    wrap.appendChild(no);
+
+    var h = el('h2', 'step-title');
+    h.innerHTML = step.title || '';
+    wrap.appendChild(h);
+
+    if (step.body) {
+      var b = el('div', 'step-body');
+      textBlocks(b, step.body);
+      wrap.appendChild(b);
+    }
+    return wrap;
+  }
+
+  function appendNote(wrap, note) {
+    if (!note) return;
+    var n = el('div', 'note');
+    var k = el('span', 'note-k');
+    k.textContent = note.k;
+    n.appendChild(k);
+    var t = document.createElement('span');
+    t.textContent = note.t;
+    n.appendChild(t);
+    wrap.appendChild(n);
+  }
+
+  /* ---------- 图形：磁盘条 ---------- */
+
+  function figureBars(data, caption) {
+    var fig = el('div', 'figure');
+    var list = data || [
+      { label: 'C:', pct: 98, num: '剩 3.2 GB' },
+      { label: 'D:', pct: 46, num: '剩 512 GB' }
+    ];
+    for (var i = 0; i < list.length; i++) {
+      var row = el('div', 'bar-row');
+      var lab = el('span', 'bar-label');
+      lab.textContent = list[i].label;
+      var track = el('div', 'bar-track');
+      var fill = el('div', 'bar-fill' + (list[i].pct > 90 ? ' is-full' : ''));
+      fill.style.width = list[i].pct + '%';
+      track.appendChild(fill);
+      var num = el('span', 'bar-num');
+      num.textContent = list[i].num;
+      row.appendChild(lab);
+      row.appendChild(track);
+      row.appendChild(num);
+      fig.appendChild(row);
+    }
+    var cap = el('p', 'caption');
+    cap.textContent =
+      caption || '同一台机器。所以真正的解法不是一直删，是把东西搬到 D 盘。';
+    fig.appendChild(cap);
+
+    return fig;
+  }
+
+  /* ---------- 图形：三类文件 ---------- */
+
+  function figureSplit(list) {
+    var wrap = el('div', 'split');
+    for (var i = 0; i < list.length; i++) {
+      var cell = el('div', 'cell');
+      var k = el('span', 'cell-k');
+      k.textContent = list[i].k;
+      var t = el('div', 'cell-t');
+      t.textContent = list[i].t;
+      cell.appendChild(k);
+      cell.appendChild(t);
+      wrap.appendChild(cell);
+    }
+    return wrap;
+  }
+
+  /* ---------- 渲染：讲解 ---------- */
+
+  function renderRead(step, i) {
+    var wrap = head(step, i);
+    if (step.figure === 'bars') wrap.appendChild(figureBars(step.bars, step.caption));
+    if (step.figure === 'split') wrap.appendChild(figureSplit(step.split || []));
+    appendNote(wrap, step.note);
+    return wrap;
+  }
+
+  /* ---------- 渲染：选择 ---------- */
+
+  function renderChoose(step, i) {
+    var wrap = head(step, i);
+    var box = el('div', 'opts');
+    var answered = false;
+
+    function pick(idx) {
+      if (answered) return;
+      answered = true;
+      var nodes = box.childNodes;
+      var k;
+      for (k = 0; k < nodes.length; k++) {
+        var b = nodes[k];
+        if (b.nodeType !== 1) continue;
+        b.disabled = true;
+        var oi = parseInt(b.getAttribute('data-i'), 10);
+        var opt = step.options[oi];
+        if (opt.ok) b.className = 'opt is-right';
+      }
+      var chosen = step.options[idx];
+      if (!chosen.ok) {
+        for (k = 0; k < nodes.length; k++) {
+          var bb = nodes[k];
+          if (bb.nodeType !== 1) continue;
+          if (parseInt(bb.getAttribute('data-i'), 10) === idx) {
+            bb.className = 'opt is-wrong';
+          }
+        }
+      }
+      var why = el('div', 'opt-why' + (chosen.ok ? ' is-right' : ' is-wrong'));
+      why.textContent = chosen.why;
+      box.appendChild(why);
+      unlock();
+    }
+
+    for (var j = 0; j < step.options.length; j++) {
+      (function (j) {
+        var b = el('button', 'opt');
+        b.type = 'button';
+        b.setAttribute('data-i', String(j));
+        var tag = el('span', 'tag');
+        tag.textContent = String.fromCharCode(65 + j);
+        b.appendChild(tag);
+        var t = document.createElement('span');
+        t.textContent = step.options[j].label;
+        b.appendChild(t);
+        b.addEventListener('click', function () {
+          pick(j);
+        });
+        box.appendChild(b);
+      })(j);
+    }
+    wrap.appendChild(box);
+    return wrap;
+  }
+
+  /* ---------- 渲染：沙盘 ---------- */
+
+  function renderSim(step, i) {
+    var wrap = head(step, i);
+    var sim = step.sim;
+    var stateKey = sim.start;
+    var checked = {};
+    var done = false;
+    var box = el('div', 'sim');
+    var promptEl = el('p', 'sim-prompt');
+    var sayBox = el('div');
+    var slot = el('div');
+    wrap.appendChild(box);
+    wrap.appendChild(promptEl);
+    wrap.appendChild(sayBox);
+    wrap.appendChild(slot);
+
+    function say(msg, kind) {
+      sayBox.innerHTML = '';
+      if (!msg) return;
+      var d = el('div', 'sim-say' + (kind ? ' is-' + kind : ''));
+      d.textContent = msg;
+      sayBox.appendChild(d);
+    }
+
+    function tip(msg) {
+      say(msg, 'no');
+    }
+
+    function allNeeded(st) {
+      if (!st.need) return false;
+      for (var k = 0; k < st.need.length; k++) {
+        if (!checked[st.need[k]]) return false;
+      }
+      return true;
+    }
+
+    function finish() {
+      if (done) return;
+      done = true;
+      unlock();
+    }
+
+    function go(nextKey) {
+      stateKey = nextKey;
+      draw();
+    }
+
+    function draw() {
+      var st = sim.states[stateKey];
+      if (!st) return;
+      box.innerHTML = '';
+
+      var bar = el('div', 'sim-bar');
+      var dots = el('span', 'dot3');
+      dots.textContent = '● ● ●';
+      var tt = el('span', 'sim-title');
+      tt.textContent = st.win || '';
+      bar.appendChild(dots);
+      bar.appendChild(tt);
+      box.appendChild(bar);
+
+      if (st.crumb) {
+        var cr = el('div', 'sim-crumb');
+        cr.textContent = st.crumb;
+        box.appendChild(cr);
+      }
+
+      var body = el('div', 'sim-body');
+      var host = body;
+      if (st.ctx) {
+        host = el('div', 'ctx');
+        body.appendChild(host);
+      }
+
+      var k;
+      for (k = 0; k < st.rows.length; k++) {
+        host.appendChild(makeRow(st, st.rows[k], st.ctx));
+      }
+      box.appendChild(body);
+
+      promptEl.textContent = st.prompt || '';
+      promptEl.style.display = st.prompt ? '' : 'none';
+
+      slot.innerHTML = '';
+
+      if (st.multi && allNeeded(st) && !done) {
+        var btn = el('button', 'btn is-accent');
+        btn.type = 'button';
+        btn.style.display = 'block';
+        btn.style.width = '100%';
+        btn.style.marginTop = 'calc(var(--u) * 2)';
+        btn.style.textAlign = 'center';
+        btn.textContent = st.confirmText || '确定';
+        btn.addEventListener('click', function () {
+          say(st.doneSay || '清理完成。', 'ok');
+          finish();
+          draw();
+        });
+        slot.appendChild(btn);
+      }
+    }
+
+    function makeRow(st, row, inCtx) {
+      var b = el('button', inCtx ? 'ctx-item' : 'sim-row');
+      b.type = 'button';
+      if (row.id) b.setAttribute('data-rid', row.id);
+      if (inCtx && row.accent) b.className += ' is-strong';
+
+      if (!inCtx) {
+        var ico = el('span', 'ico');
+        if (row.icon) ico.className = 'ico is-' + row.icon;
+        b.appendChild(ico);
+      }
+
+      var lbl = el('span', inCtx ? '' : 'lbl');
+      if (inCtx) {
+        lbl = el('span');
+      }
+      lbl.textContent = row.label || '';
+      if (!inCtx && row.sub) {
+        var sub = el('span', 'sub');
+        sub.textContent = row.sub;
+        lbl.appendChild(sub);
+      }
+      b.appendChild(lbl);
+
+      if (!inCtx && row.go) {
+        var ar = el('span', 'arrow');
+        ar.textContent = '›';
+        b.appendChild(ar);
+      }
+      if (st.multi && row.check) {
+        var ck = el('span', 'chk' + (checked[row.id] ? ' is-on' : ''));
+        ck.textContent = checked[row.id] ? '✓' : '';
+        b.appendChild(ck);
+      }
+
+      if (done) {
+        b.disabled = true;
+        return b;
+      }
+
+      /* 长按：模拟右键 */
+      if (row.longpress) {
+        bindLong(b, row);
+        return b;
+      }
+
+      b.addEventListener('click', function () {
+        handle(row, st);
+      });
+      return b;
+    }
+
+    function bindLong(node, row) {
+      var timer = null;
+      var fired = false;
+
+      function down(e) {
+        if (e.type === 'touchstart' && e.preventDefault) e.preventDefault();
+        fired = false;
+        timer = window.setTimeout(function () {
+          timer = null;
+          fired = true;
+          go(row.longpress);
+          say(row.say || '菜单出来了。选「属性」。', 'ok');
+        }, 420);
+      }
+
+      function up() {
+        if (timer) {
+          window.clearTimeout(timer);
+          timer = null;
+          if (!fired) say(row.tip || '按住不放。', 'no');
+        }
+      }
+
+      node.addEventListener('touchstart', down, false);
+      node.addEventListener('touchend', up, false);
+      node.addEventListener('touchmove', up, false);
+      node.addEventListener('mousedown', down, false);
+      node.addEventListener('mouseup', up, false);
+      node.addEventListener('mouseleave', up, false);
+    }
+
+    function handle(row, st) {
+      if (done) return;
+
+      /* 多选：只接 want 项 */
+      if (st.multi && row.check) {
+        if (row.want) {
+          checked[row.id] = !checked[row.id];
+          say(checked[row.id] ? row.say : '取消勾选了。', checked[row.id] ? 'ok' : '');
+          if (allNeeded(st)) {
+            say(st.needSay || '都勾上了。剩下的别碰，点下面的确定。', 'ok');
+          }
+          draw();
+        } else {
+          say(row.say, 'no');
+          var found = null;
+          var rows = box.getElementsByTagName('button');
+          for (var q = 0; q < rows.length; q++) {
+            if (rows[q].getAttribute('data-rid') === row.id) found = rows[q];
+          }
+          if (found) {
+            found.className += ' is-miss';
+            window.setTimeout(function () {
+              found.className = found.className.replace(' is-miss', '');
+            }, 400);
+          }
+        }
+        return;
+      }
+
+      if (row.go) {
+        if (row.say) say(row.say, 'ok');
+        if (row.done) finish();
+        go(row.go);
+        return;
+      }
+
+      if (row.done) {
+        if (row.say) say(row.say, 'ok');
+        finish();
+        return;
+      }
+
+      if (row.say) {
+        say(row.say, 'no');
+      }
+    }
+
+    draw();
+    return wrap;
+  }
+
+  /* ---------- 渲染：完成 ---------- */
+
+  function renderEnd(step, i) {
+    var wrap = el('div', 'step');
+    var mark = el('p', 'end-mark');
+    mark.textContent = '完成 · ' + TOTAL + ' 步走完';
+    wrap.appendChild(mark);
+
+    var h = el('h2', 'end-title');
+    h.textContent = step.title || '完事了';
+    wrap.appendChild(h);
+
+    var body = el('p', 'end-body');
+    body.textContent = step.body || '这一期走完了。换个场景，下一期接着来。';
+    wrap.appendChild(body);
+
+    var rc = el('div', 'recap');
+    for (var j = 0; j < (step.recap || []).length; j++) {
+      var row = el('div', 'recap-row');
+      var n = el('span', 'recap-n');
+      n.textContent = pad2(j + 1);
+      var t = el('span', 'recap-t');
+      t.textContent = step.recap[j];
+      row.appendChild(n);
+      row.appendChild(t);
+      rc.appendChild(row);
+    }
+    wrap.appendChild(rc);
+
+    /* 收尾去处：系列里继续，或者回目录挑 */
+    var acts = el('div', 'end-actions');
+    var nid = nextLessonId();
+    if (nid && REG[nid]) {
+      var bNext = el('button', 'btn is-accent');
+      bNext.type = 'button';
+      bNext.textContent = '下一期 · ' + REG[nid].title;
+      bNext.addEventListener('click', function () {
+        enterLesson(nid);
+      });
+      acts.appendChild(bNext);
+    } else {
+      var bHome = el('button', 'btn is-accent');
+      bHome.type = 'button';
+      bHome.textContent = '回到目录';
+      bHome.addEventListener('click', function () {
+        goHome();
+      });
+      acts.appendChild(bHome);
+    }
+
+    var bAgain = el('button', 'btn is-ghost');
+    bAgain.type = 'button';
+    bAgain.textContent = '再看一遍';
+    bAgain.addEventListener('click', function () {
+      show(0);
+    });
+    acts.appendChild(bAgain);
+
+    if (nid && REG[nid]) {
+      var bList = el('button', 'btn is-ghost');
+      bList.type = 'button';
+      bList.textContent = '回到目录';
+      bList.addEventListener('click', function () {
+        goHome();
+      });
+      acts.appendChild(bList);
+    }
+
+    wrap.appendChild(acts);
+    return wrap;
+  }
+
+  /* ---------- 主流程 ---------- */
+
+  function syncHash() {
+    if (!L || !window.history || !window.history.replaceState) return;
+    var want = '#/' + L.id + '/' + (cur + 1);
+    if (window.location.hash !== want) {
+      try {
+        window.history.replaceState(null, '', want);
+      } catch (e) {}
+    }
+  }
+
+  function show(i) {
+    if (!L || i < 0 || i >= TOTAL) return;
+    cur = i;
+    if (i > max) max = i;
+    save(); /* 每进新的一步就记一次，目录页据此显示「看到几/N」 */
+    var step = STEPS[i];
+    stageEl.innerHTML = '';
+    stageEl.scrollTop = 0;
+
+    var node;
+    if (step.kind === 'sim') {
+      node = renderSim(step, i);
+    } else if (step.kind === 'choose') {
+      node = renderChoose(step, i);
+    } else if (step.kind === 'end') {
+      node = renderEnd(step, i);
+    } else {
+      node = renderRead(step, i);
+    }
+    stageEl.appendChild(node);
+
+    if (step.kind === 'sim' || step.kind === 'choose') {
+      // 回看时不再拦路
+      if (i < max) {
+        gated = true;
+        setNext(true);
+      } else {
+        lock();
+      }
+    } else {
+      gated = true;
+      setNext(true);
+    }
+
+    if (step.kind === 'end') markDone();
+
+    updateChrome(step);
+    syncHash();
+    stageEl.scrollTop = 0;
+  }
+
+  /* ---------- 目录页 ---------- */
+
+  function pctInteractive(lesson) {
+    var n = 0;
+    for (var i = 0; i < lesson.steps.length; i++) {
+      var k = lesson.steps[i].kind;
+      if (k === 'sim' || k === 'choose') n += 1;
+    }
+    return Math.round((n / lesson.steps.length) * 100);
+  }
+
+  function renderHome() {
+    homeEl.innerHTML = '';
+    var S = window.SERIES || {};
+
+    var head = el('div', 'home-head');
+    var kick = el('p', 'home-kicker');
+    kick.textContent = (S.name || '点了就会') + ' · 共 ' + ORDER.length + ' 期';
+    head.appendChild(kick);
+
+    var h = el('h1', 'home-title');
+    h.textContent = S.tagline || '';
+    head.appendChild(h);
+
+    if (S.intro) {
+      var intro = el('p', 'home-intro');
+      intro.textContent = S.intro;
+      head.appendChild(intro);
+    }
+
+    var doneN = 0;
+    for (var d = 0; d < ORDER.length; d++) {
+      if (isDone(ORDER[d])) doneN += 1;
+    }
+    var prog = el('div', 'home-prog');
+    var track = el('div', 'home-track');
+    var fill = el('div', 'home-fill');
+    fill.style.width =
+      (ORDER.length ? Math.round((doneN / ORDER.length) * 100) : 0) + '%';
+    track.appendChild(fill);
+    prog.appendChild(track);
+    var pt = el('span', 'home-prog-t');
+    pt.textContent = '已学完 ' + doneN + ' / ' + ORDER.length + ' 期';
+    prog.appendChild(pt);
+    head.appendChild(prog);
+    homeEl.appendChild(head);
+
+    var list = el('div', 'course-list');
+    for (var i = 0; i < ORDER.length; i++) {
+      (function (i) {
+        var id = ORDER[i];
+        var lesson = REG[id];
+        if (!lesson) return;
+
+        var b = el('button', 'course');
+        b.type = 'button';
+        b.setAttribute('data-id', id);
+
+        var no = el('span', 'course-no');
+        no.textContent = pad2(i + 1);
+        b.appendChild(no);
+
+        var main = el('span', 'course-main');
+        var t = el('span', 'course-title');
+        t.textContent = lesson.title;
+        main.appendChild(t);
+
+        var s = el('span', 'course-sub');
+        s.textContent = lesson.subtitle || '';
+        main.appendChild(s);
+
+        var m = el('span', 'course-meta');
+        m.textContent =
+          (lesson.minutes || 4) +
+          ' 分钟 · ' +
+          lesson.steps.length +
+          ' 步 · 可点 ' +
+          pctInteractive(lesson) +
+          '%';
+        main.appendChild(m);
+        b.appendChild(main);
+
+        var st = el('span', 'course-state');
+        var seen = progressOf(id);
+        if (isDone(id)) {
+          st.className = 'course-state is-done';
+          st.textContent = '已学完';
+        } else if (seen > 0) {
+          st.className = 'course-state is-doing';
+          st.textContent = seen + '/' + lesson.steps.length;
+        } else {
+          st.textContent = '未开始';
+        }
+        b.appendChild(st);
+
+        b.addEventListener('click', function () {
+          enterLesson(id);
+        });
+        list.appendChild(b);
+      })(i);
+    }
+    homeEl.appendChild(list);
+
+    var foot = el('p', 'home-foot');
+    foot.textContent =
+      '每期都是同一套走法：先讲清为什么，再让你在假界面上自己点一遍，最后收个尾。点错了会有提示，放心试。';
+    homeEl.appendChild(foot);
+  }
+
+  function enterLesson(id, step) {
+    var lesson = REG[id];
+    if (!lesson) {
+      goHome();
+      return;
+    }
+    L = lesson;
+    STEPS = L.steps;
+    TOTAL = STEPS.length;
+    computeChapters();
+
+    app.className = '';
+    homeEl.innerHTML = '';
+    titleEl.textContent = L.title;
+    document.title = seriesName() + ' · ' + L.title;
+    buildBar();
+
+    max = isDone(id) ? 0 : load();
+    if (typeof step === 'number' && step >= 0 && step < TOTAL) {
+      if (step > max) max = step;
+      show(step);
+    } else {
+      show(max);
+    }
+  }
+
+  function goHome() {
+    L = null;
+    STEPS = [];
+    TOTAL = 0;
+    app.className = 'is-home';
+    stageEl.innerHTML = '';
+    barEl.innerHTML = '';
+    document.title = (window.SERIES && window.SERIES.name) || '点了就会';
+    renderHome();
+    homeEl.scrollTop = 0;
+    if (window.history && window.history.replaceState) {
+      try {
+        window.history.replaceState(null, '', '#/');
+      } catch (e) {}
+    }
+  }
+
+  /* ---------- 路由 ---------- */
+
+  function route() {
+    var h = (window.location.hash || '').replace(/^#/, '');
+    var m = /^\/?([A-Za-z0-9_-]+)(?:\/(\d+))?$/.exec(h);
+    if (m && REG[m[1]]) {
+      var n = m[2] ? parseInt(m[2], 10) - 1 : NaN;
+      enterLesson(m[1], isNaN(n) ? undefined : n);
+      return;
+    }
+    goHome();
+  }
+
+  nextEl.addEventListener('click', function () {
+    if (!L) return;
+    if (cur === TOTAL - 1) {
+      var nid = nextLessonId();
+      if (nid) enterLesson(nid);
+      else goHome();
+      return;
+    }
+    show(cur + 1);
+  });
+
+  backEl.addEventListener('click', function () {
+    if (cur > 0) show(cur - 1);
+  });
+
+  window.addEventListener('resize', applyUnit);
+  window.addEventListener('orientationchange', function () {
+    window.setTimeout(applyUnit, 120);
+  });
+  window.addEventListener('hashchange', route);
+
+  /* 步条点击只绑一次。buildBar 每进一期重建格子，若在里面绑监听会越积越多。 */
+  barEl.addEventListener('click', function (e) {
+    var t = e.target;
+    while (t && t !== barEl && (t.className || '').indexOf('seg') < 0) t = t.parentNode;
+    if (!t || t === barEl) return;
+    var idx = parseInt(t.getAttribute('data-i'), 10);
+    if (isNaN(idx)) return;
+    if (idx > max) return;
+    show(idx);
+  });
+
+  function boot() {
+    applyUnit();
+    if ((window.location.search || '').indexOf('reset=1') >= 0) resetAll();
+    route();
+  }
+
+  boot();
+})();

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>probe</title>
+  <link rel="stylesheet" href="../assets/theme.css" />
+  <link rel="stylesheet" href="../assets/ui.css" />
+  <style>
+    @page { size: 390px 2600px; margin: 0; }
+    html, body { height: auto; overflow: visible; }
+    #app { height: auto; max-width: none; }
+    .body { overflow: visible; height: auto; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="screen">
+    <main class="body" id="b">
+      <div class="wall" id="w"></div>
+    </main>
+  </div>
+</div>
+<pre id="out" style="position:absolute;top:0;left:0;color:#fff;background:#000;font-size:20px;line-height:1.3;z-index:99;width:100%"></pre>
+<script src="../scenes/_util.js"></script>
+<script>
+(function(){
+  var app = document.getElementById('app');
+  document.documentElement.style.setProperty('--u', app.clientWidth / 100 + 'px');
+  document.getElementById('w').innerHTML = window.DU.wall(12, 'is-full');
+  var u = getComputedStyle(document.documentElement).getPropertyValue('--u');
+  var blk = document.querySelector('.blk');
+  var body = document.getElementById('b');
+  var lines = [
+    'innerWidth=' + window.innerWidth,
+    'app.clientWidth=' + app.clientWidth,
+    'u=' + u,
+    'body.clientWidth=' + body.clientWidth,
+    'wall.clientWidth=' + document.getElementById('w').clientWidth,
+    'blk.offsetWidth=' + blk.offsetWidth,
+    'blk per row estimate=' + Math.floor(document.getElementById('w').clientWidth / (blk.offsetWidth + 2))
+  ];
+  document.getElementById('out').textContent = 'PROBE|' + lines.join('|');
+})();
+</script>
+</body>
+</html>

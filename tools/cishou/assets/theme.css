@@ -1,0 +1,33 @@
+/* 令牌层。改主题只改这一层。
+   尺寸单位 --u = 容器宽度的 1%，由 app.js 在 resize 时写入。
+   语义与 cqw 相同，但 Chrome 61 的容器上也能用（容器查询要 Chrome 105）。
+   默认值按 390 宽给，JS 没跑起来时页面依然可读。 */
+:root {
+  --u: 3.9px;
+
+  --page: #0B0B0D;
+  --panel: #17171A;
+  --ink: #EFE9DC;
+  --muted: #B3ADA3;
+  --accent: #B8322A;
+  --accent-ink: #E0483B;
+  --lamp: #E8B77A;
+  --line: rgba(255, 255, 255, 0.18);
+  --line-soft: rgba(255, 255, 255, 0.07);
+
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Songti SC",
+    "STSong", Georgia, serif;
+  --font-body: "Helvetica Neue", "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --edge: calc(var(--u) * 7);
+  --s1: calc(var(--u) * 1.5);
+  --s2: calc(var(--u) * 3);
+  --s3: calc(var(--u) * 5);
+  --s4: calc(var(--u) * 8);
+
+  --t-eyebrow: calc(var(--u) * 2.8);
+  --t-body: calc(var(--u) * 3.6);
+  --t-title: calc(var(--u) * 9);
+}

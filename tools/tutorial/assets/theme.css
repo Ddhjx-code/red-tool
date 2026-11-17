@@ -1,0 +1,40 @@
+/* 令牌层。改主题只改这一层。
+   题材：说明书 / 技术手册。纸底、墨字、赭橙批注。
+   尺寸单位 --u = 容器宽度的 1%，由 engine.js 在 resize 时写入。
+   语义等于 cqw，但 Chrome 61 上没有容器查询（需 105），所以用 JS 写变量。 */
+
+:root {
+  --u: 3.9px;
+
+  --paper: #F4F1E8;
+  --paper-2: #EAE6DA;
+  --paper-3: #DFDACB;
+  --ink: #1A1A1E;
+  --ink-2: #4F4C45;
+  --muted: #8C8679;
+  --accent: #C2410C;
+  --accent-2: #9A3208;
+  --accent-soft: #F2DDD0;
+  --ok: #2C6B4F;
+  --ok-soft: #DDE9E1;
+  --warn: #A16207;
+
+  --line: rgba(26, 26, 30, 0.18);
+  --line-soft: rgba(26, 26, 30, 0.08);
+
+  --font-ui: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui,
+    -apple-system, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Courier New", monospace;
+
+  --edge: calc(var(--u) * 6);
+  --s1: calc(var(--u) * 1.6);
+  --s2: calc(var(--u) * 3);
+  --s3: calc(var(--u) * 5);
+  --s4: calc(var(--u) * 8);
+
+  --t-kicker: calc(var(--u) * 2.9);
+  --t-body: calc(var(--u) * 4.2);
+  --t-lead: calc(var(--u) * 6.4);
+  --t-title: calc(var(--u) * 9.4);
+  --t-mono: calc(var(--u) * 3.2);
+}

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>点了就会 · 第 1 期</title>
+<style>
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #14140F;
+    font-family: "PingFang SC", "Hiragino Sans GB", system-ui, sans-serif;
+    color: #8B8578;
+    padding: 40px 32px 56px;
+  }
+  .head { max-width: 980px; margin: 0 auto 28px; }
+  .k { color: #C2410C; font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; letter-spacing: .12em; }
+  h1 { color: #EFE9DC; font-size: 26px; margin: 10px 0 14px; letter-spacing: .01em; }
+  .lead { font-size: 13.5px; line-height: 1.95; max-width: 720px; margin: 0 0 8px; }
+  .lead b { color: #C9C2B2; font-weight: 500; }
+  .grid {
+    max-width: 980px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  }
+  .cell { background: #1C1B15; border: 1px solid #2A2921; border-radius: 3px; overflow: hidden; }
+  .cell img { width: 100%; display: block; }
+  .cap {
+    padding: 9px 11px 11px; font-size: 11.5px; line-height: 1.6;
+    color: #77715F; border-top: 1px solid #26251D;
+  }
+  .cap b { color: #A9A292; font-weight: 500; display: block; margin-bottom: 2px; }
+  .foot { max-width: 980px; margin: 26px auto 0; font-size: 12.5px; line-height: 1.9; color: #6A6455; }
+  .foot code {
+    font-family: ui-monospace, Menlo, monospace; color: #A9A292;
+    background: #1C1B15; padding: 1px 6px; border-radius: 2px;
+  }
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="k">点了就会 · 第 1 期</div>
+    <h1>C 盘红了</h1>
+    <p class="lead">
+      <b>11 步，5 个沙盘。</b>不是看图学，是在一个仿真的窗口里真点：找 C 盘、长按调出右键菜单、
+      勾选要清的项、把下载文件夹搬到 D 盘。<b>点错了会告诉你为什么不能点，点对了才放行。</b>
+    </p>
+    <p class="lead">
+      顶部那排细条是进度，走过的地方都能点回去重看。手机上没有右键，用长按 420 毫秒代替。
+    </p>
+  </div>
+
+  <div class="grid">
+    <div class="cell">
+      <img src="01-讲解页.png" alt="讲解页" />
+      <div class="cap"><b>讲解</b>纸面手册风：等宽编号、赭橙批注、衬线外的另一种气质</div>
+    </div>
+    <div class="cell">
+      <img src="02-沙盘页.png" alt="沙盘页" />
+      <div class="cap"><b>沙盘</b>伪窗口里一行行都是可点的，下方橙色小三角是这一步要做什么</div>
+    </div>
+    <div class="cell">
+      <img src="03-选择页.png" alt="选择页" />
+      <div class="cap"><b>判断</b>四选一，选完才给解释——错的也讲清为什么错</div>
+    </div>
+    <div class="cell">
+      <img src="04-结算页.png" alt="结算页" />
+      <div class="cap"><b>收尾</b>五条清单重排一遍，能直接照着做</div>
+    </div>
+  </div>
+
+  <div class="foot">
+    上面是静态截图（走打印路径出的，所以是 A4 版式）。<b style="color:#A9A292">真正能点的是另一个预览面板里的那一页</b>——
+    直接打开 <code>tools/tutorial/index.html</code> 就能玩，进度条、长按、勾选、回溯都是活的。<br />
+    打包产物：<code>dist/tutorial.zip</code>，6 个文件 14.4 KB，审计零告警。
+  </div>
+</body>
+</html>
