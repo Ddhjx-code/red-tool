@@ -288,7 +288,9 @@ body {
 
 /* ---------- 升级面板 ---------- */
 #up {
-  background: rgba(91, 75, 75, 0.56);
+  /* 原来 0.56 的深褐把糖果粉压成灰紫，整个画面发脏。
+     改成奶油白半透明 + 深褐字，跟标题卡、关卡卡一套观感。 */
+  background: rgba(255, 246, 242, 0.88);
 }
 
 .up-in {
@@ -302,8 +304,8 @@ body {
 .up-kick {
   text-align: center;
   font-size: calc(var(--u) * 3.4);
-  color: #FFF;
-  opacity: 0.92;
+  color: var(--ink);
+  opacity: 0.7;
 }
 
 .up-kick b {
@@ -315,8 +317,8 @@ body {
   text-align: center;
   font-size: calc(var(--u) * 5);
   font-weight: 800;
-  color: #FFF;
-  text-shadow: 0 calc(var(--u) * 0.4) 0 rgba(91, 75, 75, 0.5);
+  color: var(--ink);
+  text-shadow: 0 calc(var(--u) * 0.4) 0 #FFF;
 }
 
 .card {

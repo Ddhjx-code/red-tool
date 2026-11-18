@@ -6,7 +6,7 @@ __pycache__/
 # dist/ 是构建缓存：由 tools/ 源码生成，一条命令就能重出
 dist/
 
-# release/<工具>/ 是发布集（zip + 图 + 视频 + 文案 + 复现脚本），要入库
+# release/<工具>/ 是发布集（zip + 图 + 文案 + 复现脚本），要入库；演示视频除外（见下）
 # 其余（8 月漆扇那批大 zip 与录屏，合计 60MB+）保持忽略
 release/*
 !release/README.md
@@ -21,6 +21,11 @@ release/*
 
 # 素材中间产物：截图、帧序列、合成前的图，都能由 src/ 里的脚本重出
 release/*/build/
+
+# 演示视频 / 录屏：体积大且能从源码重录，留在本地盘上，不随代码入库
+*.mp4
+*.mov
+*.webm
 
 # 本地规范参考与旧版备份，不入库
 .skill_upstream/

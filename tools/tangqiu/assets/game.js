@@ -201,7 +201,7 @@
       theme: { bg: '#F1F9FF', line: 'rgba(143,199,242,0.22)', t1: 'rgba(143,199,242,0.28)', t2: 'rgba(143,224,192,0.24)', edge: 'rgba(143,199,242,0.42)' } },
     { name: '蛋糕城堡', sub: '守卫全醒了', dur: 90, pool: ['pudding', 'berry', 'cookie', 'cake'], boss: 'b4',
       theme: { bg: '#FFF3F7', line: 'rgba(255,167,188,0.22)', t1: 'rgba(255,167,188,0.30)', t2: 'rgba(255,227,163,0.28)', edge: 'rgba(255,167,188,0.46)' } },
-    { name: '星空糖罐', sub: '最后一颗糖', dur: 120, pool: ['star', 'star', 'berry', 'gum', 'cake'], boss: 'starK',
+    { name: '星空糖罐', sub: '最后一颗糖', dur: 120, pool: ['star', 'berry', 'gum', 'cake', 'cookie'], boss: 'starK',
       theme: { bg: '#F4F5FF', line: 'rgba(126,98,200,0.18)', t1: 'rgba(126,98,200,0.24)', t2: 'rgba(255,211,110,0.26)', edge: 'rgba(126,98,200,0.36)' } }
   ];
 
@@ -889,7 +889,11 @@
   }
 
   function spawnRandom() {
-    if (G.enemies.length >= 90) return;
+    /* 同屏上限跟着关卡走。原来固定 90：第 7 关 t=100 时刷怪速率是
+       33 只/秒（interval 0.24、一批 8 只），眨眼就顶满 90，
+       手机上既看不清主角、又是 O(n²) 的挤开计算。 */
+    var cap = 44 + G.levelIdx * 2;
+    if (G.enemies.length >= cap) return;
     /* 关卡池按「由易到难」排好，随本关时间逐步放开后几种 */
     var pool = LEVELS[G.levelIdx].pool, k = 1, kind;
     if (G.t > G.dur * 0.20) k = Math.min(pool.length, 2);
@@ -906,10 +910,13 @@
   function spawnLogic(dt) {
     G.spawnAcc += dt;
     var lvIdx = G.levelIdx;
-    var interval = Math.max(0.24, 0.62 - lvIdx * 0.03 - G.t * 0.0022);
+    var interval = Math.max(0.28, 0.62 - lvIdx * 0.03 - G.t * 0.0022);
+    /* BOSS 在场时把节奏拉长，让王冠怪当主角 */
+    if (G.boss && !G.boss.dead) interval *= 2.4;
     if (G.spawnAcc >= interval) {
       G.spawnAcc = 0;
       var n = 1 + Math.floor(G.t / 22) + Math.floor(lvIdx / 2), i;
+      if (n > 5) n = 5;
       for (i = 0; i < n; i++) spawnRandom();
     }
     if (!G.bossSpawned && G.t >= G.dur - 20) {
@@ -943,8 +950,9 @@
       /* 草莓炮是远程单位：正常逼近，但贴到 70 就停住并往回让一点。
          停太远纯近战流够不着，停太近又糊在脸上，70 是环绕武器刚好够到的距离。 */
       if (e.def.shoot && d < 70 * S) sp = -e.sp * 0.5;
-      /* BOSS 从屏外落场：落地前加速，落定在 HUD 下方，别被顶部 UI 压住脑袋 */
-      if (e.def.boss && e.y < 190 * S) sp *= 6;
+      /* BOSS 从屏外落场：spd 本身很低，光靠倍数还是爬得慢（实测 3 秒只挪 120px），
+         直接给一个下限速度，0.7 秒内落到位置；落定后不许再往 HUD 里钻。 */
+      if (e.def.boss && e.y < 230 * S) sp = Math.max(sp * 6, 460 * S);
 
       if (e.def.drift) {
         /* 棉花云：不追人，自己慢慢飘 */
@@ -970,6 +978,7 @@
 
       e.x += mvx * sp * dt + e.vx * dt;
       e.y += mvy * sp * dt + e.vy * dt;
+      if (e.def.boss && e.y < 230 * S) e.y = 230 * S;
       e.vx -= e.vx * 9 * dt;
       e.vy -= e.vy * 9 * dt;
       e.face = dx < 0 ? -1 : 1;
@@ -995,10 +1004,12 @@
         d = len(dx, dy) || 0.01;
         if (d < minD) {
           push = (minD - d) / d * 0.42;
-          e.x -= dx * push;
-          e.y -= dy * push;
-          f.x += dx * push;
-          f.y += dy * push;
+          /* BOSS 体量大，几十只杂兵一起挤会把王冠怪顶到角落去，给它十倍体重 */
+          var pe = e.def.boss ? 0.1 : 1, pf = f.def.boss ? 0.1 : 1;
+          e.x -= dx * push * pe;
+          e.y -= dy * push * pe;
+          f.x += dx * push * pf;
+          f.y += dy * push * pf;
         }
       }
 
@@ -1509,7 +1520,9 @@
       size = e.r * (e.def.boss ? 2.34 : 2.62) * e.sc;
       /* BOSS 立绘自带王冠，只有退回几何绘制时才需要代码补一顶 */
       if (code && blitCentered(code, size, e.face, 0)) {
-        if (e.flash > 0) flashOverlay(e.r * 1.0);
+        /* BOSS 皮厚、被连续打中，0.6 的闪白会让它整只糊成半透明，
+           压到 0.22 才看得出是颗戴王冠的星星 */
+        if (e.flash > 0) flashOverlay(e.r * (e.def.boss ? 1.02 : 1.0), e.def.boss ? 0.22 : 0.6);
       } else {
         drawEnemyGeo(e);
       }
@@ -1659,7 +1672,16 @@
     for (i = 0; i < ART_LIST.length; i++) {
       (function (code) {
         var im = new Image();
-        im.onload = function () { ART[code] = im; ART_DONE++; };
+        im.onload = function () {
+          ART[code] = im;
+          ART_DONE++;
+          /* 角色卡的头像走 <img>，但标题页比图片先渲染完，
+             四个角色图到齐后要补一次重绘，否则第一次进标题页是纯色圆点。 */
+          if (HERO_COLOR[code] && ART.hero && ART.mint && ART.cocoa && ART.starry
+            && document.getElementById('skinRow')) {
+            renderSkins();
+          }
+        };
         im.onerror = function () { ART_DONE++; };
         im.src = './assets/art/' + code + '.png';
       })(ART_LIST[i]);
@@ -1678,10 +1700,10 @@
   }
 
   /* 受击闪白：图片没法改色，用一层半透明白圆代替 */
-  function flashOverlay(r) {
+  function flashOverlay(r, a) {
     ctx.beginPath();
     ctx.arc(0, 0, r, 0, TAU);
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.fillStyle = 'rgba(255,255,255,' + (a === undefined ? 0.6 : a) + ')';
     ctx.fill();
   }
 
@@ -2292,6 +2314,7 @@
     god: function (on) { if (G) G.god = (on === undefined ? true : !!on); },
     setHp: function (n) { if (G) { G.p.hp = n; syncHud(); } },
     winNow: function () { if (G) { G.t = G.dur; } },
+    placeBoss: function (x, y) { if (G && G.boss) { G.boss.x = x; G.boss.y = y; } },
     card: function () { return paintCard(); }
   };
 
