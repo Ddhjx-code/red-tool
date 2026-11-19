@@ -5,7 +5,7 @@ description: >-
   新建或改写小工具 / H5 页面、打包小工具 zip、处理端能力限制与容器 CSP 约束时使用。
 metadata:
   version: "1.7.0"
-  localDelta: "online-doc-delta.md（在线文档 2026-11-06）"
+  localDelta: "online-doc-delta.md（在线文档 2026-11-13，复核于 2026-11-18）"
 ---
 
 # 小工具 ZIP 构建指南
@@ -45,7 +45,7 @@ metadata:
 | --- | --- |
 | [小工具在线文档](https://miniapp-sandbox.xiaohongshu.com/minitool/doc) | 每个任务开始时优先获取：以当前页面为准实现所需能力与容器规则 |
 | [js-api.md](references/js-api.md) | 远程文档经授权仍无法获取时：使用本地 API 快照；远程文档恢复可用后以远程内容为准 |
-| [online-doc-delta.md](references/online-doc-delta.md) | **本地增补**：1.7.0 快照（2026-09-23）相对在线文档（2026-11-06）的增量与冲突（实况照片字段名、Worker 9.53、assets 静态资源优化、新增端能力） |
+| [online-doc-delta.md](references/online-doc-delta.md) | **本地增补**：1.7.0 快照（2026-09-23）相对在线文档（2026-11-13）的增量与冲突（实况照片字段名、Worker 9.53、assets 静态资源优化、第三方 Agent 入口与内测 AI 上传限制、赞赏内测、离线性能优化章） |
 | [zip-artifact-spec.md](references/zip-artifact-spec.md) | 写 HTML / 打包时：目录结构、`index.html` 模板、路径与资源引用规则、打包自检 |
 | [device-capabilities.md](references/device-capabilities.md) | 处理端能力时：哪些 Web 能力可用 / 不可用及替代写法、如何实现常见交互（手势、拍照、选图等）；**Worker 与定位 / 陀螺仪的「一律移除」结论已过时，先看 online-doc-delta.md §1.2 / §2** |
 | [js-compatibility.md](references/js-compatibility.md) | 写 JS / 选择构建产物时：Android 8.1 出场 Chrome / WebView 61 最低基线、Web API 检测与局部降级 |
