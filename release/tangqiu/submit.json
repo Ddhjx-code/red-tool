@@ -1,11 +1,12 @@
 {
+  "appId": "6afc77378eb4360015a7b58c",
   "appName": "糖球转转",
   "slogan": "七关糖果世界，一颗糖球闯通关",
   "iconFileId": "red_skill_tool_image/L18Ib9qb1OfOjmCStFAew9XCwArTn4A2GdotDCqvUhji80c.png",
   "coverFileId": "red_skill_tool_image/ksOv8ooa_Qeaopf96SUno_Y57rN13GFBr5tKOf7sa0yFrpk.png",
-  "version": "1.0.0",
-  "pkgFileId": "red_app/uf1onW147aX0nKIlggL7fB8_4inqh2UuYbhddFgIx4lEk3Q.zip",
-  "md5": "f3464c7c90264a6b065baf5eeb917bfa",
+  "version": "1.0.1",
+  "pkgFileId": "red_app/uflFlkBioTvjsDukjxS95oHiI5gkw-yP-7h88Kk0ElvQpug.zip",
+  "md5": "ec31ae294045ef31ddf1df491828380f",
   "categories": ["casual_game"],
   "authorizations": []
 }
