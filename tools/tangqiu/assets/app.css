@@ -48,6 +48,12 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  /* 关键：整块关掉浏览器手势。
+     不写这一行，手指在画布上拖动会被当成「页面平移」，
+     浏览器随即发 pointercancel，摇杆的 end() 立刻把方向清零，
+     表现就是「角色站着不动」——鼠标拖反而正常，所以桌面测不出来。 */
+  touch-action: none;
+  -webkit-touch-callout: none;
 }
 
 #cv {
@@ -55,6 +61,7 @@ body {
   left: 0;
   top: 0;
   display: block;
+  touch-action: none;
 }
 
 /* ---------- HUD ---------- */
@@ -457,6 +464,8 @@ body {
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
+  /* #app 关了手势，这一条单独放开，角色卡还能横向滑 */
+  touch-action: pan-x;
 }
 
 .skin {

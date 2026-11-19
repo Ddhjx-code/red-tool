@@ -1877,7 +1877,9 @@
     }
 
     function start(x, y, id) {
-      if (!G || G.state !== 'play') return;
+      /* intro 阶段 updPlayer 本来就在跑，摇杆也要能用，
+         否则开局 1.5 秒标题卡里手指怎么拖都没反应，像是卡住了 */
+      if (!G || (G.state !== 'play' && G.state !== 'intro')) return;
       if (y < H * 0.26) return;
       G.joy.on = true;
       G.joy.id = id;
@@ -1909,10 +1911,14 @@
     if (window.PointerEvent) {
       document.addEventListener('pointerdown', function (e) {
         if (e.target && e.target.tagName === 'BUTTON') return;
+        /* 双保险：touch-action:none 已经挡掉手势，这里再拦一次默认行为，
+           个别 WebView 对 touch-action 支持不全 */
+        if (e.cancelable) e.preventDefault();
         start(e.clientX, e.clientY, e.pointerId);
       }, false);
       document.addEventListener('pointermove', function (e) {
         if (!G || !G.joy.on || e.pointerId !== G.joy.id) return;
+        if (e.cancelable) e.preventDefault();
         moveTo(e.clientX, e.clientY);
       }, false);
       document.addEventListener('pointerup', end, false);
@@ -1920,7 +1926,8 @@
     } else {
       document.addEventListener('touchstart', function (e) {
         var p = pick(e); start(p.x, p.y, p.id);
-      }, false);
+        if (e.cancelable) e.preventDefault();
+      }, { passive: false });
       document.addEventListener('touchmove', function (e) {
         if (!G || !G.joy.on) return;
         var p = pick(e);

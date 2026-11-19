@@ -20,6 +20,17 @@ const URL_ = 'file://' + PAGE + '?test=1';
 const PORT = 9411;
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
+/* 某些无终端环境下 stdout 会被吞掉，需要留一份落盘日志：TQ_SMOKE_LOG=/tmp/x.log */
+const LOGF = process.env.TQ_SMOKE_LOG;
+if (LOGF) {
+  const raw = console.log.bind(console);
+  console.log = function () {
+    const s = Array.prototype.map.call(arguments, (a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ');
+    try { fs.appendFileSync(LOGF, s + '\n'); } catch (e) {}
+    raw.apply(null, arguments);
+  };
+}
+
 const chromes = fs.readdirSync('/Applications').filter((n) => /chrome|chromium/i.test(n));
 if (!chromes.length) { console.error('找不到 Chrome，跳过'); process.exit(2); }
 
@@ -97,6 +108,7 @@ async function main() {
     }
   };
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
+  await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
   await send('Runtime.enable');
   await send('Page.enable');
   await new Promise((r) => setTimeout(r, 900));
@@ -273,7 +285,30 @@ async function main() {
   ok(typeof card === 'string' && card.indexOf('data:image/png') === 0, '出图为 png dataURL');
   ok(card.length > 20000, '图片有内容', card.length);
 
-  console.log('\n[15] 异常检查');
+  console.log('\n[15] 真实触摸摇杆（DOM 事件链路）');
+  /* 曾经踩过：缺 touch-action:none → 手指一拖浏览器就发 pointercancel，
+     摇杆被 end() 复位，角色纹丝不动；而 TQ.joy() 直设方向完全测不出来。
+     这里另起一局，用 CDP 派发真触摸事件，覆盖 DOM → 游戏状态整段链路。 */
+  await ev('TQ.goLevel(0); TQ.skipIntro();');
+  await tick(0.2, false);
+  const tBefore = await snap();
+  await send('Input.dispatchTouchEvent', {
+    type: 'touchStart',
+    touchPoints: [{ x: 150, y: 600, radiusX: 6, radiusY: 6, force: 1, id: 1 }]
+  });
+  await send('Input.dispatchTouchEvent', {
+    type: 'touchMove',
+    touchPoints: [{ x: 250, y: 600, radiusX: 6, radiusY: 6, force: 1, id: 1 }]
+  });
+  const joyOn = await ev('document.getElementById("joy").className');
+  const tMoved = await tick(0.5, false);
+  await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  const joyOff = await ev('document.getElementById("joy").className');
+  ok(joyOn === 'on', '按住摇杆亮起（没被 pointercancel 掐掉）', joyOn);
+  ok(tMoved.px > tBefore.px + 20, '真实触摸拖动 → 角色右移', { from: tBefore.px, to: tMoved.px });
+  ok(joyOff === '', '抬手后摇杆复位', joyOff);
+
+  console.log('\n[16] 异常检查');
   ok(pageErrors.length === 0, '零页面异常 / 零 console.error', pageErrors.slice(0, 3));
 
   console.log('\n' + (fails.length ? 'SMOKE FAIL (' + fails.length + ')\n - ' + fails.join('\n - ') : 'SMOKE PASS'));
