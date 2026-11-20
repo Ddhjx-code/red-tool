@@ -33,7 +33,7 @@ ALLOWED_SUFFIXES = {
 # 开发期文件，不该进包
 EXCLUDE_NAMES = {".DS_Store", "Thumbs.db"}
 EXCLUDE_SUFFIXES = {".map", ".md", ".zip", ".py", ".sh", ".txt"}
-EXCLUDE_DIRS = {"node_modules", ".git", "__pycache__", ".vscode", "tests"}
+EXCLUDE_DIRS = {"node_modules", ".git", "__pycache__", ".vscode", "tests", "art-src"}
 # 下划线开头的目录 = 原型 / 旧版（如 tools/data/_v1），只留在仓库里
 EXCLUDE_DIR_PREFIXES = ("_",)
 # 工具目录里的原型稿 / 调试页，只留在仓库里

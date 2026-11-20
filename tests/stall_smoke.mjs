@@ -9,10 +9,28 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import http from 'node:http';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const PAGE = path.join(ROOT, 'tools/stall/index.html');
-const URL_ = 'file://' + PAGE;
+const HTTP_PORT = 9587;
+const MIME = {
+  '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8', '.json': 'application/json',
+  '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml'
+};
+const server = http.createServer((req, res) => {
+  const rel = decodeURIComponent(req.url.split('?')[0]);
+  const file = path.join(ROOT, rel);
+  if (!file.startsWith(ROOT)) { res.writeHead(403); res.end(); return; }
+  fs.readFile(file, (err, buf) => {
+    if (err) { res.writeHead(404); res.end('404'); return; }
+    res.writeHead(200, { 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream' });
+    res.end(buf);
+  });
+});
+await new Promise((r) => server.listen(HTTP_PORT, '127.0.0.1', r));
+const URL_ = `http://127.0.0.1:${HTTP_PORT}/tools/stall/index.html`;
 const PORT = 9423;
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const OUT = process.env.STALL_SHOT_DIR || '/tmp';
@@ -122,7 +140,11 @@ async function main() {
   ok((await scene()) === 's-buy', '进入进货', await scene());
   const rows = await ev('document.querySelectorAll("#buyList .row").length');
   ok(rows >= 4, '货品行 ≥4（初始 4 种）', rows);
-  ok(await ev('document.querySelectorAll("#buyList .ic svg").length') >= 4, '每种货都有剪纸图标');
+  ok(await ev('document.querySelectorAll("#buyList .ic img").length') >= 4, '每种货都有位图图标');
+  ok(await ev(`(function(){
+    var i = document.querySelector('#buyList .ic img');
+    return !!(i && i.complete && i.naturalWidth > 0);
+  })()`), '货品图标已真实加载');
   ok(await ev('document.getElementById("dayBrief").textContent.length') > 6, '今日行情已生成',
     await ev('document.getElementById("dayBrief").textContent'));
 
@@ -267,4 +289,9 @@ async function main() {
 
 main()
   .catch((e) => { console.error('SMOKE FAIL', e && e.message); process.exitCode = 1; })
-  .finally(() => { try { child.kill(); } catch (e) {} });
+  .finally(() => {
+    try { child.kill('SIGKILL'); } catch (e) {}
+    try { server.close(); } catch (e) {}
+    /* 立刻退出：不给事件循环留活口，否则管道缓冲不会 flush */
+    setTimeout(() => process.exit(process.exitCode || 0), 300).unref();
+  });

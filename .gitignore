@@ -37,3 +37,6 @@ release/*/build/
 
 # 本地登录凭证（redapp 复用），绝不入库
 .auth/
+
+# 文生图原始大图：中间产物，成品在 tools/*/assets/img/，脚本 art-src/build_art.py 入库
+tools/*/art-src/*.png

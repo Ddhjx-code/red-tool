@@ -319,65 +319,17 @@
     });
   }
 
-  /* ============ 货品图标（剪纸双色） ============ */
+  /* ============ 货品图标（文生图位图） ============ */
 
-  var INK = '#2A2420';
-  var PAPER = '#FBF3E2';
+  var GOOD_FILE = {
+    fan: 'g-fan', sachet: 'g-sachet', candy: 'g-sugar', lamp: 'g-lantern',
+    kite: 'g-kite', doll: 'g-clay', candied: 'g-haw', bowl: 'g-bowl',
+    tea: 'g-tea', jade: 'g-jade'
+  };
 
   function ic(id) {
-    var h = '<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">';
-    if (id === 'fan') {
-      h += '<path d="M24 39 L7 18 A20 20 0 0 1 41 18 Z" fill="#B4462F"/>';
-      h += '<path d="M24 39 L7 18 A20 20 0 0 1 41 18 Z" fill="none" stroke="' + INK + '" stroke-width="1.5" stroke-linejoin="round"/>';
-      h += '<path d="M24 39 L24 6 M24 39 L12 13 M24 39 L36 13" stroke="' + PAPER + '" stroke-width="1.4" opacity="0.85"/>';
-      h += '<circle cx="24" cy="39" r="2.2" fill="' + INK + '"/>';
-    } else if (id === 'sachet') {
-      h += '<path d="M16 19 Q24 13 32 19 L35 33 Q24 41 13 33 Z" fill="#3F6E63"/>';
-      h += '<path d="M16 19 Q24 24 32 19" fill="none" stroke="' + PAPER + '" stroke-width="1.4" opacity="0.9"/>';
-      h += '<path d="M24 14 L24 19" stroke="' + INK + '" stroke-width="1.6"/>';
-      h += '<path d="M24 8 Q27 11 24 14 Q21 11 24 8" fill="' + INK + '"/>';
-      h += '<path d="M24 37 L24 44 M21 44 L24 46 L27 44" stroke="#C9902F" stroke-width="1.5" fill="none" stroke-linecap="round"/>';
-    } else if (id === 'candy') {
-      h += '<path d="M18 30 C14 24 20 17 27 20 C33 23 31 31 25 31 C20 31 21 25 26 26" fill="none" stroke="#C9902F" stroke-width="3" stroke-linecap="round"/>';
-      h += '<path d="M24 33 L23 44" stroke="' + INK + '" stroke-width="1.8" stroke-linecap="round"/>';
-      h += '<circle cx="24" cy="25" r="10" fill="#C9902F" opacity="0.12"/>';
-    } else if (id === 'lamp') {
-      h += '<path d="M24 10 L24 14" stroke="' + INK + '" stroke-width="1.6"/>';
-      h += '<ellipse cx="24" cy="25" rx="12" ry="13" fill="#B4462F"/>';
-      h += '<path d="M12 25 L36 25 M24 12 L24 38" stroke="' + PAPER + '" stroke-width="1.2" opacity="0.7"/>';
-      h += '<path d="M24 38 L24 45 M21 45 L24 47 L27 45" stroke="#C9902F" stroke-width="1.5" fill="none" stroke-linecap="round"/>';
-      h += '<path d="M18 9 L30 9" stroke="' + INK + '" stroke-width="1.6" stroke-linecap="round"/>';
-    } else if (id === 'kite') {
-      h += '<path d="M24 6 L37 20 L24 35 L11 20 Z" fill="#3F6E63"/>';
-      h += '<path d="M24 6 L24 35 M11 20 L37 20" stroke="' + PAPER + '" stroke-width="1.3" opacity="0.8"/>';
-      h += '<path d="M24 35 Q20 39 25 41 Q30 43 26 46" fill="none" stroke="' + INK + '" stroke-width="1.4" stroke-linecap="round"/>';
-    } else if (id === 'doll') {
-      h += '<circle cx="24" cy="15" r="6" fill="#8A6B4A"/>';
-      h += '<path d="M17 24 L31 24 L34 40 L14 40 Z" fill="#B4462F"/>';
-      h += '<path d="M17 26 L11 33 M31 26 L37 33" stroke="#8A6B4A" stroke-width="3" stroke-linecap="round"/>';
-      h += '<path d="M20 40 L19 46 M28 40 L29 46" stroke="' + INK + '" stroke-width="2.4" stroke-linecap="round"/>';
-      h += '<path d="M21.4 14 L22.6 15.2 M26.6 14 L25.4 15.2" stroke="' + INK + '" stroke-width="1.2" stroke-linecap="round"/>';
-    } else if (id === 'candied') {
-      h += '<path d="M24 46 L23 14" stroke="' + INK + '" stroke-width="1.8" stroke-linecap="round"/>';
-      h += '<circle cx="24" cy="12" r="5.4" fill="#B4462F"/><circle cx="24" cy="21" r="5.4" fill="#B4462F"/><circle cx="24" cy="30" r="5.4" fill="#B4462F"/>';
-      h += '<path d="M21 10 Q22 9 23 10" stroke="' + PAPER + '" stroke-width="1.2" opacity="0.8" fill="none"/>';
-    } else if (id === 'bowl') {
-      h += '<path d="M9 22 L39 22 Q37 38 24 38 Q11 38 9 22 Z" fill="#4A4458"/>';
-      h += '<path d="M9 22 L39 22" stroke="' + PAPER + '" stroke-width="1.6" opacity="0.75"/>';
-      h += '<path d="M15 27 Q24 31 33 27" fill="none" stroke="' + PAPER + '" stroke-width="1.2" opacity="0.55"/>';
-      h += '<ellipse cx="24" cy="41" rx="8" ry="1.8" fill="' + INK + '" opacity="0.18"/>';
-    } else if (id === 'tea') {
-      h += '<circle cx="24" cy="24" r="14" fill="#8A6B4A"/>';
-      h += '<circle cx="24" cy="24" r="8.4" fill="none" stroke="' + PAPER + '" stroke-width="1.4" opacity="0.8"/>';
-      h += '<path d="M24 16 L24 32 M16 24 L32 24" stroke="' + PAPER + '" stroke-width="1.1" opacity="0.5"/>';
-      h += '<circle cx="24" cy="24" r="2.6" fill="' + PAPER + '" opacity="0.7"/>';
-    } else {
-      h += '<circle cx="24" cy="24" r="14" fill="#3F6E63"/>';
-      h += '<circle cx="24" cy="24" r="6.6" fill="' + PAPER + '"/>';
-      h += '<path d="M24 10 L24 17 M24 31 L24 38 M10 24 L17 24 M31 24 L38 24" stroke="' + PAPER + '" stroke-width="1.6" opacity="0.65"/>';
-      h += '<circle cx="24" cy="24" r="14" fill="none" stroke="' + INK + '" stroke-width="1.4"/>';
-    }
-    return h + '</svg>';
+    var f = GOOD_FILE[id] || 'g-fan';
+    return '<img class="ic-img" src="assets/img/' + f + '.webp" alt="">';
   }
 
   /* ============ 场景 ============ */
