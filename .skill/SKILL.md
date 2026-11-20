@@ -35,6 +35,8 @@ metadata:
 10. **审计并打包** — 按 [performance-budget.md](references/performance-budget.md) 的环境分支选择 Node、Python 或人工审计；修复全部错误，逐条核对各 reference 末尾的自检清单后生成待上传 zip。审计脚本是辅助工具，不得因运行时缺失跳过门禁
 11. **创服平台与真机验证提醒** — 交付时提醒用户：将本次生成的 zip 上传至创服平台，先在平台模拟器完成完整功能验证，再分别使用 Android 真机和 iOS 真机扫码验证相同产物。除非用户明确授权且当前环境具备对应能力，否则不得主动尝试登录创服平台、上传产物或启动真机验证；将这三项标记为待用户验证，不阻塞 zip 交付
 
+> **要用 AI 能力时**：先读 [ai-as-function.md](references/ai-as-function.md)。AI 是流程里的一个函数（固定提示词 → 结构化字段 → 程序校验消化 → 本地渲染），不是聊天界面、不是多轮对话、不把模型原文给用户；且必须四级降级到本地规则，核心功能不依赖 AI。
+
 > **浏览器直运行不可信**：仅将代码在普通浏览器中直接运行所得结果不可置信，不得作为小工具功能、兼容性或交付验收的依据。交付时再次提醒用户完成创服平台模拟器、Android 真机扫码与 iOS 真机扫码验证。
 
 > **产出前提**：交付的 zip 必须同时满足 `zip-artifact-spec.md`、`device-capabilities.md`、`js-compatibility.md`、`css-compatibility.md`、`performance-budget.md` 与小工具在线文档的全部约束；交付说明必须包含创服平台模拟器、Android 真机扫码与 iOS 真机扫码验证提醒。
@@ -52,5 +54,6 @@ metadata:
 | [css-compatibility.md](references/css-compatibility.md) | 写 CSS / 选择构建产物时：Chrome 61 基线、能力检测、现代 CSS 增强与局部回退 |
 | [cross-platform-h5.md](references/cross-platform-h5.md) | 适配多端时：触摸、滚动、安全区、PC 模拟器与真机差异 |
 | [performance-budget.md](references/performance-budget.md) | 开发和交付前：包体、静态数据、Base64、媒体、长列表与 WebGL 资源控制和降级 |
+| [ai-as-function.md](references/ai-as-function.md) | **接入 `window.xhs.AI` 时必读**：AI 当函数用不当对话用的四条硬规则、固定提示词模板、校验层、四级降级、次数与内容安全、发布路径限制（用了内测 AI 接口就无法走第三方 Agent 上传） |
 | [../docs/redapp-auth.md](../docs/redapp-auth.md) | **发布运维**：`redapp` 凭证续期机制、为什么会被迫反复扫码、长期有效的正确执行方式（受限环境下写盘被拒会断链，必须无隔离执行） |
 | [../skills/minitool-reference-projects/SKILL.md](../skills/minitool-reference-projects/SKILL.md) | **本地增补**：要做新工具、缺玩法/视觉灵感或提示词时——36 个单文件效果参考库（CC0）、EVEngine 的提示词范式，以及「单文件 demo → 小工具 zip」的强制改造清单（内联脚本 / `type="module"` / CDN 三项必改） |
