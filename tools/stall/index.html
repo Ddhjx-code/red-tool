@@ -4,10 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#FBF3E2">
 <title>小摊记</title>
+<link rel="icon" href="data:,">
 <link rel="stylesheet" href="assets/app.css">
 </head>
 <body>
+<canvas id="cv" aria-hidden="true"></canvas>
+<div id="veil"></div>
+
 <div id="app">
 
   <header id="hud">
@@ -16,6 +21,7 @@
       <b id="hudCoins">0</b>
       <span class="hud-u">文</span>
     </div>
+    <div class="hud-c" id="hudTime">辰时</div>
     <div class="hud-r">
       <span class="hud-k">第</span>
       <b id="hudRound">1</b>
@@ -26,16 +32,17 @@
   <!-- ===== 封面 ===== -->
   <section class="scene on" id="s-intro">
     <div class="intro-wrap">
-      <div id="introArt" class="intro-art"></div>
+      <div class="intro-seal">市</div>
+      <div class="intro-side">市井百态</div>
       <h1 class="intro-title">小摊记</h1>
-      <p class="intro-sub">一百文本钱，一日集市，看你能挣几成</p>
+      <p class="intro-poem">一盏粗茶<br>半幅青布<br>看今日赚得几文</p>
       <div class="intro-rule">
-        <div class="rule-row" data-n="1"><i>1</i><span>早市进货，货挑贵贱</span></div>
-        <div class="rule-row" data-n="2"><i>2</i><span>开价定高定低，全凭眼力</span></div>
-        <div class="rule-row" data-n="3"><i>3</i><span>客来客往，收摊结账</span></div>
+        <div class="rule-row"><i>一</i><span>早市进货，货挑贵贱</span></div>
+        <div class="rule-row"><i>二</i><span>开价定高低，客人会还价</span></div>
+        <div class="rule-row"><i>三</i><span>收摊结账，题一句词</span></div>
       </div>
-      <button class="btn btn-main" data-act="Start">开张</button>
-      <div class="intro-best">最好的一摊：<b id="bestProfit">0</b> 文</div>
+      <button class="btn btn-main" data-act="Start">开 张</button>
+      <div class="intro-best">最好的一摊 <b id="bestProfit">0</b> 文</div>
     </div>
   </section>
 
@@ -52,15 +59,20 @@
         <b id="cashLeft">100</b>
         <span class="cash-u">文</span>
       </div>
-      <button class="btn btn-main" data-act="ToPrice">摆摊去</button>
+      <button class="btn btn-main" data-act="ToPrice">摆 摊</button>
     </div>
   </section>
 
   <!-- ===== 定价 ===== -->
   <section class="scene" id="s-price">
     <div class="sc-head">
-      <div class="sc-t">开价 · 摆摊</div>
+      <div class="sc-t">开价 · 招徕</div>
       <div class="sc-d">今日集市：<b id="dayTip">—</b></div>
+    </div>
+    <div class="sign-row" id="signRow">
+      <button class="chip" data-act="Sign" data-id="0"><b>静坐等客</b><i>价钱照开，来去自如</i></button>
+      <button class="chip" data-act="Sign" data-id="1"><b>高声吆喝</b><i>多来两位，价得让一分</i></button>
+      <button class="chip" data-act="Sign" data-id="2"><b>挂出招牌</b><i>客少一两位，出价肯高些</i></button>
     </div>
     <div class="sc-body" id="priceList"></div>
     <div class="sc-foot">
@@ -69,7 +81,7 @@
         <b id="costLeft">0</b>
         <span class="cash-u">文</span>
       </div>
-      <button class="btn btn-main" data-act="Open">开市</button>
+      <button class="btn btn-main" data-act="Open">开 市</button>
     </div>
   </section>
 
@@ -79,17 +91,19 @@
       <div class="mk-stat"><span>来客</span><b id="mkCome">0</b></div>
       <div class="mk-stat"><span>成交</span><b id="mkSold">0</b></div>
       <div class="mk-stat"><span>进账</span><b id="mkRev">0</b></div>
+      <div class="mk-clock" id="mkClock">辰时·开市</div>
     </div>
+
     <div class="mk-stage">
-      <div id="stallArt" class="stall-art"></div>
+      <div class="bubble" id="bubble"></div>
       <div class="mk-feed" id="feed"></div>
       <div class="mk-left" id="mkLeft"></div>
     </div>
-    <div class="mk-bar">
-      <div class="mk-bar-in" id="mkBar"></div>
-    </div>
+
+    <div class="mk-bar"><div class="mk-bar-in" id="mkBar"></div></div>
+
     <div class="mk-foot">
-      <button class="btn btn-ghost" data-act="Skip">快进</button>
+      <button class="btn btn-ghost" data-act="Skip">快 进</button>
     </div>
   </section>
 
@@ -106,16 +120,20 @@
         <b id="rsProfit">0</b>
         <span class="rs-pu">文</span>
       </div>
+      <div class="rs-couplet" id="rsCouplet">—</div>
       <div class="rs-lines" id="rsLines"></div>
       <div class="rs-comment" id="rsComment">—</div>
       <div class="rs-stars" id="rsStars"></div>
+      <div class="rs-foot">小摊记</div>
     </div>
-    <div class="rs-foot">
+    <div class="rs-btns">
       <button class="btn btn-main" data-act="Again">再摆一摊</button>
     </div>
   </section>
 
 </div>
+
+<script src="assets/art.js"></script>
 <script src="assets/game.js"></script>
 </body>
 </html>
